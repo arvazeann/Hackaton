@@ -1,0 +1,232 @@
+generator client {
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["partialIndexes"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ProductCondition {
+  like_new
+  good
+  fair
+
+  @@map("product_condition")
+}
+
+enum ProductStatus {
+  active
+  reserved
+  sold
+  archived
+
+  @@map("product_status")
+}
+
+enum OrderStatus {
+  pending
+  confirmed
+  completed
+  cancelled
+  rejected
+
+  @@map("order_status")
+}
+
+enum AddressKind {
+  SHIPPING
+  PICKUP
+
+  @@map("address_kind")
+}
+
+enum PaymentAccountType {
+  BANK
+  EWALLET
+
+  @@map("payment_account_type")
+}
+
+enum UploadedFilePurpose {
+  AVATAR
+  LOGO
+  PRODUCT
+
+  @@map("uploaded_file_purpose")
+}
+
+model User {
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String         @db.VarChar(100)
+  email         String         @unique(map: "users_email_key") @db.VarChar(255)
+  passwordHash  String         @map("password_hash") @db.Text
+  phone         String?        @db.VarChar(20)
+  city          String?        @db.VarChar(100)
+  avatarKey     String?        @map("avatar_key") @db.Text
+  bio           String?        @db.VarChar(300)
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  products      Product[]
+  favorites     Favorite[]
+  purchases     Order[]        @relation("OrderBuyer")
+  sales         Order[]        @relation("OrderSeller")
+  addresses     Address[]
+  sellerProfile SellerProfile?
+  uploadedFiles UploadedFile[]
+
+  @@map("users")
+}
+
+model Category {
+  id       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name     String    @unique(map: "categories_name_key") @db.VarChar(60)
+  slug     String    @unique(map: "categories_slug_key") @db.VarChar(80)
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sellerId    String           @map("seller_id") @db.Uuid
+  categoryId  String           @map("category_id") @db.Uuid
+  title       String           @db.VarChar(150)
+  description String           @db.Text
+  price       Int
+  condition   ProductCondition
+  status      ProductStatus    @default(active)
+  city        String           @db.VarChar(100)
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  seller      User             @relation(fields: [sellerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  category    Category         @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  images      ProductImage[]
+  favorites   Favorite[]
+  orders      Order[]
+
+  @@index([status, createdAt(sort: Desc)], map: "products_status_created_at_idx")
+  @@index([categoryId, status], map: "products_category_status_idx")
+  @@index([sellerId, status], map: "products_seller_status_idx")
+  @@index([price], map: "products_price_idx")
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "products_title_trgm_idx")
+  @@index([description(ops: raw("gin_trgm_ops"))], type: Gin, map: "products_description_trgm_idx")
+  @@map("products")
+}
+
+model ProductImage {
+  id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId  String  @map("product_id") @db.Uuid
+  storageKey String  @unique(map: "product_images_storage_key_key") @map("storage_key") @db.Text
+  url        String  @db.Text
+  position   Int     @db.SmallInt
+  product    Product @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([productId, position], map: "product_images_product_position_key")
+  @@map("product_images")
+}
+
+model Favorite {
+  userId    String   @map("user_id") @db.Uuid
+  productId String   @map("product_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([userId, productId])
+  @@index([userId, createdAt(sort: Desc)], map: "favorites_user_created_at_idx")
+  @@map("favorites")
+}
+
+model Order {
+  id                           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderCode                    String      @unique(map: "orders_order_code_key") @map("order_code") @db.VarChar(24)
+  buyerId                      String      @map("buyer_id") @db.Uuid
+  sellerId                     String      @map("seller_id") @db.Uuid
+  productId                    String      @map("product_id") @db.Uuid
+  priceAtOrder                 Int         @map("price_at_order")
+  productTitleSnapshot         String      @map("product_title_snapshot") @db.VarChar(150)
+  status                       OrderStatus @default(pending)
+  shippingName                 String      @map("shipping_name") @db.VarChar(100)
+  shippingPhone                String      @map("shipping_phone") @db.VarChar(20)
+  shippingAddress              String      @map("shipping_address") @db.Text
+  note                         String?     @db.Text
+  cancelReason                 String?     @map("cancel_reason") @db.Text
+  paymentInstructionCiphertext String?     @map("payment_instruction_ciphertext") @db.Text
+  paymentAccountNumberLast4    String?     @map("payment_account_number_last4") @db.VarChar(4)
+  createdAt                    DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                    DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  buyer                        User        @relation("OrderBuyer", fields: [buyerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  seller                       User        @relation("OrderSeller", fields: [sellerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  product                      Product     @relation(fields: [productId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([productId], where: raw("status IN ('pending', 'confirmed')"), map: "orders_one_active_per_product")
+  @@index([buyerId, createdAt(sort: Desc)], map: "orders_buyer_created_at_idx")
+  @@index([sellerId, createdAt(sort: Desc)], map: "orders_seller_created_at_idx")
+  @@map("orders")
+}
+
+model Address {
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String      @map("user_id") @db.Uuid
+  kind        AddressKind
+  label       String      @db.VarChar(60)
+  contactName String      @map("contact_name") @db.VarChar(100)
+  phone       String      @db.VarChar(20)
+  street      String      @db.Text
+  city        String      @db.VarChar(100)
+  province    String      @db.VarChar(100)
+  postalCode  String      @map("postal_code") @db.VarChar(12)
+  isDefault   Boolean     @default(false) @map("is_default")
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([userId, kind], where: raw("is_default = true"), map: "addresses_one_default_per_kind")
+  @@index([userId, kind, createdAt(sort: Desc)], map: "addresses_user_kind_created_idx")
+  @@map("addresses")
+}
+
+model SellerProfile {
+  userId          String           @id @map("user_id") @db.Uuid
+  storeName       String           @map("store_name") @db.VarChar(100)
+  slug            String           @unique(map: "seller_profiles_slug_key") @db.VarChar(120)
+  description     String           @default("") @db.VarChar(500)
+  logoKey         String?          @map("logo_key") @db.Text
+  city            String           @db.VarChar(100)
+  province        String?          @db.VarChar(100)
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  paymentAccounts PaymentAccount[]
+
+  @@map("seller_profiles")
+}
+
+model PaymentAccount {
+  id                      String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sellerProfileId         String             @map("seller_profile_id") @db.Uuid
+  type                    PaymentAccountType
+  providerName            String             @map("provider_name") @db.VarChar(100)
+  accountNumberCiphertext String             @map("account_number_ciphertext") @db.Text
+  accountNumberLast4      String             @map("account_number_last4") @db.VarChar(4)
+  accountHolderName       String             @map("account_holder_name") @db.VarChar(100)
+  isActive                Boolean            @default(true) @map("is_active")
+  createdAt               DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  sellerProfile           SellerProfile      @relation(fields: [sellerProfileId], references: [userId], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([sellerProfileId, isActive], map: "payment_accounts_seller_active_idx")
+  @@map("payment_accounts")
+}
+
+model UploadedFile {
+  key       String              @id @db.VarChar(255)
+  ownerId   String              @map("owner_id") @db.Uuid
+  purpose   UploadedFilePurpose
+  createdAt DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  owner     User                @relation(fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([ownerId, purpose], map: "uploaded_files_owner_purpose_idx")
+  @@map("uploaded_files")
+}
