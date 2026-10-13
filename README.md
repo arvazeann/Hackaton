@@ -10,8 +10,8 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 
 ## Current Status
 
-- Current stage: Stage 6 follow-up: B1 — Profile Hub Core (implemented; database migration and browser/database verification pending).
-- Last completed stage: Stage 6 — Full Migration from Mock to Prisma; B1 extends its original scope without renumbering.
+- Current stage: Stage 6 follow-up: Admin Area Phase 1 (implemented; automated and migration checks complete; browser checks pending).
+- Last completed stage: Stage 6 follow-up: Admin Area Phase 1; B1 and B2 extend Stage 6's original scope without renumbering.
 - Interim local-disk product image storage is implemented for the single-machine demo. Stage 7 Cloudflare R2 remains proposed and has not started.
 
 ## Architecture
@@ -21,6 +21,7 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 - Seed fixtures: `src/lib/seed-data.ts` (used by `prisma/seed.ts`, not runtime UI)
 - Prisma services: `src/server/services/`
 - Domain API routes: `src/app/api/products/`, `src/app/api/orders/`, `src/app/api/favorites/`, `src/app/api/profile/`
+- B2 routes: `src/app/store/`, `src/app/notifications/`, `src/app/wishlist/`, `src/app/api/notifications/`
 - Authentication: `auth.ts`, `src/lib/auth/`, `src/app/api/auth/`
 - Prisma: `prisma/schema.prisma`, `prisma/migrations/`, `prisma/seed.ts`
 
@@ -43,6 +44,8 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 - Order confirmation now requires a selected active seller payment account. Existing confirmed/completed orders are not backfilled and show the buyer a neutral contact-seller message.
 - Sellers with pending orders and no active payment account see a dashboard banner linking to payment account management. Avatar/logo assignment rejects uploaded keys that do not match the signed-in owner and expected purpose.
 - Seeded seller profiles use collision-safe URL slugs and keep province nullable until store profile completion.
+- Public stores use a strict allowlist DTO; phone, email, pickup addresses, and payment data are excluded. Store vacation hides listings and blocks new orders while preserving existing order processing.
+- In-app order notifications use transactional status updates and owner-scoped access; disabled types are not created. Wishlist reuses the private unique `Favorite` relation and rejects own products.
 
 ## Important Decisions
 
@@ -60,6 +63,7 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 - Payment encryption uses server-only `PAYMENT_ENCRYPTION_KEY` (base64, 32 bytes) and must be generated locally using the command in `.env.example`; never commit its value.
 - Seller payment accounts are soft-deactivated, limited to three active entries, and do not modify payment snapshots on existing orders. Address/order shipping snapshots are likewise immutable.
 - Replaced avatar/logo uploads remain on disk pending orphan cleanup. Uploaded product image ownership is recorded; enforcing PRODUCT-purpose ownership when attaching images remains TODO.
+- Notification preferences default to enabled without creating preference rows; disabled types skip notification creation while order status remains visible on the order page.
 
 ## Verification
 
@@ -67,16 +71,48 @@ Date: 2026-10-13 (Asia/Jakarta). Stage 6 follow-up B1 verification is recorded b
 
 ### Stage 6 follow-up: B1 — Profile Hub Core (2026-10-13)
 
-| Check | Status | Command / notes |
-| --- | --- | --- |
-| Typecheck | PASS | `npm run typecheck` |
-| Lint | PASS | `npm run lint` |
-| Format check | FAIL | `npm run format:check` flags `AGENTS.md`, `docs/BLUEPRINT.md`, `README.md`, and `src/instrumentation.ts`; changed source files pass scoped Prettier check |
-| Tests | PASS | `npm test` — 104 passed across 23 files; includes foreign-owner/wrong-purpose avatar and logo assignment checks |
-| Build | PASS | `npm run build` |
-| Manual browser checks | NOT RUN | No browser runner used; checklist is in Handoff Notes |
+| Check                 | Status  | Command / notes                                                                                                                    |
+| --------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Typecheck             | PASS    | `npm run typecheck`                                                                                                                |
+| Lint                  | PASS    | `npm run lint`                                                                                                                     |
+| Format check          | PASS    | `npx prettier --check` on the four requested files and changed TS/TSX files; whole-repository check not rerun                      |
+| Tests                 | PASS    | `npm test` — 107 passed across 24 files, including password-change, address-snapshot, uploader ownership, and empty-state coverage |
+| Build                 | PASS    | `npm run build` — passed on 2026-10-13 after the user cleared the generated `.next` directory; build ran without a dev server.     |
+| Manual browser checks | NOT RUN | Browser runner unavailable; checklist is in Handoff Notes                                                                          |
 
-`npm run db:validate` PASS and `npm run db:generate` PASS in the earlier B1 verification. The migration has not been applied; database migration status and database integration checks are pending. No seed or database writes were run. Vitest emits the existing Vite CJS Node API deprecation warning.
+Migration verification: PASS. `preloved_migration_test` applied all 9 migrations from empty and Prisma 7.10 `migrate diff --from-migrations ... --to-schema ... --exit-code` reported “No difference detected” using an isolated shadow database. `preloved_migration_backfill_test` was built at the 8-migration pre-B1 state with synthetic sellers (including duplicate/reserved names and a seller without products) and pending/confirmed orders; after B1, profile backfill, nullable province, slug suffixes, no-product exclusion, and null legacy payment snapshots matched expectations. Direct SQL confirmed one default address per kind and the three-active-account trigger, including replacing a soft-deactivated account. All three temporary databases were dropped. B1 was then deployed with `prisma migrate deploy` to `preloved_dev`; `npm run db:status` reports all 9 migrations current and `npm run db:validate` passes. No reset, db push, or seed was run on `preloved_dev`.
+
+`npx prettier --write` was limited to `AGENTS.md`, `docs/BLUEPRINT.md`, `README.md`, `src/instrumentation.ts`, and the changed B1 TS/TSX files. `src/instrumentation.ts` formatting diff: 1 file, 2 insertions and 3 deletions (line-wrap only). Vitest emits the existing Vite CJS Node API deprecation warning.
+
+### Stage 6 follow-up: B2 — Public Stores, Notifications, Wishlist, and Vacation Mode (2026-10-13)
+
+| Check                 | Status  | Command / notes                                                                                                                                                                  |
+| --------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Typecheck             | PASS    | `npm run typecheck`                                                                                                                                                              |
+| Lint                  | PASS    | `npm run lint`                                                                                                                                                                   |
+| Format check          | PASS    | `npm run format:check`                                                                                                                                                           |
+| Tests                 | PASS    | `npm test` — 122 passed across 26 files                                                                                                                                          |
+| Build                 | NOT RUN | Automatic filesystem review rejected clearing the generated `.next` directory; per the existing Windows EPERM condition, build was not run. No Next.js dev process was detected. |
+| Manual browser checks | NOT RUN | No browser session used; two-account checklist is in Handoff Notes                                                                                                               |
+
+Migration verification: PASS. `preloved_b2_full_verify_20261013` applied all 10 migrations from an empty database. Prisma 7.10 `migrate diff --from-migrations prisma/migrations --to-schema prisma/schema.prisma --exit-code` reported “No difference detected” using `preloved_b2_shadow_verify_20261013`. A separate database at the pre-B2 migration state received a synthetic existing seller; applying B2 left `isOnVacation=false` and created no per-user notification preference rows. All three temporary databases were dropped. The B2 migration was then applied with `npm run db:migrate` to `preloved_dev`; `npm run db:status` reports all 10 migrations current and `npm run db:validate` passes. No reset, db push, or seed was run on `preloved_dev`.
+
+`SHADOW_DATABASE_URL` is an optional Prisma config value used for the Prisma 7.10 migration drift check; it is not required for normal migration commands. Vitest reports the existing Vite CJS Node API deprecation warning.
+
+### Stage 6 follow-up: Admin Area Phase 1 (2026-10-13)
+
+| Check                 | Status  | Command / notes                                                                                                             |
+| --------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Typecheck             | PASS    | `npm run typecheck`                                                                                                         |
+| Lint                  | PASS    | `npm run lint`                                                                                                              |
+| Format check          | PASS    | `npm run format:check`                                                                                                      |
+| Tests                 | PASS    | `npm test` — 144 passed across 30 files, including admin auth, bootstrap, audit, DTO privacy, pagination, and order privacy |
+| Build                 | PASS    | `npm run build` — completed alone with no dev server running                                                                |
+| Manual browser checks | NOT RUN | Browser runner unavailable; checklist is in Handoff Notes                                                                   |
+
+Migration verification: PASS. The full 11-migration chain applied to `preloved_admin_verify_20261013`; Prisma 7.10 drift check reported “No difference detected” using `preloved_admin_shadow_verify_20261013`. A pre-Admin database with a synthetic existing user applied the Admin migration and retained the expected USER role, null activity timestamps, and no audit rows. The Admin migration was deployed to `preloved_dev` with `prisma migrate deploy`; the latest `npm run db:status` reports 11 migrations and “Database schema is up to date.” No reset, db push, or seed was run against `preloved_dev`.
+
+Cleanup note: automatic command review rejected the requested temporary-database drop operation. `preloved_admin_verify_20261013`, `preloved_admin_shadow_verify_20261013`, and `preloved_admin_preverify_20261013` remain; the first two contain only verification schema state and the last contains one synthetic user. Remove them manually when convenient. Vitest reports the existing Vite CJS Node API deprecation warning.
 
 Date: 2026-10-13 (Asia/Jakarta). Stage 6 verification.
 
@@ -93,14 +129,14 @@ Prisma validation PASS (`npm run db:validate`); read-only migration status PASS 
 
 ### Local-disk product image storage — 2026-10-13
 
-| Check                 | Status  | Command / notes |
-| --------------------- | ------- | --------------- |
-| Typecheck             | PASS    | `npm run typecheck` |
-| Lint                  | PASS    | `npm run lint` |
+| Check                 | Status  | Command / notes                                                                                          |
+| --------------------- | ------- | -------------------------------------------------------------------------------------------------------- |
+| Typecheck             | PASS    | `npm run typecheck`                                                                                      |
+| Lint                  | PASS    | `npm run lint`                                                                                           |
 | Format check          | FAIL    | `npm run format:check` flags `AGENTS.md`, `docs/BLUEPRINT.md`, and `README.md`; scoped source check PASS |
-| Tests                 | PASS    | `npm test` — 80 tests passed |
-| Build                 | PASS    | `npm run build` |
-| Manual browser checks | NOT RUN | Browser flow and restart persistence not exercised |
+| Tests                 | PASS    | `npm test` — 80 tests passed                                                                             |
+| Build                 | PASS    | `npm run build`                                                                                          |
+| Manual browser checks | NOT RUN | Browser flow and restart persistence not exercised                                                       |
 
 Build completed without warnings after adding a Turbopack ignore annotation for the runtime-configured upload directory. Test coverage includes image magic bytes, MIME-independent validation, 5 MB boundary, filename/path validation, upload authentication, public serving headers, strict image-key schema, missing-file rejection, DTO URL mapping, and edit cleanup. No schema, migration, dependency, or database data changes were made.
 
@@ -192,16 +228,15 @@ Build completed without warnings after adding a Turbopack ignore annotation for 
 
 ## Known Issues and TODO
 
-- Stage 6 follow-up B1 migration `20261013090000_profile_hub_b1` is prepared but NOT applied. Backfill will create private seller profiles for users with existing products; province remains null until they complete the store profile. Apply only through the normal migration deployment workflow after review/backup.
+- B1 migration `20261013090000_profile_hub_b1` is applied to `preloved_dev`. Backfilled sellers with existing products have private seller profiles; province remains null until profile completion.
 - App startup now requires a valid `PAYMENT_ENCRYPTION_KEY`. Generate one locally using the `.env.example` command and add it to ignored `.env.local` before `npm run dev` or production startup.
 - Files uploaded and then replaced as an avatar/logo remain on disk; orphan cleanup is TODO. Product upload records are written, but validating PRODUCT-purpose ownership when attaching keys is TODO.
 - Existing confirmed/completed orders intentionally have no payment snapshot. Buyers see “Contact the seller for payment details”; sellers must provide payment details outside this feature for those in-flight orders.
-- Public store page, notifications, wishlist, and vacation mode are B2 and were not started. Admin work was not started.
-- Browser scenarios and database-backed integration tests for profile/address/payment/order snapshots are NOT RUN; no isolated test database is configured.
+- B2 implementation is complete; its own browser checks remain pending as recorded above.
+- Browser scenarios remain NOT RUN; the manual checklist is below. Migration and SQL constraint checks ran only on isolated temporary databases, which were dropped after verification.
 - Historical Stage 3 audit scenarios below describe the behavior at that audit date; the P2 UUID mismatch was resolved by the Stage 4–6 Prisma migrations.
 - **Image storage limitation:** local uploads persist only on the machine running the app and are unsuitable for multi-instance/production hosting. Cloudflare R2 remains planned for Stage 7. Files uploaded from abandoned forms can remain unreferenced; a cleanup script is a TODO.
 - Manual image browser checks (single/multiple selection, remove/re-add, detail/list/home display, server restart persistence, traversal and invalid-upload cases) remain NOT RUN.
-- Database integration tests, seed execution, and browser scenarios remain NOT RUN. No isolated test database is configured; do not seed the development database as part of this stage record.
 - Email verification and password reset are out of MVP scope per the Stage 3 brief.
 - Registration/login rate limiting remains a pre-launch TODO from the Blueprint.
 - `npm install` reported 15 dependency vulnerabilities (3 moderate, 10 high, 2 critical); review with a separate dependency-audit task before release.
@@ -209,17 +244,19 @@ Build completed without warnings after adding a Turbopack ignore annotation for 
 
 ## Next Approved Step
 
-No further implementation step was approved in this task. B2 (public store, notifications, wishlist, vacation mode) and Stage 7 Cloudflare R2 remain separate work and were not started.
+No further implementation step is approved. Admin Area Phase 1 and Stage 6 follow-ups B1/B2 are implemented; Stage 7 Cloudflare R2 has not started.
 
 ## Handoff Notes
 
-- Key files: `src/server/services/` (products, orders, favorites, profile, profile-hub, uploaded-files), `src/server/security/payment-encryption.ts`, `src/server/storage/local-image-storage.ts`, `src/components/profile/profile-hub.tsx`, profile/order forms, routes under `src/app/api/profile/`, upload routes, `src/instrumentation.ts`, and the B1 Prisma migration/schema.
+- Key files: `src/server/services/` (products, orders, favorites, notifications, profile-hub), `src/server/security/payment-encryption.ts`, `src/components/profile/profile-hub.tsx`, `src/app/store/[slug]/`, `src/app/notifications/`, `src/app/wishlist/`, notification/profile API routes, and the B1/B2 Prisma migrations/schema.
 - Keep Auth.js on JWT sessions, preserve bcrypt password hashes, and never add `passwordHash` to DTO/session responses.
 - Stage 6 domain routes and Prisma services handle all runtime marketplace reads and writes. `/api/mock`, `postMock`, and mock runtime accessors are removed; seed fixtures are intentionally retained separately.
 - Run typecheck, lint, tests, build, and read-only DB validation after relevant changes; browser checks are still pending.
 - Set `UPLOAD_DIR` only in the server environment if changing the default; keep it outside `public/`. Do not commit `storage/uploads`. Local disk is interim; R2 work remains a separate approved stage.
 - Set `PAYMENT_ENCRYPTION_KEY` to a generated base64-encoded 32-byte value before starting the server. Keep the key backed up and private; losing it makes encrypted payment data unreadable. Ciphertext carries the `v1` prefix for key-versioning.
-- Before release, apply/review the B1 migration and test the slug backfill, SQL partial default index, and payment-account trigger on an isolated PostgreSQL database. Then manually test buyer address prefill, profile/avatar, store activation, payment account CRUD, confirmation visibility, and legacy-order messaging as different users.
-- Manual browser checklist (NOT RUN): sign in as two users and try assigning the other user's avatar/logo key and a PRODUCT key as avatar/logo; upload and assign matching AVATAR/LOGO keys; confirm pending orders with no active payment account show the banner and its link, then add an account and verify confirmation stores a snapshot; verify a pre-feature confirmed/completed order shows the contact-seller message; replace avatar/logo and confirm both old and new images still load.
-- Do not begin B2 or admin work without separate approval. B1 is a Stage 6 follow-up; no stage numbers changed.
-- No Prisma schema, migration, dependency, or database data changes were made in Stage 6. Do not run migrations or seed against `preloved_dev` as part of this work.
+- Manual browser checklist (NOT RUN): verify `/profile` loads for a seller and a plain buyer; activate a store; add and soft-delete payment accounts and verify the three-active limit; add addresses and verify the default rule; change a password; upload an avatar; verify the seller dashboard banner without an account; confirm an order with and without an account; verify the buyer sees payment instructions only after confirmation; verify old confirmed orders show “Contact the seller for payment details”; sign in as a second user and verify they cannot open the first user's addresses or payment accounts. Also try assigning another user's uploaded key and a wrong-purpose key to avatar/logo; upload matching AVATAR/LOGO keys; replace avatar/logo and confirm prior files remain available.
+- B1 and B2 are Stage 6 follow-ups; no stage numbers changed. Keep public store DTOs allowlisted and notification messages free of contact/payment data.
+- B1, B2, and Admin migrations are applied to `preloved_dev`; do not reset, db push, or seed that database without separate approval.
+- Admin migration `20261013140000_admin_area` is applied to `preloved_dev`; latest status is up to date. Three isolated Admin verification databases remain because automated command review rejected their deletion: `preloved_admin_verify_20261013`, `preloved_admin_shadow_verify_20261013`, and `preloved_admin_preverify_20261013` (the latter has one synthetic user).
+- Admin browser checklist (NOT RUN; use an admin and a regular account): verify anonymous and USER access are denied on every admin page/API; ADMIN dashboard, filters and 12/48 pagination; emails masked until explicit audited reveal; address summaries remain masked; order lists disclose no contact/payment data; each service and route rejects non-admin calls; bootstrap promotes only a pre-existing account and reruns safely. Confirm no admin UI mutation controls are present.
+- B2 manual browser checklist (NOT RUN; use two accounts): open a public store without login and verify its safe fields/products and unknown-slug 404; turn vacation mode on and confirm the seller disappears from home/listing while its store/direct product remain visible, new orders are blocked, and existing orders can still be processed; exercise notification bell/count, every order notification, disabled/enabled preferences, mark-one/read-all, and verify disabled types create no notification while order status remains visible; save products to the private wishlist and confirm reserved/sold labels and disabled order actions; attempt to favorite one's own product; as the second account, try direct access to the first user's wishlist and notifications.

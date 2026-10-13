@@ -11,7 +11,12 @@ const prisma = vi.hoisted(() => ({
     findFirst: vi.fn(),
     deleteMany: vi.fn(),
   },
-  sellerProfile: { findUnique: vi.fn(), update: vi.fn(), create: vi.fn() },
+  sellerProfile: {
+    findUnique: vi.fn(),
+    update: vi.fn(),
+    updateMany: vi.fn(),
+    create: vi.fn(),
+  },
   paymentAccount: {
     findMany: vi.fn(),
     findFirst: vi.fn(),
@@ -25,8 +30,11 @@ const prisma = vi.hoisted(() => ({
   product: { groupBy: vi.fn() },
   $transaction: vi.fn(),
 }));
+const bcrypt = vi.hoisted(() => ({ compare: vi.fn(), hash: vi.fn() }));
 vi.mock("@/lib/db", () => ({ db: prisma }));
+vi.mock("bcryptjs", () => ({ default: bcrypt }));
 import {
+  changePassword,
   deactivatePaymentAccount,
   deleteAddress,
   getProfileHub,
@@ -34,6 +42,7 @@ import {
   saveAddress,
   savePaymentAccount,
   saveStore,
+  setStoreVacation,
 } from "@/server/services/profile-hub";
 import { updateProfile } from "@/server/services/profile";
 
@@ -68,12 +77,56 @@ beforeEach(() => {
     async ({ data }: { data: unknown }) => data,
   );
   prisma.sellerProfile.findUnique.mockResolvedValue(null);
+  prisma.sellerProfile.updateMany.mockResolvedValue({ count: 1 });
   prisma.paymentAccount.count.mockResolvedValue(0);
   prisma.uploadedFile.findFirst.mockResolvedValue(null);
   process.env.PAYMENT_ENCRYPTION_KEY = Buffer.alloc(32, 2).toString("base64");
 });
 
 describe("profile hub services", () => {
+  it("updates vacation mode only for the session user's store", async () => {
+    await expect(
+      setStoreVacation(owner, { isOnVacation: true }),
+    ).resolves.toEqual({ ok: true, data: { isOnVacation: true } });
+    expect(prisma.sellerProfile.updateMany).toHaveBeenCalledWith({
+      where: { userId: owner },
+      data: { isOnVacation: true },
+    });
+    expect(
+      await setStoreVacation(owner, { isOnVacation: true, userId: other }),
+    ).toMatchObject({ ok: false });
+  });
+  it("rejects an incorrect current password and stores a hash after a valid change", async () => {
+    prisma.user.findUnique.mockResolvedValue({ passwordHash: "old-hash" });
+    bcrypt.compare.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+    bcrypt.hash.mockResolvedValue("new-hash");
+
+    const invalid = await changePassword(owner, {
+      currentPassword: "wrong-password",
+      newPassword: "new-password-123",
+    });
+    expect(invalid).toMatchObject({ ok: false });
+    expect(prisma.user.update).not.toHaveBeenCalled();
+
+    const valid = await changePassword(owner, {
+      currentPassword: "correct-password",
+      newPassword: "new-password-123",
+    });
+    expect(valid).toEqual({ ok: true });
+    expect(bcrypt.compare).toHaveBeenNthCalledWith(
+      1,
+      "wrong-password",
+      "old-hash",
+    );
+    expect(bcrypt.hash).toHaveBeenCalledWith("new-password-123", 12);
+    expect(prisma.user.update).toHaveBeenCalledWith({
+      where: { id: owner },
+      data: { passwordHash: "new-hash" },
+    });
+    expect(JSON.stringify(valid)).not.toContain("passwordHash");
+    expect(JSON.stringify(valid)).not.toContain("new-hash");
+  });
+
   it("serializes default address changes and scopes them by owner and kind", async () => {
     const result = await saveAddress(owner, validAddress);
     expect(result.ok).toBe(true);

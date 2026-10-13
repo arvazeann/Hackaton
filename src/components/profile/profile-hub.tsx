@@ -2,9 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import type { AddressDTO, PaymentAccountDTO, StoreProfileDTO } from "@/types";
 import { ProfileForm } from "@/components/forms/profile-form";
+import { CollectionEmptyState } from "@/components/profile/collection-empty-state";
+import { NotificationPreferences } from "@/components/profile/notification-preferences";
 
 type Hub = {
   account: {
@@ -278,6 +281,13 @@ export function ProfileHub({ hub }: { hub: Hub }) {
             Maksimal 10 alamat pengiriman dan 1 alamat pickup.
           </p>
           <div className="mt-4 grid gap-3">
+            {hub.addresses.length === 0 && (
+              <CollectionEmptyState
+                message="Kamu belum menyimpan alamat pengiriman atau pickup."
+                href="#address-form"
+                actionLabel="Tambah alamat pertama"
+              />
+            )}
             {hub.addresses.map((item) => (
               <article key={item.id} className="rounded-xl border p-3">
                 <div className="flex flex-wrap justify-between gap-2">
@@ -323,6 +333,7 @@ export function ProfileHub({ hub }: { hub: Hub }) {
             ))}
           </div>
           <form
+            id="address-form"
             onSubmit={saveAddress}
             className="mt-5 grid gap-3 sm:grid-cols-2"
           >
@@ -431,8 +442,11 @@ export function ProfileHub({ hub }: { hub: Hub }) {
             />
             {hub.store && (
               <p className="text-xs text-stone-500">
-                URL toko: /store/{hub.store.slug} (halaman publik dibuat pada
-                B2). Slug tidak dapat diubah.
+                URL toko:{" "}
+                <Link className="underline" href={`/store/${hub.store.slug}`}>
+                  /store/{hub.store.slug}
+                </Link>
+                . Slug tidak dapat diubah.
               </p>
             )}
             <textarea
@@ -493,6 +507,37 @@ export function ProfileHub({ hub }: { hub: Hub }) {
             </button>
           </form>
         </section>
+        <NotificationPreferences />
+        {hub.store && (
+          <section className="rounded-2xl border bg-white p-5">
+            <h2 className="text-xl font-bold">Mode liburan toko</h2>
+            <p className="mt-1 text-sm text-stone-600">
+              Saat aktif, produk tidak tampil di beranda atau pencarian dan
+              pesanan baru dinonaktifkan. Pesanan yang sudah ada tetap dapat
+              diproses.
+            </p>
+            <button
+              type="button"
+              aria-pressed={hub.store.isOnVacation}
+              onClick={() =>
+                void perform(
+                  () =>
+                    send("/api/profile/store", "PATCH", {
+                      isOnVacation: !hub.store?.isOnVacation,
+                    }),
+                  hub.store?.isOnVacation
+                    ? "Mode liburan dinonaktifkan."
+                    : "Mode liburan diaktifkan.",
+                )
+              }
+              className={`mt-4 rounded-full px-4 py-2 text-sm font-semibold ${hub.store.isOnVacation ? "bg-amber-100 text-amber-900" : "bg-emerald-800 text-white"}`}
+            >
+              {hub.store.isOnVacation
+                ? "Nonaktifkan mode liburan"
+                : "Aktifkan mode liburan"}
+            </button>
+          </section>
+        )}
         {hub.store && (
           <section
             id="payments"
@@ -504,6 +549,13 @@ export function ProfileHub({ hub }: { hub: Hub }) {
               setelah order dikonfirmasi.
             </p>
             <div className="mt-4 grid gap-3">
+              {hub.paymentAccounts.length === 0 && (
+                <CollectionEmptyState
+                  message="Belum ada akun pembayaran untuk menerima pembayaran pesanan."
+                  href="#payment-form"
+                  actionLabel="Tambah akun pembayaran pertama"
+                />
+              )}
               {hub.paymentAccounts.map((item) => (
                 <article
                   key={item.id}
@@ -562,6 +614,7 @@ export function ProfileHub({ hub }: { hub: Hub }) {
               ))}
             </div>
             <form
+              id="payment-form"
               className="mt-5 grid gap-3 sm:grid-cols-2"
               onSubmit={(event) => {
                 event.preventDefault();

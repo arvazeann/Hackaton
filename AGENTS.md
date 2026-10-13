@@ -225,6 +225,7 @@ The user has final approval over design, UX, business rules, and stage progressi
    - Database schema: `prisma/schema.prisma`
 
    Adjust this list to match the real structure.
+
 5. **Implemented Features**: record only features that are actually implemented and verified.
 6. **Important Decisions**: keep approved decisions, including:
    - PostgreSQL is the database.

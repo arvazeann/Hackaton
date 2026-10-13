@@ -10,6 +10,7 @@ const isUuid = (value: string) =>
 const fail = <T = never>(
   code:
     | "UNAUTHENTICATED"
+    | "FORBIDDEN"
     | "VALIDATION_ERROR"
     | "NOT_FOUND"
     | "CONFLICT"
@@ -33,7 +34,9 @@ type FavoriteRecord = {
     status: ProductListItem["status"];
     createdAt: Date;
     category: ProductListItem["category"];
-    seller: ProductListItem["seller"];
+    seller: ProductListItem["seller"] & {
+      sellerProfile?: { slug: string; isOnVacation: boolean } | null;
+    };
     images: { url: string; position: number }[];
   };
 };
@@ -48,7 +51,12 @@ function mapFavorite({ product }: FavoriteRecord): ProductListItem {
     status: product.status,
     coverImageUrl: product.images[0]?.url ?? "/products/item-1.svg",
     category: product.category,
-    seller: product.seller,
+    seller: {
+      id: product.seller.id,
+      name: product.seller.name,
+      storeSlug: product.seller.sellerProfile?.slug ?? null,
+      isOnVacation: product.seller.sellerProfile?.isOnVacation ?? false,
+    },
     isFavorited: true,
     createdAt: product.createdAt.toISOString(),
   };
@@ -68,7 +76,13 @@ export async function getFavorites(userId: string): Promise<ProductListItem[]> {
       product: {
         include: {
           category: true,
-          seller: { select: { id: true, name: true } },
+          seller: {
+            select: {
+              id: true,
+              name: true,
+              sellerProfile: { select: { slug: true, isOnVacation: true } },
+            },
+          },
           images: { orderBy: { position: "asc" } },
         },
       },
@@ -108,10 +122,12 @@ export async function setFavorite(
     if (isFavorited) {
       const product = await db.product.findUnique({
         where: { id: parsed.data.productId },
-        select: { id: true, status: true },
+        select: { id: true, status: true, sellerId: true },
       });
       if (!product || product.status === "archived")
         return fail("NOT_FOUND", "Produk tidak ditemukan.");
+      if (product.sellerId === userId)
+        return fail("FORBIDDEN", "Kamu tidak bisa menyimpan produk sendiri.");
       await db.favorite.upsert({
         where: {
           userId_productId: { userId, productId: product.id },

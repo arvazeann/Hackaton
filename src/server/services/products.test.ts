@@ -13,6 +13,7 @@ const prisma = vi.hoisted(() => ({
   favorite: { findMany: vi.fn(), findUnique: vi.fn() },
   category: { findMany: vi.fn() },
   sellerProfile: { findUnique: vi.fn() },
+  order: { count: vi.fn() },
   $transaction: vi.fn(),
 }));
 
@@ -32,6 +33,7 @@ import {
   listProducts,
   updateProduct,
 } from "@/server/services/products";
+import { publicStoreDtoSchema } from "@/schemas";
 
 const record = {
   id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
@@ -96,9 +98,110 @@ beforeEach(() => {
   });
   prisma.productImage.findMany.mockResolvedValue([]);
   prisma.sellerProfile.findUnique.mockResolvedValue({ province: "Jawa Barat" });
+  prisma.order.count.mockResolvedValue(4);
 });
 
 describe("product Prisma service", () => {
+  it("filters vacationing sellers from public product listings", async () => {
+    prisma.product.findMany.mockResolvedValue([]);
+    prisma.product.count.mockResolvedValue(0);
+    await listProducts();
+    expect(prisma.product.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          seller: { sellerProfile: { isNot: { isOnVacation: true } } },
+        }),
+      }),
+    );
+  });
+
+  it("keeps direct product details visible during seller vacation", async () => {
+    prisma.product.findUnique.mockResolvedValue({
+      ...record,
+      seller: {
+        ...record.seller,
+        sellerProfile: { slug: "nadia-putri", isOnVacation: true },
+      },
+    });
+    const detail = await getProduct(record.id);
+    expect(detail?.seller).toMatchObject({
+      storeSlug: "nadia-putri",
+      isOnVacation: true,
+    });
+  });
+
+  it("builds public store DTOs from an explicit safe allowlist", async () => {
+    prisma.sellerProfile.findUnique.mockResolvedValue({
+      userId: record.sellerId,
+      storeName: "Toko Nadia",
+      slug: "toko-nadia",
+      description: "Barang terpilih",
+      logoKey: null,
+      city: "Bandung",
+      province: "Jawa Barat",
+      isOnVacation: false,
+      user: { createdAt: new Date("2022-01-01T00:00:00.000Z") },
+      phone: "private-phone-must-not-escape",
+      email: "private@example.test",
+      paymentAccounts: [{ accountNumberCiphertext: "private-payment" }],
+      pickupAddress: "private-pickup-address",
+    });
+    prisma.product.findMany.mockResolvedValue([
+      {
+        id: record.id,
+        title: record.title,
+        price: record.price,
+        condition: record.condition,
+        city: record.city,
+        status: "active",
+        createdAt: record.createdAt,
+        category: record.category,
+        seller: {
+          id: record.sellerId,
+          name: "Nadia",
+          sellerProfile: { slug: "toko-nadia" },
+        },
+        images: [],
+        phone: "private-product-phone",
+      },
+    ]);
+    prisma.product.count.mockResolvedValue(1);
+    prisma.favorite.findMany.mockResolvedValue([]);
+
+    const result = await (
+      await import("@/server/services/products")
+    ).getPublicStore("toko-nadia");
+    expect(result).toMatchObject({
+      storeName: "Toko Nadia",
+      slug: "toko-nadia",
+      completedSales: 4,
+      products: [{ id: record.id, seller: { storeSlug: "toko-nadia" } }],
+    });
+    const serialized = JSON.stringify(result);
+    expect(serialized).not.toMatch(
+      /phone|email|payment|accountNumber|pickupAddress|private-/i,
+    );
+    expect(prisma.product.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        select: expect.not.objectContaining({
+          phone: true,
+          email: true,
+          paymentAccounts: true,
+        }),
+      }),
+    );
+    expect(() =>
+      publicStoreDtoSchema.parse({ ...result, email: "private@example.test" }),
+    ).toThrow();
+  });
+
+  it("returns no public store for an unknown slug", async () => {
+    prisma.sellerProfile.findUnique.mockResolvedValue(null);
+    const { getPublicStore } = await import("@/server/services/products");
+    await expect(getPublicStore("missing-store")).resolves.toBeNull();
+    expect(prisma.product.findMany).not.toHaveBeenCalled();
+  });
+
   it("creates validated product data for the session owner", async () => {
     prisma.product.create.mockResolvedValue(record);
     const result = await createProduct(input, record.sellerId);
@@ -282,6 +385,8 @@ describe("product Prisma service", () => {
       id: record.seller.id,
       name: record.seller.name,
       city: record.seller.city,
+      storeSlug: null,
+      isOnVacation: false,
     });
     expect(JSON.stringify(detail)).not.toContain("081234567890");
     expect(JSON.stringify(detail)).not.toContain("must-not-leak");

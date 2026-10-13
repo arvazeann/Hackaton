@@ -12,6 +12,8 @@ import {
   STORED_IMAGE_FILENAME_PATTERN,
 } from "@/lib/product-images";
 import { localImageStorage } from "@/server/storage/local-image-storage";
+import { publicStoreDtoSchema } from "@/schemas";
+import type { PublicStoreDTO } from "@/types";
 
 type ProductInput = z.infer<typeof productSchema>;
 type ProductQuery = z.infer<typeof productQuerySchema>;
@@ -19,7 +21,12 @@ type ProductRecord = NonNullable<
   Awaited<ReturnType<typeof db.product.findUnique>>
 > & {
   category: { id: string; name: string; slug: string };
-  seller: { id: string; name: string; city: string | null };
+  seller: {
+    id: string;
+    name: string;
+    city: string | null;
+    sellerProfile?: { slug: string; isOnVacation: boolean } | null;
+  };
   images: { id: string; storageKey: string; url: string; position: number }[];
 };
 
@@ -58,7 +65,11 @@ function mapListItem(
       ? productImageUrl(product.images[0].storageKey, product.images[0].url)
       : "/products/item-1.svg",
     category: mapCategory(product.category),
-    seller: { id: product.seller.id, name: product.seller.name },
+    seller: {
+      id: product.seller.id,
+      name: product.seller.name,
+      storeSlug: product.seller.sellerProfile?.slug ?? null,
+    },
     isFavorited,
     createdAt: product.createdAt.toISOString(),
   };
@@ -83,6 +94,8 @@ function mapDetail(product: ProductRecord, isFavorited = false): ProductDetail {
       id: product.seller.id,
       name: product.seller.name,
       city: product.seller.city ?? product.city,
+      storeSlug: product.seller.sellerProfile?.slug ?? null,
+      isOnVacation: product.seller.sellerProfile?.isOnVacation ?? false,
     },
     updatedAt: product.updatedAt.toISOString(),
   };
@@ -90,7 +103,14 @@ function mapDetail(product: ProductRecord, isFavorited = false): ProductDetail {
 
 const productInclude = {
   category: true,
-  seller: { select: { id: true, name: true, city: true } },
+  seller: {
+    select: {
+      id: true,
+      name: true,
+      city: true,
+      sellerProfile: { select: { slug: true, isOnVacation: true } },
+    },
+  },
   images: { orderBy: { position: "asc" as const } },
 };
 
@@ -168,6 +188,7 @@ export async function listProducts(
   const query: ProductQuery = productQuerySchema.parse(input);
   const where = {
     status: "active" as const,
+    seller: { sellerProfile: { isNot: { isOnVacation: true } } },
     ...(query.q
       ? {
           OR: [
@@ -226,6 +247,107 @@ export async function listProducts(
     pageSize: query.pageSize,
     totalPages: Math.ceil(total / query.pageSize),
   };
+}
+
+export async function getPublicStore(
+  slug: string,
+  input: unknown = {},
+  viewerId?: string,
+): Promise<PublicStoreDTO | null> {
+  const query = productQuerySchema.parse(input);
+  const store = await db.sellerProfile.findUnique({
+    where: { slug },
+    select: {
+      userId: true,
+      storeName: true,
+      slug: true,
+      description: true,
+      logoKey: true,
+      city: true,
+      province: true,
+      isOnVacation: true,
+      user: { select: { createdAt: true } },
+    },
+  });
+  if (!store) return null;
+  const productWhere = { sellerId: store.userId, status: "active" as const };
+  const [records, total, completedSales, favoriteIds] = await Promise.all([
+    db.product.findMany({
+      where: productWhere,
+      select: {
+        id: true,
+        title: true,
+        price: true,
+        condition: true,
+        city: true,
+        status: true,
+        createdAt: true,
+        category: { select: { id: true, name: true, slug: true } },
+        seller: {
+          select: {
+            id: true,
+            name: true,
+            sellerProfile: { select: { slug: true } },
+          },
+        },
+        images: {
+          select: { storageKey: true, url: true, position: true },
+          orderBy: { position: "asc" },
+          take: 1,
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      skip: (query.page - 1) * query.pageSize,
+      take: query.pageSize,
+    }),
+    db.product.count({ where: productWhere }),
+    db.order.count({ where: { sellerId: store.userId, status: "completed" } }),
+    viewerId
+      ? db.favorite.findMany({
+          where: {
+            userId: viewerId,
+            product: { sellerId: store.userId, status: "active" },
+          },
+          select: { productId: true },
+        })
+      : Promise.resolve([]),
+  ]);
+  const favoritedIds = new Set(favoriteIds.map((item) => item.productId));
+  const dto = {
+    storeName: store.storeName,
+    slug: store.slug,
+    description: store.description,
+    logoUrl: store.logoKey ? `/uploads/${store.logoKey}` : null,
+    city: store.city,
+    province: store.province,
+    joinedAt: store.user.createdAt.toISOString(),
+    completedSales,
+    isOnVacation: store.isOnVacation,
+    products: records.map((product) => ({
+      id: product.id,
+      title: product.title,
+      price: product.price,
+      condition: product.condition,
+      city: product.city,
+      status: product.status,
+      coverImageUrl: product.images[0]
+        ? productImageUrl(product.images[0].storageKey, product.images[0].url)
+        : "/products/item-1.svg",
+      category: product.category,
+      seller: {
+        id: product.seller.id,
+        name: product.seller.name,
+        storeSlug: product.seller.sellerProfile?.slug ?? null,
+      },
+      isFavorited: favoritedIds.has(product.id),
+      createdAt: product.createdAt.toISOString(),
+    })),
+    page: query.page,
+    pageSize: query.pageSize,
+    total,
+    totalPages: Math.ceil(total / query.pageSize),
+  };
+  return publicStoreDtoSchema.parse(dto);
 }
 
 export async function getProduct(

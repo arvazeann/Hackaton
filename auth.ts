@@ -30,18 +30,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         try {
           const user = await db.user.findUnique({
             where: { id: token.sub },
-            select: { id: true, name: true, email: true },
+            select: { id: true, name: true, email: true, role: true },
           });
           if (user) {
             session.user.id = user.id;
             session.user.name = user.name;
             session.user.email = user.email;
             session.user.image = null;
+            session.user.role = user.role;
+          } else {
+            session.user.id = "";
+            session.user.name = "";
+            session.user.email = "";
+            session.user.role = null;
+            session.user.image = null;
           }
         } catch (error) {
           logAuthFailure("Session user lookup", error);
+          session.user.id = "";
           session.user.name = "";
           session.user.email = "";
+          session.user.role = null;
           session.user.image = null;
         }
       }

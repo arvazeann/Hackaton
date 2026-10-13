@@ -57,25 +57,51 @@ enum UploadedFilePurpose {
   @@map("uploaded_file_purpose")
 }
 
-model User {
-  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name          String         @db.VarChar(100)
-  email         String         @unique(map: "users_email_key") @db.VarChar(255)
-  passwordHash  String         @map("password_hash") @db.Text
-  phone         String?        @db.VarChar(20)
-  city          String?        @db.VarChar(100)
-  avatarKey     String?        @map("avatar_key") @db.Text
-  bio           String?        @db.VarChar(300)
-  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  products      Product[]
-  favorites     Favorite[]
-  purchases     Order[]        @relation("OrderBuyer")
-  sales         Order[]        @relation("OrderSeller")
-  addresses     Address[]
-  sellerProfile SellerProfile?
-  uploadedFiles UploadedFile[]
+enum NotificationType {
+  ORDER_PLACED
+  ORDER_CONFIRMED
+  ORDER_REJECTED
+  ORDER_CANCELLED
+  ORDER_COMPLETED
 
+  @@map("notification_type")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+
+  @@map("user_role")
+}
+
+model User {
+  id                      String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                    String                   @db.VarChar(100)
+  email                   String                   @unique(map: "users_email_key") @db.VarChar(255)
+  passwordHash            String                   @map("password_hash") @db.Text
+  phone                   String?                  @db.VarChar(20)
+  city                    String?                  @db.VarChar(100)
+  avatarKey               String?                  @map("avatar_key") @db.Text
+  bio                     String?                  @db.VarChar(300)
+  role                    UserRole                 @default(USER)
+  lastLoginAt             DateTime?                @map("last_login_at") @db.Timestamptz(6)
+  lastActiveAt            DateTime?                @map("last_active_at") @db.Timestamptz(6)
+  createdAt               DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  products                Product[]
+  favorites               Favorite[]
+  purchases               Order[]                  @relation("OrderBuyer")
+  sales                   Order[]                  @relation("OrderSeller")
+  addresses               Address[]
+  sellerProfile           SellerProfile?
+  uploadedFiles           UploadedFile[]
+  notifications           Notification[]
+  notificationPreferences NotificationPreference[]
+  adminAuditLogs          AuditLog[]
+
+  @@index([createdAt(sort: Desc)], map: "users_created_at_idx")
+  @@index([lastActiveAt], map: "users_last_active_at_idx")
+  @@index([role, createdAt(sort: Desc)], map: "users_role_created_at_idx")
   @@map("users")
 }
 
@@ -140,28 +166,29 @@ model Favorite {
 }
 
 model Order {
-  id                           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  orderCode                    String      @unique(map: "orders_order_code_key") @map("order_code") @db.VarChar(24)
-  buyerId                      String      @map("buyer_id") @db.Uuid
-  sellerId                     String      @map("seller_id") @db.Uuid
-  productId                    String      @map("product_id") @db.Uuid
-  priceAtOrder                 Int         @map("price_at_order")
-  productTitleSnapshot         String      @map("product_title_snapshot") @db.VarChar(150)
-  status                       OrderStatus @default(pending)
-  shippingName                 String      @map("shipping_name") @db.VarChar(100)
-  shippingPhone                String      @map("shipping_phone") @db.VarChar(20)
-  shippingAddress              String      @map("shipping_address") @db.Text
-  note                         String?     @db.Text
-  cancelReason                 String?     @map("cancel_reason") @db.Text
-  paymentInstructionCiphertext String?     @map("payment_instruction_ciphertext") @db.Text
-  paymentAccountNumberLast4    String?     @map("payment_account_number_last4") @db.VarChar(4)
-  createdAt                    DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt                    DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  buyer                        User        @relation("OrderBuyer", fields: [buyerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  seller                       User        @relation("OrderSeller", fields: [sellerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  product                      Product     @relation(fields: [productId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  id                           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderCode                    String         @unique(map: "orders_order_code_key") @map("order_code") @db.VarChar(24)
+  buyerId                      String         @map("buyer_id") @db.Uuid
+  sellerId                     String         @map("seller_id") @db.Uuid
+  productId                    String         @map("product_id") @db.Uuid
+  priceAtOrder                 Int            @map("price_at_order")
+  productTitleSnapshot         String         @map("product_title_snapshot") @db.VarChar(150)
+  status                       OrderStatus    @default(pending)
+  shippingName                 String         @map("shipping_name") @db.VarChar(100)
+  shippingPhone                String         @map("shipping_phone") @db.VarChar(20)
+  shippingAddress              String         @map("shipping_address") @db.Text
+  note                         String?        @db.Text
+  cancelReason                 String?        @map("cancel_reason") @db.Text
+  paymentInstructionCiphertext String?        @map("payment_instruction_ciphertext") @db.Text
+  paymentAccountNumberLast4    String?        @map("payment_account_number_last4") @db.VarChar(4)
+  createdAt                    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                    DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  buyer                        User           @relation("OrderBuyer", fields: [buyerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  seller                       User           @relation("OrderSeller", fields: [sellerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  product                      Product        @relation(fields: [productId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  notifications                Notification[]
 
-  @@unique([productId], where: raw("status IN ('pending', 'confirmed')"), map: "orders_one_active_per_product")
+  @@unique([productId], where: raw("status = ANY (ARRAY['pending'::order_status, 'confirmed'::order_status])"), map: "orders_one_active_per_product")
   @@index([buyerId, createdAt(sort: Desc)], map: "orders_buyer_created_at_idx")
   @@index([sellerId, createdAt(sort: Desc)], map: "orders_seller_created_at_idx")
   @@map("orders")
@@ -196,11 +223,38 @@ model SellerProfile {
   logoKey         String?          @map("logo_key") @db.Text
   city            String           @db.VarChar(100)
   province        String?          @db.VarChar(100)
+  isOnVacation    Boolean          @default(false) @map("is_on_vacation")
   createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   paymentAccounts PaymentAccount[]
 
   @@map("seller_profiles")
+}
+
+model Notification {
+  id        String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String           @map("user_id") @db.Uuid
+  type      NotificationType
+  orderId   String?          @map("order_id") @db.Uuid
+  title     String           @db.VarChar(120)
+  body      String           @db.VarChar(300)
+  readAt    DateTime?        @map("read_at") @db.Timestamptz(6)
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  order     Order?           @relation(fields: [orderId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([userId, readAt, createdAt(sort: Desc)], map: "notifications_user_read_created_idx")
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  userId  String           @map("user_id") @db.Uuid
+  type    NotificationType
+  enabled Boolean          @default(true)
+  user    User             @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([userId, type])
+  @@map("notification_preferences")
 }
 
 model PaymentAccount {
@@ -229,4 +283,19 @@ model UploadedFile {
 
   @@index([ownerId, purpose], map: "uploaded_files_owner_purpose_idx")
   @@map("uploaded_files")
+}
+
+model AuditLog {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actorId    String?  @map("actor_id") @db.Uuid
+  action     String   @db.VarChar(80)
+  targetType String   @map("target_type") @db.VarChar(80)
+  targetId   String   @map("target_id") @db.VarChar(255)
+  requestId  String?  @map("request_id") @db.VarChar(64)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([actorId, createdAt(sort: Desc)], map: "audit_logs_actor_created_at_idx")
+  @@index([targetType, targetId, createdAt(sort: Desc)], map: "audit_logs_target_created_at_idx")
+  @@map("audit_logs")
 }

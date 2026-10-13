@@ -66,6 +66,93 @@ export const createOrderSchema = orderSchema
 export const favoriteSchema = z
   .object({ productId: z.uuid("Produk tidak valid.") })
   .strict();
+export const notificationTypeSchema = z.enum([
+  "ORDER_PLACED",
+  "ORDER_CONFIRMED",
+  "ORDER_REJECTED",
+  "ORDER_CANCELLED",
+  "ORDER_COMPLETED",
+]);
+export const notificationDtoSchema = z
+  .object({
+    id: z.uuid(),
+    type: notificationTypeSchema,
+    orderId: z.uuid().nullable(),
+    title: z.string(),
+    body: z.string(),
+    readAt: z.iso.datetime().nullable(),
+    createdAt: z.iso.datetime(),
+  })
+  .strict();
+export const notificationPreferenceSchema = z
+  .object({
+    preferences: z
+      .array(
+        z
+          .object({
+            type: notificationTypeSchema,
+            enabled: z.boolean(),
+          })
+          .strict(),
+      )
+      .length(5),
+  })
+  .strict();
+export const notificationQuerySchema = z
+  .object({
+    page: z.coerce.number().int().min(1).default(1),
+    pageSize: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .transform((value) => Math.min(value, 48))
+      .default(12),
+  })
+  .strict();
+export const publicStoreProductSchema = z
+  .object({
+    id: z.uuid(),
+    title: z.string(),
+    price: z.number().int(),
+    condition: z.enum(["like_new", "good", "fair"]),
+    city: z.string(),
+    status: z.enum(["active", "reserved", "sold", "archived"]),
+    coverImageUrl: z.string(),
+    category: z
+      .object({ id: z.string(), name: z.string(), slug: z.string() })
+      .strict(),
+    seller: z
+      .object({
+        id: z.uuid(),
+        name: z.string(),
+        storeSlug: z.string().nullable(),
+      })
+      .strict(),
+    isFavorited: z.boolean(),
+    createdAt: z.iso.datetime(),
+  })
+  .strict();
+export const publicStoreDtoSchema = z
+  .object({
+    storeName: z.string(),
+    slug: z.string(),
+    description: z.string(),
+    logoUrl: z.string().nullable(),
+    city: z.string(),
+    province: z.string().nullable(),
+    joinedAt: z.iso.datetime(),
+    completedSales: z.number().int().nonnegative(),
+    isOnVacation: z.boolean(),
+    products: z.array(publicStoreProductSchema),
+    page: z.number().int().positive(),
+    pageSize: z.number().int().positive().max(48),
+    total: z.number().int().nonnegative(),
+    totalPages: z.number().int().nonnegative(),
+  })
+  .strict();
+export const storeVacationSchema = z
+  .object({ isOnVacation: z.boolean() })
+  .strict();
 export const orderStatusSchema = z
   .object({
     orderId: z.uuid("Pesanan tidak valid."),
@@ -181,3 +268,42 @@ export const cancelReasonSchema = z
       .max(500, "Alasan pembatalan maksimal 500 karakter."),
   })
   .strict();
+
+const adminPaginationSchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(48).default(12),
+});
+const adminSearchSchema = z.string().trim().max(120).optional();
+export const adminUserQuerySchema = adminPaginationSchema
+  .extend({
+    q: adminSearchSchema,
+    role: z.enum(["USER", "ADMIN"]).optional(),
+    dateFrom: z.iso.date().optional(),
+    dateTo: z.iso.date().optional(),
+  })
+  .strict();
+export const adminProductQuerySchema = adminPaginationSchema
+  .extend({
+    q: adminSearchSchema,
+    status: z.enum(["active", "reserved", "sold", "archived"]).optional(),
+    category: z.string().trim().max(80).optional(),
+  })
+  .strict();
+export const adminOrderQuerySchema = adminPaginationSchema
+  .extend({
+    q: z.string().trim().max(24).optional(),
+    status: z
+      .enum(["pending", "confirmed", "completed", "cancelled", "rejected"])
+      .optional(),
+    identityId: z.uuid().optional(),
+  })
+  .strict();
+export const adminAddressQuerySchema = adminPaginationSchema
+  .extend({
+    q: adminSearchSchema,
+    kind: z.enum(["SHIPPING", "PICKUP"]).optional(),
+    city: z.string().trim().max(100).optional(),
+    province: z.string().trim().max(100).optional(),
+  })
+  .strict();
+export const adminRevealEmailSchema = z.object({ userId: z.uuid() }).strict();

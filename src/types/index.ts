@@ -28,6 +28,7 @@ export type User = {
   name: string;
   email: string;
   city: string;
+  platformRole?: "USER" | "ADMIN";
   phone?: string | null;
   bio?: string | null;
   avatarKey?: string | null;
@@ -52,6 +53,42 @@ export type StoreProfileDTO = {
   city: string;
   province: string | null;
   needsCompletion: boolean;
+  isOnVacation: boolean;
+};
+export type NotificationType =
+  | "ORDER_PLACED"
+  | "ORDER_CONFIRMED"
+  | "ORDER_REJECTED"
+  | "ORDER_CANCELLED"
+  | "ORDER_COMPLETED";
+export type NotificationDTO = {
+  id: string;
+  type: NotificationType;
+  orderId: string | null;
+  title: string;
+  body: string;
+  readAt: string | null;
+  createdAt: string;
+};
+export type NotificationPreferenceDTO = {
+  type: NotificationType;
+  enabled: boolean;
+};
+export type PublicStoreDTO = {
+  storeName: string;
+  slug: string;
+  description: string;
+  logoUrl: string | null;
+  city: string;
+  province: string | null;
+  joinedAt: string;
+  completedSales: number;
+  isOnVacation: boolean;
+  products: ProductListItem[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
 };
 export type PaymentAccountDTO = {
   id: string;
@@ -76,7 +113,12 @@ export type ProductListItem = {
   status: ProductStatus;
   coverImageUrl: string;
   category: Category;
-  seller: { id: string; name: string };
+  seller: {
+    id: string;
+    name: string;
+    storeSlug?: string | null;
+    isOnVacation?: boolean;
+  };
   isFavorited: boolean;
   createdAt: string;
 };
@@ -88,7 +130,13 @@ export type ProductDetail = ProductListItem & {
     position: number;
     storageKey?: string;
   }[];
-  seller: { id: string; name: string; city: string };
+  seller: {
+    id: string;
+    name: string;
+    city: string;
+    storeSlug: string | null;
+    isOnVacation: boolean;
+  };
   updatedAt: string;
 };
 export type OrderDTO = {

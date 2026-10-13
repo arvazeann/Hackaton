@@ -1,13 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import bcrypt from "bcryptjs";
 
-const { findUnique } = vi.hoisted(() => ({ findUnique: vi.fn() }));
-vi.mock("@/lib/db", () => ({ db: { user: { findUnique } } }));
+const { findUnique, update } = vi.hoisted(() => ({
+  findUnique: vi.fn(),
+  update: vi.fn(),
+}));
+vi.mock("@/lib/db", () => ({ db: { user: { findUnique, update } } }));
 
 import { authorizeCredentials } from "@/lib/auth/credentials";
 
 describe("Auth.js Credentials", () => {
-  beforeEach(() => findUnique.mockReset());
+  beforeEach(() => {
+    findUnique.mockReset();
+    update.mockReset().mockResolvedValue({ id: "user-1" });
+  });
 
   it("melakukan normalisasi email, memverifikasi password, dan hanya mengembalikan DTO aman", async () => {
     const passwordHash = await bcrypt.hash("password-valid", 4);
@@ -33,7 +39,14 @@ describe("Auth.js Credentials", () => {
     });
     expect(findUnique).toHaveBeenCalledWith({
       where: { email: "ayu@example.test" },
+      select: { id: true, name: true, email: true, passwordHash: true },
     });
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "user-1" },
+        data: { lastLoginAt: expect.any(Date) },
+      }),
+    );
   });
 
   it("menolak password salah, pengguna tidak dikenal, dan input invalid", async () => {
@@ -49,6 +62,7 @@ describe("Auth.js Credentials", () => {
         password: "wrong-pass",
       }),
     ).resolves.toBeNull();
+    expect(update).not.toHaveBeenCalled();
     findUnique.mockResolvedValue(null);
     await expect(
       authorizeCredentials({

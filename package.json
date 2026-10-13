@@ -16,7 +16,8 @@
     "db:migrate": "prisma migrate deploy",
     "db:status": "prisma migrate status",
     "db:seed": "prisma db seed",
-    "db:verify": "tsx prisma/verify-constraints.ts"
+    "db:verify": "tsx prisma/verify-constraints.ts",
+    "admin:bootstrap": "tsx scripts/bootstrap-admin.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

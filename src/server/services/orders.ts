@@ -10,6 +10,7 @@ import {
   decryptPaymentData,
   encryptPaymentData,
 } from "@/server/security/payment-encryption";
+import { createOrderNotification } from "@/server/services/notifications";
 
 type OrderRecord = Prisma.OrderGetPayload<Prisma.OrderDefaultArgs>;
 type OrderAction = "confirm" | "reject" | "cancel" | "complete";
@@ -105,6 +106,15 @@ export async function createOrder(
         );
       if (product.status !== "active")
         return fail("PRODUCT_NOT_AVAILABLE", "Produk sudah tidak tersedia.");
+      const sellerStore = await tx.sellerProfile.findUnique({
+        where: { userId: product.sellerId },
+        select: { isOnVacation: true },
+      });
+      if (sellerStore?.isOnVacation)
+        return fail(
+          "PRODUCT_NOT_AVAILABLE",
+          "Toko sedang libur dan belum menerima pesanan baru.",
+        );
 
       const openOrder = await tx.order.findFirst({
         where: {
@@ -131,6 +141,12 @@ export async function createOrder(
           note: parsed.data.note?.trim() || null,
         },
       });
+      await createOrderNotification(
+        tx,
+        record.sellerId,
+        record.id,
+        "ORDER_PLACED",
+      );
       return ok(mapOrder(record, "buyer"));
     });
   } catch (error) {
@@ -321,6 +337,18 @@ export async function updateOrderStatus(
         where: { id: order.id },
       });
       if (!updatedOrder) throw new ConcurrentOrderChange();
+      const notificationType = {
+        confirm: "ORDER_CONFIRMED",
+        reject: "ORDER_REJECTED",
+        cancel: "ORDER_CANCELLED",
+        complete: "ORDER_COMPLETED",
+      } as const;
+      await createOrderNotification(
+        tx,
+        role === "buyer" ? order.sellerId : order.buyerId,
+        order.id,
+        notificationType[parsed.data.action],
+      );
       return ok(mapOrder(updatedOrder, role));
     });
   } catch (error) {

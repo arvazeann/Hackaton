@@ -52,20 +52,40 @@ export default async function Detail({
             <p className="text-sm text-stone-500">Dijual oleh</p>
             <p className="mt-1 font-semibold">{p.seller.name}</p>
             <p className="text-sm text-stone-500">{p.seller.city}</p>
+            {p.seller.storeSlug && (
+              <Link
+                href={`/store/${p.seller.storeSlug}`}
+                className="mt-2 inline-flex text-sm font-semibold text-emerald-800 underline"
+              >
+                Kunjungi toko
+              </Link>
+            )}
+            {p.seller.isOnVacation && (
+              <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+                Toko sedang libur dan belum menerima pesanan baru.
+              </p>
+            )}
           </div>
           <div className="mt-6 flex gap-3">
             <Link
               href={`/products/${p.id}/order`}
-              aria-disabled={p.status !== "active" || isOwner}
-              className={`flex-1 rounded-full py-3 text-center font-bold text-white ${p.status === "active" && !isOwner ? "bg-emerald-800" : "pointer-events-none bg-stone-400"}`}
+              aria-disabled={
+                p.status !== "active" || isOwner || p.seller.isOnVacation
+              }
+              className={`flex-1 rounded-full py-3 text-center font-bold text-white ${p.status === "active" && !isOwner && !p.seller.isOnVacation ? "bg-emerald-800" : "pointer-events-none bg-stone-400"}`}
+              tabIndex={p.seller.isOnVacation ? -1 : 0}
             >
-              {p.status === "active" ? "Pesan barang" : "Tidak tersedia"}
+              {p.status === "active" && !p.seller.isOnVacation
+                ? "Pesan barang"
+                : p.seller.isOnVacation
+                  ? "Toko sedang libur"
+                  : "Tidak tersedia"}
             </Link>
             <div className="grid place-items-center rounded-full border px-5">
               <FavoriteButton
                 productId={p.id}
                 initial={p.isFavorited}
-                disabled={!user}
+                loginRequired={!user}
               />
             </div>
           </div>

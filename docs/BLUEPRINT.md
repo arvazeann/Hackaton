@@ -107,17 +107,17 @@ The visibility rows in §8 and rules explicitly tagged **[APPROVED]** are final.
 
 **User**
 
-| Field                    | Type                  | Notes                                                                   |
-| ------------------------ | --------------------- | ----------------------------------------------------------------------- |
-| `id`                     | string (cuid or uuid) | **[PROPOSED]**                                                          |
-| `name`                   | string                |                                                                         |
-| `email`                  | string, unique        | Login identifier. **[PROPOSED]**                                        |
-| `phone`                  | string, nullable      | Never exposed in public product DTOs.                                   |
-| `city`                   | string, nullable      | Editable in the account owner's profile.                                |
+| Field                    | Type                  | Notes                                                                                                                   |
+| ------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `id`                     | string (cuid or uuid) | **[PROPOSED]**                                                                                                          |
+| `name`                   | string                |                                                                                                                         |
+| `email`                  | string, unique        | Login identifier. **[PROPOSED]**                                                                                        |
+| `phone`                  | string, nullable      | Never exposed in public product DTOs.                                                                                   |
+| `city`                   | string, nullable      | Editable in the account owner's profile.                                                                                |
 | `avatarKey`              | string, nullable      | Account-owned uploaded image key; replaced files are not automatically deleted. **[APPROVED for Stage 6 follow-up B1]** |
-| `bio`                    | string, nullable      | Maximum 300 characters. **[APPROVED for Stage 6 follow-up B1]**        |
-| `passwordHash`           | string                | **[APPROVED]** Never exposed to the client or in any client-facing DTO. |
-| `createdAt`, `updatedAt` | datetime              |                                                                         |
+| `bio`                    | string, nullable      | Maximum 300 characters. **[APPROVED for Stage 6 follow-up B1]**                                                         |
+| `passwordHash`           | string                | **[APPROVED]** Never exposed to the client or in any client-facing DTO.                                                 |
+| `createdAt`, `updatedAt` | datetime              |                                                                                                                         |
 
 **Product**
 
@@ -136,19 +136,19 @@ The visibility rows in §8 and rules explicitly tagged **[APPROVED]** are final.
 
 **Order**
 
-| Field                    | Type             | Notes                                                                                                                |
-| ------------------------ | ---------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `id`                     | string           |                                                                                                                      |
-| `productId`              | string           | FK to Product                                                                                                        |
-| `buyerId`                | string           | FK to User                                                                                                           |
-| `sellerId`               | string           | FK to User (denormalized from product for access checks). **[APPROVED]** Set from the product owner in the database. |
-| `status`                 | enum             | **[APPROVED]** `pending`, `confirmed`, `completed`, `cancelled`, `rejected`                                          |
-| `shippingName`           | string           |                                                                                                                      |
-| `shippingPhone`          | string           | Stored in full; nullable in DTO per §8.                                                                              |
-| `shippingAddress`        | string           | Stored in full; nullable in DTO per §8.                                                                              |
-| `cancelReason`           | string, nullable | Database column `cancel_reason`. **[APPROVED]** required when status is `cancelled`. 5–500 characters.               |
-| `paymentInstructionCiphertext`, `paymentAccountNumberLast4` | string, nullable | Encrypted confirmation-time payment snapshot; legacy orders remain null. **[APPROVED for Stage 6 follow-up B1]** |
-| `createdAt`, `updatedAt` | datetime         |                                                                                                                      |
+| Field                                                       | Type             | Notes                                                                                                                |
+| ----------------------------------------------------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `id`                                                        | string           |                                                                                                                      |
+| `productId`                                                 | string           | FK to Product                                                                                                        |
+| `buyerId`                                                   | string           | FK to User                                                                                                           |
+| `sellerId`                                                  | string           | FK to User (denormalized from product for access checks). **[APPROVED]** Set from the product owner in the database. |
+| `status`                                                    | enum             | **[APPROVED]** `pending`, `confirmed`, `completed`, `cancelled`, `rejected`                                          |
+| `shippingName`                                              | string           |                                                                                                                      |
+| `shippingPhone`                                             | string           | Stored in full; nullable in DTO per §8.                                                                              |
+| `shippingAddress`                                           | string           | Stored in full; nullable in DTO per §8.                                                                              |
+| `cancelReason`                                              | string, nullable | Database column `cancel_reason`. **[APPROVED]** required when status is `cancelled`. 5–500 characters.               |
+| `paymentInstructionCiphertext`, `paymentAccountNumberLast4` | string, nullable | Encrypted confirmation-time payment snapshot; legacy orders remain null. **[APPROVED for Stage 6 follow-up B1]**     |
+| `createdAt`, `updatedAt`                                    | datetime         |                                                                                                                      |
 
 **Favorite**
 
@@ -308,7 +308,11 @@ type OrderDTO = {
   cancelReason: string | null; // nullable [APPROVED]
   createdAt: string;
   updatedAt: string;
-  paymentInstruction: { providerName: string; accountHolderName: string; accountNumber: string } | null;
+  paymentInstruction: {
+    providerName: string;
+    accountHolderName: string;
+    accountNumber: string;
+  } | null;
   paymentAccountNumberLast4: string | null;
 };
 ```
@@ -409,20 +413,20 @@ See §8. The service layer builds the DTO per viewer; it must not return the ful
 
 All route names are **[PROPOSED]**.
 
-| Route                             | Purpose                                                         | Auth               |
-| --------------------------------- | --------------------------------------------------------------- | ------------------ |
-| `/`                               | Home with featured and latest active products                   | Public             |
-| `/products`                       | Product listing with search, filters, pagination                | Public             |
-| `/products/[id]`                  | Product detail; order button disabled for `reserved` and `sold` | Public             |
-| `/products/new`                   | Create product (with local image preview in Stage 1)            | Seller             |
-| `/products/[id]/edit`             | Edit own product                                                | Seller             |
-| `/my/products`                    | Seller's own products and status                                | Logged in          |
-| `/orders/new` or dialog on detail | Place order with shipping form                                  | Logged in          |
-| `/my/orders`                      | Buyer's orders                                                  | Logged in          |
-| `/seller/orders`                  | Orders received by the seller                                   | Logged in          |
-| `/orders/[id]`                    | Order detail with role-aware actions                            | Order participants |
-| `/login`, `/register`             | Authentication                                                  | Public             |
-| `/profile`                        | Account, address book, private seller profile, payment accounts, buyer/seller overview | Logged in |
+| Route                             | Purpose                                                                                | Auth               |
+| --------------------------------- | -------------------------------------------------------------------------------------- | ------------------ |
+| `/`                               | Home with featured and latest active products                                          | Public             |
+| `/products`                       | Product listing with search, filters, pagination                                       | Public             |
+| `/products/[id]`                  | Product detail; order button disabled for `reserved` and `sold`                        | Public             |
+| `/products/new`                   | Create product (with local image preview in Stage 1)                                   | Seller             |
+| `/products/[id]/edit`             | Edit own product                                                                       | Seller             |
+| `/my/products`                    | Seller's own products and status                                                       | Logged in          |
+| `/orders/new` or dialog on detail | Place order with shipping form                                                         | Logged in          |
+| `/my/orders`                      | Buyer's orders                                                                         | Logged in          |
+| `/seller/orders`                  | Orders received by the seller                                                          | Logged in          |
+| `/orders/[id]`                    | Order detail with role-aware actions                                                   | Order participants |
+| `/login`, `/register`             | Authentication                                                                         | Public             |
+| `/profile`                        | Account, address book, private seller profile, payment accounts, buyer/seller overview | Logged in          |
 
 ### 11.3 Order Actions by Role
 
@@ -468,17 +472,17 @@ docs/
 
 **[APPROVED]** Work only on the stage the user explicitly requests. Never start a later stage automatically. Stage status lives in `README.md`.
 
-| Stage | Name                                                   | Status of definition                       |
-| ----- | ------------------------------------------------------ | ------------------------------------------ |
-| 0     | Project setup and foundational configuration           | **[APPROVED]**                             |
-| 1     | Frontend, schemas, DTOs, mock data, UI navigation      | **[APPROVED]**                             |
-| 2     | Database, Prisma, migration, and seed                  | **[APPROVED]** (name from project history) |
-| 3     | Authentication and session                             | **[APPROVED]** (name from project history) |
-| 4     | Product services and actions                           | **[PROPOSED]**                             |
-| 5     | Order services, state machine, and privacy enforcement | **[APPROVED]**                             |
-| 6     | Full migration from mock to Prisma; domain API routes  | **[APPROVED]**                             |
+| Stage | Name                                                   | Status of definition                                    |
+| ----- | ------------------------------------------------------ | ------------------------------------------------------- |
+| 0     | Project setup and foundational configuration           | **[APPROVED]**                                          |
+| 1     | Frontend, schemas, DTOs, mock data, UI navigation      | **[APPROVED]**                                          |
+| 2     | Database, Prisma, migration, and seed                  | **[APPROVED]** (name from project history)              |
+| 3     | Authentication and session                             | **[APPROVED]** (name from project history)              |
+| 4     | Product services and actions                           | **[PROPOSED]**                                          |
+| 5     | Order services, state machine, and privacy enforcement | **[APPROVED]**                                          |
+| 6     | Full migration from mock to Prisma; domain API routes  | **[APPROVED]**                                          |
 | 7     | Image upload to Cloudflare R2                          | **[PROPOSED]** (local-disk interim approved separately) |
-| 8     | Hardening, tests, deployment readiness                 | **[PROPOSED]**                             |
+| 8     | Hardening, tests, deployment readiness                 | **[PROPOSED]**                                          |
 
 ### Stage 0 — Setup **[APPROVED]**
 
@@ -528,6 +532,33 @@ docs/
 - **[APPROVED] User decisions for B1:** (1) Encrypt payment account numbers and order payment snapshots at rest with AES-256-GCM using `node:crypto`, random 12-byte IVs, a version prefix, and a server-only base64 32-byte key validated with Zod at startup; fail fast if missing/invalid, document local key generation in `.env.example`, and never log key or plaintext. Store account last-four separately and decrypt only in services for authorized DTOs. (2) Treat account deletion as soft deactivation and apply the three-account limit only to active accounts; order snapshots remain immutable. (3) Backfill existing sellers from account names using lowercase URL-safe collision-safe slugs with reserved words blocked; nullable province is allowed only for backfill until sellers complete their store profile, while new activation requires province. Keep seed profiles aligned. (4) Place B1 under Stage 6 as a follow-up without renumbering; it extends Stage 6's original scope.
 - **[APPROVED] B1 additions:** `/api/uploads` records each uploaded key, owner, purpose, and timestamp. Avatar/logo assignment requires matching session owner and purpose. Do not hard-delete replaced avatar/logo files; orphan cleanup remains a TODO. Keep the existing product image flow except for writing ownership metadata; enforcing PRODUCT ownership on attachment remains a TODO. Sellers with pending orders and no payment account receive the dashboard blocker banner; legacy confirmed/completed orders have no backfilled snapshot and show buyers the neutral contact-seller message. Test foreign-owner and wrong-purpose key rejection for avatar/logo assignment.
 - **[APPROVED]** B1 extends the original Stage 6 scope without renumbering stages. Public store page, notifications, wishlist, store vacation mode (B2), and admin work remain outside B1.
+
+### Stage 6 follow-up: B2 — Public Stores, Notifications, Wishlist, and Vacation Mode **[APPROVED]**
+
+- **[APPROVED] User decisions:** one account may buy and sell; payment is manual transfer; release scope includes a public store page, in-app notifications, and wishlist. Admin work is outside B2.
+- **Public store:** add public server route `/store/[slug]`, resolve a seller by `SellerProfile.slug`, and return 404 for unknown slugs. A strict `PublicStoreDTO` allowlist contains store name, logo, description, city/province, account join date, completed-sales count, vacation flag, and paginated active products (default 12, maximum 48). It must never contain phone, pickup address, or payment accounts. Link product cards and detail pages to the store. The store page displays a vacation banner; active product detail URLs remain viewable.
+- **Vacation mode:** add `SellerProfile.isOnVacation Boolean @default(false)` and a seller-owned profile control/API. Exclude active products of vacationing sellers from global product listings and home results. Keep their active products visible on their public store page and direct product pages, but disable ordering there with an explanation. Reject order creation in the service layer while the seller is on vacation. Existing open orders remain processable.
+- **Notifications:** add `NotificationType` values `ORDER_PLACED`, `ORDER_CONFIRMED`, `ORDER_REJECTED`, `ORDER_CANCELLED`, and `ORDER_COMPLETED`; add `Notification` with `userId`, type, nullable `orderId`, title/body, nullable `readAt`, and `createdAt`, indexed by `(userId, readAt, createdAt)`. Add per-user/per-type preferences with all types enabled by default. Create each applicable notification in the same Prisma transaction as its order creation/status transition, addressed to the other party. Generic notification text must not include contact or payment data; links lead to the order. An insert failure rolls back the corresponding order change. Services must enforce ownership on reads and updates.
+- **Notification routes/UI:** `/notifications`, a header bell with indexed unread count, paginated listing, mark-one-read and mark-all-read actions, and profile preference controls. Routes: `GET /api/notifications`, `GET /api/notifications/unread-count`, `PATCH /api/notifications/[id]`, `POST /api/notifications/read-all`, and `GET/PUT /api/profile/notification-preferences`. Refresh on navigation; no websocket or email delivery. **[APPROVED]** A disabled notification type is not created; missing preferences mean enabled. Order status remains visible on the order page regardless of preference.
+- **Wishlist:** retain the existing `Favorite` table and `/api/favorites` service/routes because its user/product uniqueness, private ownership, and saved-product status behavior already match the requested wishlist; do not add a duplicate `WishlistItem` table. Add `/wishlist` UI (the existing `/favorites` route may redirect or remain a compatibility alias), reuse heart controls on product cards/detail, require login with a return path, and reject saving one's own product in the service. Keep reserved/sold items visible with status and disabled order action; keep wishlist data private.
+- **[APPROVED] DTOs and validation:** strict `PublicStoreDTO`, `NotificationDTO`, paginated notification response, notification preference DTO/schema, and wishlist item DTO composed from safe product fields. Derive user IDs from the session in all mutation services; never accept owner IDs from request bodies. Continue the existing product pagination contract (12 default, 48 max).
+- **[APPROVED] Routes:** public page `/store/[slug]`; private pages `/notifications` and `/wishlist`; existing product and order routes remain in use. Notification APIs are listed above; vacation updates use `PATCH /api/profile/store`.
+- **[APPROVED] Tests:** PublicStoreDTO excludes private fields and unknown slug returns 404; public listing/home hide vacation sellers while the store/direct product view remains available; vacation blocks new orders but not existing order transitions; each order event creates the correct recipient notification atomically and simulated failure rolls back the order change; notification text contains no contact/payment data; notification IDOR and unread/read-all ownership; preference defaults and disabling; wishlist privacy/IDOR, uniqueness, own-product rejection, and reserved/sold visibility. Add route/page empty, loading, error, and success coverage as appropriate.
+- **[APPROVED] Compatibility:** B1's existing `Favorite` model substitutes for the suggested `WishlistItem`; its composite primary key provides uniqueness and its service query is user-scoped. The service rejects favoriting one's own product. PRODUCT image ownership validation and orphan file cleanup remain existing TODOs and are outside this scope.
+
+### Stage 6 follow-up: Admin Area **[APPROVED — Phase 1]**
+
+This scope was approved for Phase 1 implementation. It adds a read-only Admin Area and does not authorize unrelated administration or moderation features.
+
+- **[APPROVED] Platform role and registration:** Add a separate `UserRole` enum (`USER`, `ADMIN`) and `User.role` defaulting to `USER`; existing accounts backfill/default to `USER`. This is independent of per-order buyer/seller roles. Public registration accepts no role field and never changes roles. Load role from the database when creating the server session rather than trusting a long-lived JWT role claim; fail closed on lookup errors. `passwordHash` must not be selected for any admin DTO, returned to a page, or displayed.
+- **[APPROVED] Explicit bootstrap and repeat behavior:** A manually invoked, server-only bootstrap script reads normalized `ADMIN_BOOTSTRAP_EMAIL` and `ADMIN_BOOTSTRAP_PASSWORD` environment variables, validates both, finds an already registered account, and verifies the supplied password against its existing bcrypt hash. If no account exists, fail with a clear instruction to register first; do not create an account. If the password does not match, fail without changing role. If the account is `USER`, promote it atomically to `ADMIN`. If it is already `ADMIN` and the password matches, succeed as a no-op. Never demote an `ADMIN`, print the password/hash, or run this script from seed or deployment. A valid rerun is idempotent while a mismatched password cannot change the role.
+- **[APPROVED] Session and per-call authorization:** Provide a server-only `requireAdmin` boundary. Every admin service and every admin Route Handler independently verifies the current database-backed ADMIN role on each call. Layout/page checks and Next.js Proxy may redirect unauthorized navigation, but are not authorization. Keep the JWT and session free of password hash, phone, address, payment data, and other private account fields; expose only the role needed for UI navigation after server-side lookup. Preserve the approved seller-contact rules in §8.2 unchanged.
+- **[APPROVED] Activity definition:** Add nullable `lastLoginAt` and `lastActiveAt` to `User`. Set `lastLoginAt` after successful credential verification. Update `lastActiveAt` for authenticated page navigations and user-initiated domain API requests, at most once per user per five minutes using an atomic conditional database update. Exclude static assets, prefetches, polling/background requests, auth/session introspection, and health checks. Use the Node.js server/database path, not Edge/Proxy. `null` means unobserved since rollout, not inactive. “Online” means observed activity within the last 15 minutes and is approximate; active-in-7-days uses a rolling seven-day window.
+- **[APPROVED] Audit and disclosure:** Add append-only `AuditLog` with `id`, nullable `actorId` FK using `ON DELETE SET NULL`, `action`, `targetType`, `targetId`, `createdAt`, and optional `requestId`; do not store request IP by default. Actions use stable enumerated names (initially `ADMIN_CONTACT_REVEAL`). Never store the revealed value, password/hash, free-form request body, payment data, phone, or address in the log. Only account email may be explicitly revealed in v1, from a user detail action for account-support/identity verification. Email is masked by default; each reveal requires a server-side ADMIN check and successful audit insertion in the same transaction before the value is returned. Do not provide full phone, shipping contact, or payment disclosure in v1. The Address page shows summary fields only (kind, label, city, province, and owner reference); it never reveals contact name, phone, street, or postal code. If audit insertion fails, fail closed without returning email. Initial HTML/RSC payloads and normal DTOs contain masked values only.
+- **[APPROVED] Read-only dashboard and pages:** `/admin` shows total users, registrations in the last 7/30 days, approximate online users (15-minute window), active users in 7 days, product counts by status, order counts by status, and latest registrations/orders. Paginated read-only pages cover Users, Products, Orders, and Addresses. No edit, delete, ban, moderation, or product/order status changes in v1; no raw table dumps or unrestricted SQL.
+- **[APPROVED] Minimum filters, pagination, routes, and DTOs:** `/admin/users` filters by name/email search, platform role, and registration date; results mask email until an audited reveal. `/admin/products` filters by title search, product status, and category. `/admin/orders` filters by order code, order status, and buyer/seller identity; never search or filter by phone/address. `/admin/addresses` filters by owner name/email search, address kind, city, and province; output remains summary-only. Pages: `/admin`, `/admin/users`, `/admin/products`, `/admin/orders`, `/admin/addresses`. APIs: `/api/admin/overview`, `/api/admin/users`, `/api/admin/products`, `/api/admin/orders`, `/api/admin/addresses`, and a narrowly scoped email-reveal endpoint. Use server-rendered pages by default and strict Zod query schemas. Page defaults to 1; page size defaults to 12 and maxes at 48. Reject non-integer/less-than-one pages and page sizes outside 1–48; a valid page beyond the last page returns an empty list. Use explicit DTO allowlists: `AdminOverviewDTO`, `AdminUserDTO`, `AdminProductDTO`, `AdminOrderDTO`, and `AdminAddressDTO`. Admin services live in `src/server/services/admin.ts` or domain-specific modules.
+- **[APPROVED] Verification plan:** Test anonymous and USER denial at every admin service and route, ADMIN success, registration role spoof rejection, bootstrap absent-account/wrong-password/USER-promotion/already-ADMIN/idempotent rerun/no-demotion behavior, database role refresh and fail-closed session errors, activity update/throttle/exclusions/null values, metric windows/status counts, filters and pagination boundaries, DTO allowlists and `passwordHash` absence, masked initial HTML/RSC payloads, email reveal audit-before-return and audit-failure denial, and no phone/address/payment disclosure. Keep regression tests for §8.2 seller privacy. Run typecheck, lint, format check, Vitest, production build, and manual authorization/privacy checks with two accounts. Verify migrations using an isolated temporary database; do not mutate development data outside the approved migration process.
+- **[APPROVED] Scope boundary:** Admin Phase 1 remains read-only except for the explicit audited email reveal and audit-log write. It does not include account/product/order mutations, bans, moderation, or other administration features.
 
 ### Stage 7 — Image Upload **[PROPOSED]**
 
@@ -587,5 +618,8 @@ Resolve these with the user before implementing the affected area. Move each to 
 | 1.1     | 2026-10-13         | Approved Stage 5 order scope and business rules: dual buyer/seller accounts, IDR integer pricing, state transitions, cancellation permissions, optional rejection reason, single open order, transactional product coupling, and required shipping fields. |
 | 1.1     | 2026-10-13         | Approved local-disk image storage as an interim single-machine demo solution; Cloudflare R2 remains planned for production.                                                                                                                                |
 | 1.1     | 2026-10-13         | Approved and completed Stage 6: Prisma favorites and profile, per-domain API routes, visitor favorite controls disabled, `/api/mock` and mock runtime removed, with seed fixtures preserved separately.                                                    |
-| 1.1     | 2026-10-13         | Approved Stage 6 follow-up B1 profile hub, addresses, seller activation, encrypted payment accounts/snapshots, upload ownership metadata, migration backfill, dashboard scope, and the explicit exclusion of B2/admin. |
-| 1.1     | 2026-10-13         | Recorded the B1-approved AES-256-GCM/key-rotation requirements, payment-account soft deletion, seller backfill and seed slug rules, upload ownership checks and cleanup TODOs, and in-flight order messaging/banner behavior. |
+| 1.1     | 2026-10-13         | Approved Stage 6 follow-up B1 profile hub, addresses, seller activation, encrypted payment accounts/snapshots, upload ownership metadata, migration backfill, dashboard scope, and the explicit exclusion of B2/admin.                                     |
+| 1.1     | 2026-10-13         | Recorded the B1-approved AES-256-GCM/key-rotation requirements, payment-account soft deletion, seller backfill and seed slug rules, upload ownership checks and cleanup TODOs, and in-flight order messaging/banner behavior.                              |
+| 1.1     | 2026-10-13         | Approved and implemented Stage 6 follow-up B2: public store allowlist, vacation mode, transactional in-app notifications and preferences, and private wishlist on the existing Favorite model.                                                             |
+| 1.1     | 2026-10-13         | Recorded the approved rule that disabled notification types are not created and order status remains visible regardless of notification preferences.                                                                                                       |
+| 1.1     | 2026-10-13         | Approved and implemented Stage 6 follow-up Admin Area Phase 1: platform roles, explicit existing-account bootstrap, throttled activity metrics, read-only admin DTOs and pages, and audited email reveal.                                                  |

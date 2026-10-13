@@ -136,6 +136,7 @@ describe("favorite Prisma service", () => {
       .mockResolvedValueOnce({
         id: ids.product,
         status: "archived",
+        sellerId: ids.other,
       });
     expect(await setFavorite(input, ids.user, true)).toMatchObject({
       success: false,
@@ -145,6 +146,21 @@ describe("favorite Prisma service", () => {
       success: false,
       error: { code: "NOT_FOUND" },
     });
+  });
+
+  it("rejects favoriting the user's own product", async () => {
+    prisma.product.findUnique.mockResolvedValue({
+      id: ids.product,
+      status: "active",
+      sellerId: ids.user,
+    });
+    await expect(
+      setFavorite({ productId: ids.product }, ids.user, true),
+    ).resolves.toMatchObject({
+      success: false,
+      error: { code: "FORBIDDEN" },
+    });
+    expect(prisma.favorite.upsert).not.toHaveBeenCalled();
   });
 
   it("treats a unique race as success if the favorite now exists", async () => {

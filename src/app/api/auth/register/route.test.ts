@@ -4,11 +4,12 @@ import { Prisma } from "@/generated/prisma/client";
 import { registerFormSchema } from "@/schemas";
 import { authorizeCredentials } from "@/lib/auth/credentials";
 
-const { findUnique, create } = vi.hoisted(() => ({
+const { findUnique, create, update } = vi.hoisted(() => ({
   findUnique: vi.fn(),
   create: vi.fn(),
+  update: vi.fn(),
 }));
-vi.mock("@/lib/db", () => ({ db: { user: { findUnique, create } } }));
+vi.mock("@/lib/db", () => ({ db: { user: { findUnique, create, update } } }));
 
 import { POST } from "./route";
 
@@ -31,6 +32,7 @@ describe("POST /api/auth/register", () => {
   beforeEach(() => {
     findUnique.mockReset().mockResolvedValue(null);
     create.mockReset().mockResolvedValue({ id: "new-user" });
+    update.mockReset().mockResolvedValue({ id: "new-user" });
   });
 
   it("membuat akun dengan email ternormalisasi dan password hash saja", async () => {
@@ -68,6 +70,29 @@ describe("POST /api/auth/register", () => {
       id: "new-user",
       email: "ayu@example.test",
     });
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "new-user" },
+        data: { lastLoginAt: expect.any(Date) },
+      }),
+    );
+  });
+
+  it("tidak mencatat lastLoginAt jika verifikasi bcrypt gagal", async () => {
+    const passwordHash = await bcrypt.hash("expected-password", 4);
+    findUnique.mockResolvedValue({
+      id: "existing-user",
+      name: "Ayu",
+      email: "ayu@example.test",
+      passwordHash,
+    });
+    await expect(
+      authorizeCredentials({
+        email: "ayu@example.test",
+        password: "wrong-password",
+      }),
+    ).resolves.toBeNull();
+    expect(update).not.toHaveBeenCalled();
   });
 
   it("menolak email duplikat tanpa membuat akun", async () => {
@@ -117,6 +142,12 @@ describe("POST /api/auth/register", () => {
       request({ ...input, confirmPassword: "other-pass" }),
     );
     expect(mismatch.status).toBe(400);
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("menolak role platform dari registrasi publik", async () => {
+    const response = await POST(request({ ...input, role: "ADMIN" }));
+    expect(response.status).toBe(400);
     expect(create).not.toHaveBeenCalled();
   });
 

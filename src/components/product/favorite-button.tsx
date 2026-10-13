@@ -1,44 +1,58 @@
 "use client";
-import { useOptimistic, useTransition } from "react";
+import { useOptimistic, useState, useTransition } from "react";
 import { Heart } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { requestApi } from "@/components/forms/request-api";
 
 export function FavoriteButton({
   productId,
   initial,
-  disabled = false,
+  loginRequired = false,
 }: {
   productId: string;
   initial: boolean;
-  disabled?: boolean;
+  loginRequired?: boolean;
 }) {
   const [favorite, setFavorite] = useOptimistic(initial);
+  const [feedback, setFeedback] = useState("");
   const [, startTransition] = useTransition();
   const router = useRouter();
+  const pathname = usePathname();
   return (
     <button
       type="button"
-      disabled={disabled}
+      aria-disabled={false}
       aria-label={favorite ? "Hapus dari favorit" : "Tambah ke favorit"}
       aria-pressed={favorite}
-      aria-disabled={disabled}
       onClick={(event) => {
         event.preventDefault();
         event.stopPropagation();
-        if (disabled) return;
+        if (loginRequired) {
+          router.push(`/login?callbackUrl=${encodeURIComponent(pathname)}`);
+          return;
+        }
         startTransition(async () => {
+          setFeedback("");
           setFavorite(!favorite);
-          const result = favorite
-            ? await requestApi(
-                `/api/favorites/${encodeURIComponent(productId)}`,
-                "DELETE",
-              )
-            : await requestApi("/api/favorites", "PUT", { productId });
-          if (!result.success) {
+          try {
+            const result = favorite
+              ? await requestApi(
+                  `/api/favorites/${encodeURIComponent(productId)}`,
+                  "DELETE",
+                )
+              : await requestApi("/api/favorites", "PUT", { productId });
+            if (!result.success) {
+              setFavorite(favorite);
+              setFeedback("Wishlist gagal diperbarui. Coba lagi.");
+            } else {
+              setFeedback(
+                favorite ? "Dihapus dari wishlist." : "Disimpan ke wishlist.",
+              );
+              router.refresh();
+            }
+          } catch {
             setFavorite(favorite);
-          } else {
-            router.refresh();
+            setFeedback("Wishlist gagal diperbarui. Coba lagi.");
           }
         });
       }}
@@ -47,6 +61,12 @@ export function FavoriteButton({
         size={16}
         className={favorite ? "fill-rose-500 text-rose-500" : "text-stone-500"}
       />
+      <span
+        className="sr-only"
+        role={feedback.includes("gagal") ? "alert" : "status"}
+      >
+        {feedback}
+      </span>
     </button>
   );
 }

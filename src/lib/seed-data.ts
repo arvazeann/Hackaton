@@ -114,6 +114,8 @@ export const seedProducts: ProductDetail[] = titles.map((title, i) => ({
     id: i === 6 ? "u-buyer" : "u-seller",
     name: i === 6 ? "Raka Pratama" : "Nadia Putri",
     city: i === 6 ? "Bandung" : "Jakarta",
+    storeSlug: i === 6 ? null : "nadia-putri",
+    isOnVacation: false,
   },
   isFavorited: i === 0 || i === 4,
   createdAt: new Date(Date.UTC(2026, 8, 20 - i)).toISOString(),

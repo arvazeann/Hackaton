@@ -110,3 +110,10 @@ CREATE INDEX "uploaded_files_owner_purpose_idx" ON "uploaded_files"("owner_id", 
 ALTER TABLE "orders"
   ADD COLUMN "payment_instruction_ciphertext" TEXT,
   ADD COLUMN "payment_account_number_last4" VARCHAR(4);
+
+-- Keep the existing partial index in the canonical form emitted by Prisma 7
+-- so a migrations-to-schema drift check reports an empty diff.
+DROP INDEX "orders_one_active_per_product";
+CREATE UNIQUE INDEX "orders_one_active_per_product"
+  ON "orders"("product_id")
+  WHERE (status = ANY (ARRAY['pending'::order_status, 'confirmed'::order_status]));

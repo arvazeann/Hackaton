@@ -6,6 +6,7 @@ import {
   paymentAccountSchema,
   passwordChangeSchema,
   storeProfileSchema,
+  storeVacationSchema,
 } from "@/schemas";
 import {
   encryptPaymentData,
@@ -158,6 +159,7 @@ export async function getProfileHub(userId: string) {
         city: store.city,
         province: store.province,
         needsCompletion: !store.province,
+        isOnVacation: store.isOnVacation,
       }
     : null;
   return {
@@ -299,11 +301,25 @@ export async function saveStore(userId: string, input: unknown) {
         city: saved.city,
         province: saved.province,
         needsCompletion: !saved.province,
+        isOnVacation: saved.isOnVacation,
       } satisfies StoreProfileDTO,
     };
   } catch {
     return { ok: false as const, message: "Profil toko gagal disimpan." };
   }
+}
+
+export async function setStoreVacation(userId: string, input: unknown) {
+  const parsed = storeVacationSchema.safeParse(input);
+  if (!parsed.success)
+    return { ok: false as const, message: "Status toko tidak valid." };
+  const updated = await db.sellerProfile.updateMany({
+    where: { userId },
+    data: { isOnVacation: parsed.data.isOnVacation },
+  });
+  if (!updated.count)
+    return { ok: false as const, message: "Aktifkan toko terlebih dahulu." };
+  return { ok: true as const, data: parsed.data };
 }
 
 export async function savePaymentAccount(userId: string, input: unknown) {

@@ -4,7 +4,11 @@ export async function Shell({ children }: { children: React.ReactNode }) {
   const session = await getCurrentUser();
   return (
     <>
-      <Navbar userName={session?.name ?? null} />
+      <Navbar
+        userName={session?.name ?? null}
+        userId={session?.id ?? null}
+        isAdmin={session?.platformRole === "ADMIN"}
+      />
       <main className="min-h-[80vh]">{children}</main>
       <footer className="mt-20 border-t bg-stone-50">
         <div className="mx-auto flex max-w-7xl justify-between px-4 py-8 text-sm text-stone-500">

@@ -10,8 +10,10 @@ const prisma = vi.hoisted(() => ({
   },
   product: { findUnique: vi.fn(), updateMany: vi.fn() },
   paymentAccount: { findFirst: vi.fn() },
+  sellerProfile: { findUnique: vi.fn() },
   $transaction: vi.fn(),
 }));
+const notification = vi.hoisted(() => ({ createOrderNotification: vi.fn() }));
 
 vi.mock("@/lib/db", () => ({ db: prisma }));
 vi.mock("@/server/security/payment-encryption", () => ({
@@ -19,6 +21,7 @@ vi.mock("@/server/security/payment-encryption", () => ({
   decryptPaymentData: (value: string) =>
     value.startsWith("cipher:") ? value.slice(7) : "123456789012",
 }));
+vi.mock("@/server/services/notifications", () => notification);
 
 import {
   createOrder,
@@ -86,6 +89,7 @@ const freshOrder = (status: TestStatus = "pending"): TestOrder => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  notification.createOrderNotification.mockResolvedValue(null);
   state = {
     order: null,
     product: {
@@ -100,6 +104,7 @@ beforeEach(() => {
   prisma.product.findUnique.mockImplementation(async () => ({
     ...state.product,
   }));
+  prisma.sellerProfile.findUnique.mockResolvedValue({ isOnVacation: false });
   prisma.paymentAccount.findFirst.mockResolvedValue({
     id: "ffffffff-ffff-4fff-8fff-ffffffffffff",
     sellerProfileId: ids.seller,
@@ -218,6 +223,12 @@ describe("Prisma order service", () => {
       },
     });
     expect(state.product.status).toBe("active");
+    expect(notification.createOrderNotification).toHaveBeenCalledWith(
+      prisma,
+      ids.seller,
+      ids.order,
+      "ORDER_PLACED",
+    );
     expect(prisma.order.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
@@ -226,6 +237,57 @@ describe("Prisma order service", () => {
         }),
       }),
     );
+  });
+
+  it("keeps the order shipping snapshot after its source address is edited or deleted", async () => {
+    let sourceAddress: {
+      contactName: string;
+      phone: string;
+      street: string;
+    } | null = {
+      contactName: "Raka Pratama",
+      phone: "081234567890",
+      street: "Jl. Merdeka 10, Bandung",
+    };
+    const addressAtCheckout = sourceAddress;
+    const created = await createOrder(
+      {
+        ...createValues,
+        shippingName: addressAtCheckout.contactName,
+        shippingPhone: addressAtCheckout.phone,
+        shippingAddress: addressAtCheckout.street,
+      },
+      ids.buyer,
+    );
+    expect(created.success).toBe(true);
+    expect(prisma.order.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        shippingName: "Raka Pratama",
+        shippingPhone: "081234567890",
+        shippingAddress: "Jl. Merdeka 10, Bandung",
+      }),
+    });
+
+    Object.assign(sourceAddress, {
+      contactName: "Alamat Baru",
+      phone: "081299999999",
+      street: "Jl. Baru 1, Jakarta",
+    });
+    const unchangedAfterEdit = await getOrder(ids.order, ids.buyer);
+    expect(unchangedAfterEdit).toMatchObject({
+      shippingName: "Raka Pratama",
+      shippingPhone: "081234567890",
+      shippingAddress: "Jl. Merdeka 10, Bandung",
+    });
+
+    sourceAddress = null;
+    expect(sourceAddress).toBeNull();
+    const unchangedAfterDelete = await getOrder(ids.order, ids.buyer);
+    expect(unchangedAfterDelete).toMatchObject({
+      shippingName: "Raka Pratama",
+      shippingPhone: "081234567890",
+      shippingAddress: "Jl. Merdeka 10, Bandung",
+    });
   });
 
   it("rejects invalid, unauthenticated, own-product, unavailable, and already-open requests", async () => {
@@ -258,6 +320,32 @@ describe("Prisma order service", () => {
     });
   });
 
+  it("blocks new orders while the seller is on vacation", async () => {
+    prisma.sellerProfile.findUnique.mockResolvedValueOnce({
+      isOnVacation: true,
+    });
+    await expect(createOrder(createValues, ids.buyer)).resolves.toMatchObject({
+      success: false,
+      error: { code: "PRODUCT_NOT_AVAILABLE" },
+    });
+    expect(prisma.order.create).not.toHaveBeenCalled();
+  });
+
+  it("continues processing an open order while the seller is on vacation", async () => {
+    state.order = freshOrder("pending");
+    prisma.sellerProfile.findUnique.mockResolvedValue({ isOnVacation: true });
+    await expect(
+      updateOrderStatus(
+        {
+          orderId: ids.order,
+          action: "confirm",
+          paymentAccountId: "ffffffff-ffff-4fff-8fff-ffffffffffff",
+        },
+        ids.seller,
+      ),
+    ).resolves.toMatchObject({ success: true, data: { status: "confirmed" } });
+  });
+
   it.each([
     ["pending", "confirm", "seller", "confirmed", "reserved"],
     ["pending", "reject", "seller", "rejected", "active"],
@@ -285,6 +373,17 @@ describe("Prisma order service", () => {
       expect(result).toMatchObject({ success: true, data: { status: next } });
       expect(state.order?.status).toBe(next);
       expect(state.product.status).toBe(productStatus);
+      expect(notification.createOrderNotification).toHaveBeenLastCalledWith(
+        prisma,
+        role === "buyer" ? ids.seller : ids.buyer,
+        ids.order,
+        {
+          confirm: "ORDER_CONFIRMED",
+          reject: "ORDER_REJECTED",
+          cancel: "ORDER_CANCELLED",
+          complete: "ORDER_COMPLETED",
+        }[action],
+      );
     },
   );
 
@@ -499,6 +598,40 @@ describe("Prisma order service", () => {
     expect(result).toMatchObject({
       success: false,
       error: { code: "CONFLICT" },
+    });
+    expect(state.order?.status).toBe("pending");
+    expect(state.product.status).toBe("active");
+  });
+
+  it("rolls back order and product changes when notification creation fails", async () => {
+    notification.createOrderNotification.mockRejectedValueOnce(
+      new Error("notification insert failed"),
+    );
+    await expect(createOrder(createValues, ids.buyer)).resolves.toMatchObject({
+      success: false,
+      error: { code: "INTERNAL_ERROR" },
+    });
+    expect(state.order).toBeNull();
+    expect(state.product.status).toBe("active");
+  });
+
+  it("rolls back a status transition if its notification cannot be created", async () => {
+    state.order = freshOrder("pending");
+    notification.createOrderNotification.mockRejectedValueOnce(
+      new Error("notification insert failed"),
+    );
+    await expect(
+      updateOrderStatus(
+        {
+          orderId: ids.order,
+          action: "confirm",
+          paymentAccountId: "ffffffff-ffff-4fff-8fff-ffffffffffff",
+        },
+        ids.seller,
+      ),
+    ).resolves.toMatchObject({
+      success: false,
+      error: { code: "INTERNAL_ERROR" },
     });
     expect(state.order?.status).toBe("pending");
     expect(state.product.status).toBe("active");
