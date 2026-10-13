@@ -149,9 +149,6 @@ export function OrderActions({
       )}
       {showCancel && (
         <form
-          role="dialog"
-          aria-modal="true"
-          aria-label="Batalkan pesanan"
           className="w-full rounded-xl border border-rose-200 bg-rose-50 p-4"
           onSubmit={handleSubmit(cancel)}
         >

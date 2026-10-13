@@ -62,7 +62,7 @@ export function NotificationList({ data }: { data: Page }) {
           type="button"
           onClick={() => void markAll()}
           disabled={busy || data.unreadCount === 0}
-          className="rounded-full border px-4 py-2 text-sm font-semibold disabled:opacity-50"
+          className="rounded-full border border-[#d9d4c8] bg-[#fffefa] px-4 py-2 text-sm font-semibold transition hover:bg-[#f0ede5] disabled:cursor-not-allowed disabled:opacity-50"
         >
           Tandai semua sebagai dibaca
         </button>
@@ -82,7 +82,7 @@ export function NotificationList({ data }: { data: Page }) {
           {data.items.map((item) => (
             <li
               key={item.id}
-              className={`rounded-2xl border p-4 ${item.readAt ? "bg-white" : "border-emerald-300 bg-emerald-50"}`}
+              className={`rounded-2xl border p-4 shadow-sm ${item.readAt ? "border-[#e3ded2] bg-[#fffefa]" : "border-[#b8cfbf] bg-[#edf4ee]"}`}
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
@@ -94,7 +94,7 @@ export function NotificationList({ data }: { data: Page }) {
                   {item.orderId && (
                     <Link
                       href={`/orders?orderId=${encodeURIComponent(item.orderId)}`}
-                      className="mt-3 inline-block text-sm font-semibold text-emerald-800 underline"
+                      className="mt-3 inline-block text-sm font-semibold text-[#174c3c] underline underline-offset-4"
                     >
                       Lihat pesanan
                     </Link>
@@ -115,9 +115,9 @@ export function NotificationList({ data }: { data: Page }) {
           ))}
         </ul>
       ) : (
-        <div className="rounded-3xl border border-dashed p-12 text-center">
-          <h2 className="font-semibold">Belum ada notifikasi</h2>
-          <p className="mt-2 text-sm text-stone-500">
+        <div className="rounded-3xl border border-dashed border-[#d6d0c3] bg-[#fffefa] p-12 text-center">
+          <h2 className="font-semibold text-[#26332d]">Belum ada notifikasi</h2>
+          <p className="mt-2 text-sm text-stone-600">
             Pembaruan pesanan akan muncul di sini.
           </p>
         </div>

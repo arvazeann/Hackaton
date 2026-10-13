@@ -16,8 +16,12 @@ export default async function NotificationsPage({
   return (
     <Shell>
       <section className="mx-auto max-w-3xl px-4 py-12">
-        <p className="text-sm font-semibold text-emerald-700">PEMBARUAN AKUN</p>
-        <h1 className="mb-7 mt-1 text-3xl font-bold">Notifikasi</h1>
+        <p className="text-xs font-bold tracking-[.14em] text-[#568270]">
+          PEMBARUAN AKUN
+        </p>
+        <h1 className="mb-7 mt-1 text-3xl font-bold text-[#26332d]">
+          Notifikasi
+        </h1>
         <NotificationList data={result} />
       </section>
     </Shell>

@@ -16,17 +16,21 @@ export default async function EditProduct({
   if (p.status !== "active")
     return (
       <Shell>
-        <section className="mx-auto max-w-2xl px-4 py-12">
-          <h1 className="text-3xl font-bold">Produk tidak dapat diedit</h1>
-          <p className="mt-3 text-stone-500">
-            Produk dengan status {p.status} tidak bisa diubah.
-          </p>
+        <section className="mx-auto max-w-2xl px-4 py-8 sm:py-12">
+          <div className="rounded-3xl border border-[#e3ded2] bg-[#fffefa] p-6 shadow-sm sm:p-8">
+            <h1 className="text-3xl font-bold text-[#26332d]">
+              Produk tidak dapat diedit
+            </h1>
+            <p className="mt-3 text-stone-500">
+              Produk dengan status {p.status} tidak bisa diubah.
+            </p>
+          </div>
         </section>
       </Shell>
     );
   return (
     <Shell>
-      <section className="mx-auto max-w-2xl px-4 py-12">
+      <section className="mx-auto max-w-2xl px-4 py-8 sm:py-12">
         <ProductForm categories={await getProductCategories()} product={p} />
       </section>
     </Shell>

@@ -26,25 +26,30 @@ export default async function Products({
   const pageCount = result.totalPages;
   return (
     <Shell>
-      <section className="mx-auto max-w-7xl px-4 py-10">
-        <p className="text-sm font-semibold text-emerald-700">
+      <section className="mx-auto max-w-7xl px-4 py-8 sm:py-10">
+        <p className="text-xs font-bold tracking-[.14em] text-[#568270]">
           KATALOG RUANGLAGI
         </p>
-        <h1 className="mt-1 text-3xl font-bold">Temukan barang favoritmu</h1>
+        <h1 className="mt-1 text-3xl font-bold text-[#26332d]">
+          Temukan barang favoritmu
+        </h1>
         <form action="/products" className="mt-6 md:hidden">
           <input
             name="q"
             defaultValue={query.q}
             placeholder="Cari barang..."
-            className="w-full rounded-full border p-3"
+            className="w-full rounded-full border border-[#e3ded2] bg-[#fffefa] p-3"
           />
         </form>
-        <div className="mt-8 grid gap-7 md:grid-cols-[240px_1fr]">
-          <aside>
+        <div className="mt-6 grid gap-4 md:mt-8 md:grid-cols-[240px_1fr] md:gap-7">
+          <aside
+            aria-label="Filter katalog"
+            className="md:sticky md:top-24 md:self-start"
+          >
             <FilterPanel categories={categories} />
           </aside>
           <div>
-            <div className="mb-4 flex items-center justify-between text-sm text-stone-500">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[#eeeae1] px-4 py-3 text-sm text-stone-600">
               <span>
                 {result.total} barang ditemukan
                 {query.q ? ` untuk “${query.q}”` : ""}

@@ -40,7 +40,8 @@ type Hub = {
   };
 };
 
-const inputClass = "rounded-xl border px-3 py-2 text-sm";
+const inputClass =
+  "w-full rounded-xl border border-[#d9d4c8] bg-[#fffefa] px-3 py-2.5 text-sm outline-none transition focus:border-[#568270] focus:ring-2 focus:ring-[#568270]/20";
 const initialAddress = {
   kind: "SHIPPING",
   label: "",
@@ -140,10 +141,10 @@ export function ProfileHub({ hub }: { hub: Hub }) {
   }
 
   return (
-    <div className="mx-auto grid max-w-5xl gap-8 px-4 py-10 lg:grid-cols-[220px_1fr]">
+    <div className="mx-auto grid max-w-6xl gap-5 px-4 py-7 sm:py-10 lg:grid-cols-[220px_1fr] lg:gap-8">
       <nav
         aria-label="Bagian profil"
-        className="flex gap-2 overflow-x-auto lg:sticky lg:top-20 lg:h-fit lg:flex-col"
+        className="flex gap-2 overflow-x-auto rounded-2xl border border-[#e3ded2] bg-[#fffefa] p-2 lg:sticky lg:top-20 lg:h-fit lg:flex-col"
       >
         {[
           ["overview", "Overview"],
@@ -155,7 +156,7 @@ export function ProfileHub({ hub }: { hub: Hub }) {
           <a
             key={id}
             href={`#${id}`}
-            className="whitespace-nowrap rounded-full border px-4 py-2 text-sm"
+            className="whitespace-nowrap rounded-full border border-transparent px-4 py-2 text-sm text-[#46564c] transition hover:border-[#d9d4c8] hover:bg-[#f6f3ec] hover:text-[#174c3c] focus-visible:ring-2 focus-visible:ring-[#568270]"
           >
             {title}
           </a>
@@ -176,7 +177,7 @@ export function ProfileHub({ hub }: { hub: Hub }) {
         )}
         <section
           id="overview"
-          className="scroll-mt-24 rounded-2xl border bg-white p-5"
+          className="scroll-mt-24 rounded-2xl border border-[#e3ded2] bg-[#fffefa] p-5 shadow-sm sm:p-6"
         >
           <h1 className="text-2xl font-bold">Ringkasan akun</h1>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -257,7 +258,7 @@ export function ProfileHub({ hub }: { hub: Hub }) {
         </section>
         <section
           id="account"
-          className="scroll-mt-24 rounded-2xl border bg-white p-5"
+          className="scroll-mt-24 rounded-2xl border border-[#e3ded2] bg-[#fffefa] p-5 shadow-sm sm:p-6"
         >
           <h2 className="mb-5 text-xl font-bold">Akun</h2>
           <ProfileForm
@@ -274,7 +275,7 @@ export function ProfileHub({ hub }: { hub: Hub }) {
         </section>
         <section
           id="addresses"
-          className="scroll-mt-24 rounded-2xl border bg-white p-5"
+          className="scroll-mt-24 rounded-2xl border border-[#e3ded2] bg-[#fffefa] p-5 shadow-sm sm:p-6"
         >
           <h2 className="text-xl font-bold">Buku alamat</h2>
           <p className="mt-1 text-sm text-stone-600">
@@ -409,7 +410,7 @@ export function ProfileHub({ hub }: { hub: Hub }) {
         </section>
         <section
           id="store"
-          className="scroll-mt-24 rounded-2xl border bg-white p-5"
+          className="scroll-mt-24 rounded-2xl border border-[#e3ded2] bg-[#fffefa] p-5 shadow-sm sm:p-6"
         >
           <h2 className="text-xl font-bold">
             {hub.store ? "Profil toko" : "Aktifkan toko"}

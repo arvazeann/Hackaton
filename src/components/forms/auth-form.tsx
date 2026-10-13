@@ -32,7 +32,7 @@ function LoginForm() {
   return (
     <form
       method="post"
-      className="grid gap-4"
+      className="grid gap-5"
       onSubmit={handleSubmit(async (values) => {
         setFormError(null);
         const result = await signInWithCredentials(
@@ -63,7 +63,7 @@ function LoginForm() {
           type="email"
           autoComplete="email"
           {...register("email")}
-          className="rounded-xl border px-4 py-3 font-normal"
+          className="rounded-xl border border-[#d9d4c8] bg-[#fffefa] px-4 py-3 font-normal shadow-sm outline-none transition focus:border-[#568270] focus:ring-2 focus:ring-[#568270]/20"
         />
         <FieldError message={errors.email?.message} />
       </label>
@@ -73,13 +73,13 @@ function LoginForm() {
           type="password"
           autoComplete="current-password"
           {...register("password")}
-          className="rounded-xl border px-4 py-3 font-normal"
+          className="rounded-xl border border-[#d9d4c8] bg-[#fffefa] px-4 py-3 font-normal shadow-sm outline-none transition focus:border-[#568270] focus:ring-2 focus:ring-[#568270]/20"
         />
         <FieldError message={errors.password?.message} />
       </label>
       <button
         disabled={isSubmitting}
-        className="rounded-full bg-emerald-800 px-6 py-3 font-semibold text-white"
+        className="min-h-12 rounded-full bg-[#174c3c] px-6 py-3 font-semibold text-white transition hover:bg-[#103d30] disabled:cursor-wait disabled:opacity-60"
       >
         {isSubmitting ? "Memproses…" : "Masuk"}
       </button>
@@ -100,7 +100,7 @@ function RegisterForm() {
   return (
     <form
       method="post"
-      className="grid gap-4"
+      className="grid gap-5"
       onSubmit={handleSubmit(async (values) => {
         setFormError(null);
         let response: Response;
@@ -160,7 +160,7 @@ function RegisterForm() {
         <input
           autoComplete="name"
           {...register("name")}
-          className="rounded-xl border px-4 py-3 font-normal"
+          className="rounded-xl border border-[#d9d4c8] bg-[#fffefa] px-4 py-3 font-normal shadow-sm outline-none transition focus:border-[#568270] focus:ring-2 focus:ring-[#568270]/20"
         />
         <FieldError message={errors.name?.message} />
       </label>
@@ -170,7 +170,7 @@ function RegisterForm() {
           type="email"
           autoComplete="email"
           {...register("email")}
-          className="rounded-xl border px-4 py-3 font-normal"
+          className="rounded-xl border border-[#d9d4c8] bg-[#fffefa] px-4 py-3 font-normal shadow-sm outline-none transition focus:border-[#568270] focus:ring-2 focus:ring-[#568270]/20"
         />
         <FieldError message={errors.email?.message} />
       </label>
@@ -180,7 +180,7 @@ function RegisterForm() {
           type="password"
           autoComplete="new-password"
           {...register("password")}
-          className="rounded-xl border px-4 py-3 font-normal"
+          className="rounded-xl border border-[#d9d4c8] bg-[#fffefa] px-4 py-3 font-normal shadow-sm outline-none transition focus:border-[#568270] focus:ring-2 focus:ring-[#568270]/20"
         />
         <FieldError message={errors.password?.message} />
       </label>
@@ -190,13 +190,13 @@ function RegisterForm() {
           type="password"
           autoComplete="new-password"
           {...register("confirmPassword")}
-          className="rounded-xl border px-4 py-3 font-normal"
+          className="rounded-xl border border-[#d9d4c8] bg-[#fffefa] px-4 py-3 font-normal shadow-sm outline-none transition focus:border-[#568270] focus:ring-2 focus:ring-[#568270]/20"
         />
         <FieldError message={errors.confirmPassword?.message} />
       </label>
       <button
         disabled={isSubmitting}
-        className="rounded-full bg-emerald-800 px-6 py-3 font-semibold text-white"
+        className="min-h-12 rounded-full bg-[#174c3c] px-6 py-3 font-semibold text-white transition hover:bg-[#103d30] disabled:cursor-wait disabled:opacity-60"
       >
         {isSubmitting ? "Memproses…" : "Daftar"}
       </button>

@@ -14,14 +14,18 @@ export default async function Dashboard() {
   return (
     <Shell>
       <section className="mx-auto max-w-6xl px-4 py-10">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-semibold text-emerald-700">TOKO SAYA</p>
-            <h1 className="mt-1 text-3xl font-bold">Produk saya</h1>
+            <p className="text-xs font-bold tracking-[.14em] text-[#568270]">
+              TOKO SAYA
+            </p>
+            <h1 className="mt-1 text-3xl font-bold text-[#26332d]">
+              Produk saya
+            </h1>
           </div>
           <Link
             href="/dashboard/products/new"
-            className="rounded-full bg-emerald-800 px-5 py-3 font-semibold text-white"
+            className="w-fit rounded-full bg-[#174c3c] px-5 py-3 font-semibold text-white transition hover:bg-[#103d30]"
           >
             + Jual barang
           </Link>
@@ -43,11 +47,27 @@ export default async function Dashboard() {
             </Link>
           </aside>
         )}
-        <div className="mt-8 divide-y rounded-2xl border bg-white">
+        <div className="mt-8 divide-y divide-[#e3ded2] overflow-hidden rounded-2xl border border-[#e3ded2] bg-[#fffefa]">
+          {products.length === 0 && (
+            <div className="p-8 text-center">
+              <p className="font-semibold text-[#26332d]">
+                Belum ada produk di tokomu
+              </p>
+              <p className="mt-2 text-sm text-stone-600">
+                Mulai dengan mengunggah barang preloved pertamamu.
+              </p>
+              <Link
+                href="/dashboard/products/new"
+                className="mt-4 inline-flex rounded-full bg-[#174c3c] px-5 py-2.5 text-sm font-semibold text-white"
+              >
+                Tambah produk
+              </Link>
+            </div>
+          )}
           {products.map((p) => (
             <div
               key={p.id}
-              className="flex items-center justify-between gap-4 p-4"
+              className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
             >
               <div>
                 <Link href={`/products/${p.id}`} className="font-semibold">

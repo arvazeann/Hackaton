@@ -47,6 +47,7 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 - Public stores use a strict allowlist DTO; phone, email, pickup addresses, and payment data are excluded. Store vacation hides listings and blocks new orders while preserving existing order processing.
 - In-app order notifications use transactional status updates and owner-scoped access; disabled types are not created. Wishlist reuses the private unique `Favorite` relation and rejects own products.
 - Admin Phase 2 adds audited account name and enable/disable actions, active-product edit/archive, pending-order cancellation, and a paginated audit-log view. Disabling revokes sessions with `sessionVersion`; account, product, and order changes share transactions with their audit rows. Cancellation notifications run after commit with bounded retries and respect recipient preferences.
+- Warm visual refresh: cream-and-forest color tokens, responsive search/navigation and catalog filters, consistent product cards, and clearer empty/auth/form states across client marketplace pages. Existing service contracts and business rules remain unchanged.
 
 ## Important Decisions
 
@@ -68,6 +69,21 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 - Admin changes never modify platform roles, password credentials, product images/ownership, or order snapshots. Audit metadata contains allowlisted field names and state transitions only.
 
 ## Verification
+
+### UI/UX refresh — 2026-10-13
+
+| Check                 | Status  | Command / notes                                                                                                                                                                                       |
+| --------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Typecheck             | PASS    | `npm run typecheck`                                                                                                                                                                                   |
+| Lint                  | PASS    | `npm run lint`                                                                                                                                                                                        |
+| Format check          | PASS    | `npm run format:check`                                                                                                                                                                                |
+| Tests                 | PASS    | `npm test` — 161 passed across 32 files; existing Vite CJS deprecation warning                                                                                                                        |
+| Build                 | FAIL    | `npm run build` three times; all attempts stopped with `EPERM unlink` under `.next/build/chunks`. A Next.js dev process is running and shares the generated `.next` directory. It was left untouched. |
+| Prisma validation     | PASS    | `npm run db:validate`                                                                                                                                                                                 |
+| Migration status      | PASS    | `npm run db:status` — all 12 migrations current on `preloved_dev`; no migration was created or run.                                                                                                   |
+| Manual browser checks | NOT RUN | No browser runner is available in this session. Desktop and mobile visual review remains pending.                                                                                                     |
+
+No database writes, resets, or seeds were performed for this UI refresh.
 
 Date: 2026-10-13 (Asia/Jakarta). Stage 6 follow-up B1 verification is recorded below; earlier stage audit records are retained.
 

@@ -1,38 +1,39 @@
 "use client";
+
 import { useSearchParams } from "next/navigation";
-export function FilterPanel({
+
+type CategoryOption = { id: string; name: string; slug: string };
+
+function FilterFields({
   categories,
+  search,
 }: {
-  categories: { id: string; name: string; slug: string }[];
+  categories: CategoryOption[];
+  search: URLSearchParams;
 }) {
-  const search = useSearchParams();
   return (
-    <form
-      action="/products"
-      className="grid gap-3 rounded-2xl border bg-white p-4"
-    >
-      <h2 className="font-semibold">Filter barang</h2>
-      <label className="grid gap-1 text-xs text-stone-500">
+    <>
+      <label className="grid gap-1.5 text-xs font-medium text-stone-600">
         Kategori
         <select
           name="category"
           defaultValue={search.get("category") ?? ""}
-          className="rounded-lg border p-2 text-sm text-stone-900"
+          className="rounded-xl border bg-[#fffefa] p-2.5 text-sm text-stone-900"
         >
           <option value="">Semua kategori</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.slug}>
-              {c.name}
+          {categories.map((category) => (
+            <option key={category.id} value={category.slug}>
+              {category.name}
             </option>
           ))}
         </select>
       </label>
-      <label className="grid gap-1 text-xs text-stone-500">
+      <label className="grid gap-1.5 text-xs font-medium text-stone-600">
         Kondisi
         <select
           name="condition"
           defaultValue={search.get("condition") ?? ""}
-          className="rounded-lg border p-2 text-sm text-stone-900"
+          className="rounded-xl border bg-[#fffefa] p-2.5 text-sm text-stone-900"
         >
           <option value="">Semua kondisi</option>
           <option value="like_new">Seperti baru</option>
@@ -40,43 +41,72 @@ export function FilterPanel({
           <option value="fair">Cukup</option>
         </select>
       </label>
-      <div className="grid grid-cols-2 gap-2">
+      <fieldset className="grid grid-cols-2 gap-2">
+        <legend className="sr-only">Rentang harga</legend>
         <input
           name="minPrice"
           aria-label="Harga minimum"
           placeholder="Min harga"
           defaultValue={search.get("minPrice") ?? ""}
-          className="w-full rounded-lg border p-2 text-sm"
+          className="min-w-0 rounded-xl border bg-[#fffefa] p-2.5 text-sm"
         />
         <input
           name="maxPrice"
           aria-label="Harga maksimum"
           placeholder="Maks harga"
           defaultValue={search.get("maxPrice") ?? ""}
-          className="w-full rounded-lg border p-2 text-sm"
+          className="min-w-0 rounded-xl border bg-[#fffefa] p-2.5 text-sm"
         />
-      </div>
+      </fieldset>
       <input
         name="city"
         aria-label="Kota"
         placeholder="Kota"
         defaultValue={search.get("city") ?? ""}
-        className="rounded-lg border p-2 text-sm"
+        className="rounded-xl border bg-[#fffefa] p-2.5 text-sm"
       />
-      <select
-        name="sort"
-        aria-label="Urutkan"
-        defaultValue={search.get("sort") ?? "newest"}
-        className="rounded-lg border p-2 text-sm"
-      >
-        <option value="newest">Terbaru</option>
-        <option value="price_asc">Harga terendah</option>
-        <option value="price_desc">Harga tertinggi</option>
-      </select>
+      <label className="grid gap-1.5 text-xs font-medium text-stone-600">
+        Urutkan
+        <select
+          name="sort"
+          defaultValue={search.get("sort") ?? "newest"}
+          className="rounded-xl border bg-[#fffefa] p-2.5 text-sm text-stone-900"
+        >
+          <option value="newest">Terbaru</option>
+          <option value="price_asc">Harga terendah</option>
+          <option value="price_desc">Harga tertinggi</option>
+        </select>
+      </label>
       <input type="hidden" name="q" value={search.get("q") ?? ""} />
-      <button className="rounded-full bg-emerald-800 py-2.5 font-semibold text-white">
-        Terapkan filter
-      </button>
-    </form>
+    </>
+  );
+}
+
+export function FilterPanel({ categories }: { categories: CategoryOption[] }) {
+  const search = useSearchParams();
+  return (
+    <>
+      <details className="rounded-2xl border border-[#e3ded2] bg-[#fffefa] p-4 md:hidden">
+        <summary className="cursor-pointer list-none font-semibold text-[#26332d] marker:hidden">
+          Filter &amp; urutkan
+        </summary>
+        <form action="/products" className="mt-4 grid gap-3">
+          <FilterFields categories={categories} search={search} />
+          <button className="rounded-full bg-[#174c3c] py-2.5 font-semibold text-white transition hover:bg-[#103d30]">
+            Terapkan filter
+          </button>
+        </form>
+      </details>
+      <form
+        action="/products"
+        className="hidden gap-3 rounded-2xl border border-[#e3ded2] bg-[#fffefa] p-4 md:grid"
+      >
+        <h2 className="font-semibold text-[#26332d]">Filter barang</h2>
+        <FilterFields categories={categories} search={search} />
+        <button className="rounded-full bg-[#174c3c] py-2.5 font-semibold text-white transition hover:bg-[#103d30]">
+          Terapkan filter
+        </button>
+      </form>
+    </>
   );
 }

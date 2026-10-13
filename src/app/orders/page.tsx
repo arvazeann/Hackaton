@@ -10,23 +10,35 @@ export default async function Orders() {
   return (
     <Shell>
       <section className="mx-auto max-w-5xl px-4 py-12">
-        <p className="text-sm font-semibold text-emerald-700">AKTIVITAS</p>
-        <h1 className="mb-8 mt-1 text-3xl font-bold">Pesanan</h1>
+        <p className="text-xs font-bold tracking-[.14em] text-[#568270]">
+          AKTIVITAS
+        </p>
+        <h1 className="mb-8 mt-1 text-3xl font-bold text-[#26332d]">Pesanan</h1>
         <div className="grid gap-8 md:grid-cols-2">
           {[
             ["Pembelian", purchases],
             ["Penjualan", sales],
           ].map(([title, list]) => (
             <div key={title as string}>
-              <h2 className="mb-4 text-xl font-bold">{title as string}</h2>
+              <h2 className="mb-4 text-xl font-bold text-[#26332d]">
+                {title as string}
+              </h2>
               <div className="grid gap-3">
+                {!(list as Awaited<ReturnType<typeof getOrders>>["purchases"])
+                  .length && (
+                  <div className="rounded-2xl border border-dashed border-[#d6d0c3] bg-[#fffefa] p-6 text-sm text-stone-600">
+                    {title === "Pembelian"
+                      ? "Kamu belum memiliki pesanan pembelian."
+                      : "Belum ada pesanan masuk dari pembeli."}
+                  </div>
+                )}
                 {(
                   list as Awaited<ReturnType<typeof getOrders>>["purchases"]
                 ).map((o) => (
                   <article
                     key={o.id}
                     id={o.id}
-                    className="rounded-2xl border p-4"
+                    className="rounded-2xl border border-[#e3ded2] bg-[#fffefa] p-4 shadow-sm"
                   >
                     <div className="flex justify-between">
                       <p className="font-semibold">{o.productTitleSnapshot}</p>

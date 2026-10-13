@@ -7,7 +7,7 @@ export default async function NewProduct() {
   const categories = await getProductCategories();
   return (
     <Shell>
-      <section className="mx-auto max-w-2xl px-4 py-12">
+      <section className="mx-auto max-w-2xl px-4 py-8 sm:py-12">
         <ProductForm categories={categories} />
       </section>
     </Shell>

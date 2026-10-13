@@ -37,7 +37,7 @@ export default async function PublicStorePage({
             menerima pesanan baru.
           </div>
         )}
-        <header className="flex flex-col gap-5 rounded-3xl border bg-white p-6 sm:flex-row sm:items-center">
+        <header className="flex flex-col gap-5 rounded-3xl border border-[#e3ded2] bg-[#fffefa] p-5 shadow-sm sm:flex-row sm:items-center sm:p-7">
           {store.logoUrl ? (
             <Image
               src={store.logoUrl}
@@ -50,14 +50,18 @@ export default async function PublicStorePage({
           ) : (
             <div
               aria-hidden="true"
-              className="grid size-24 place-items-center rounded-2xl bg-emerald-100 text-3xl font-bold text-emerald-900"
+              className="grid size-24 shrink-0 place-items-center rounded-2xl bg-[#e6eee7] text-3xl font-bold text-[#174c3c]"
             >
               {store.storeName.slice(0, 1).toUpperCase()}
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-emerald-800">TOKO</p>
-            <h1 className="mt-1 text-3xl font-bold">{store.storeName}</h1>
+            <p className="text-xs font-bold tracking-[.14em] text-[#568270]">
+              TOKO
+            </p>
+            <h1 className="mt-1 text-3xl font-bold text-[#26332d]">
+              {store.storeName}
+            </h1>
             <p className="mt-2 text-sm text-stone-600">
               {store.city}
               {store.province ? `, ${store.province}` : ""} · Bergabung{" "}
@@ -77,12 +81,15 @@ export default async function PublicStorePage({
           </div>
         </header>
         <div className="mt-10">
-          <h2 className="mb-5 text-2xl font-bold">Produk aktif</h2>
+          <h2 className="mb-5 text-2xl font-bold text-[#26332d]">
+            Produk aktif
+          </h2>
           <ProductGrid
             products={store.products}
             favoriteDisabled={!user}
             emptyTitle="Belum ada produk aktif"
             emptyDescription="Produk aktif dari toko ini akan tampil di sini."
+            emptyAction={{ href: "/products", label: "Jelajahi marketplace" }}
           />
           {store.totalPages > 1 && (
             <nav
