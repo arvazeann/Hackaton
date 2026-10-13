@@ -2,12 +2,14 @@ import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import {
   adminAddressQuerySchema,
+  adminAuditLogQuerySchema,
   adminOrderQuerySchema,
   adminProductQuerySchema,
   adminUserQuerySchema,
 } from "@/schemas";
 import type {
   AdminAddressDTO,
+  AdminAuditLogDTO,
   AdminOrderDTO,
   AdminOverviewDTO,
   AdminPage,
@@ -46,6 +48,7 @@ const userSelect = {
   createdAt: true,
   lastLoginAt: true,
   lastActiveAt: true,
+  disabledAt: true,
 } satisfies Prisma.UserSelect;
 
 function mapUser(
@@ -59,6 +62,7 @@ function mapUser(
     name: row.name,
     emailMasked: maskEmail(row.email),
     role: row.role,
+    isDisabled: row.disabledAt !== null,
     createdAt: row.createdAt.toISOString(),
     lastLoginAt: row.lastLoginAt?.toISOString() ?? null,
     lastActiveAt: row.lastActiveAt?.toISOString() ?? null,
@@ -171,6 +175,8 @@ export async function listAdminUsers(
   };
   const where: Prisma.UserWhereInput = {
     ...(query.role ? { role: query.role } : {}),
+    ...(query.accountState === "enabled" ? { disabledAt: null } : {}),
+    ...(query.accountState === "disabled" ? { disabledAt: { not: null } } : {}),
     ...(query.dateFrom || query.dateTo ? { createdAt: dateFilter } : {}),
     ...(query.q
       ? {
@@ -213,11 +219,20 @@ export async function listAdminProducts(
       select: {
         id: true,
         title: true,
+        description: true,
         price: true,
+        categoryId: true,
+        condition: true,
+        city: true,
         status: true,
         createdAt: true,
         category: { select: { name: true } },
         seller: { select: { id: true, name: true } },
+        orders: {
+          where: { status: { in: ["pending", "confirmed"] } },
+          select: { id: true },
+          take: 1,
+        },
       },
     }),
     db.product.count({ where }),
@@ -226,8 +241,13 @@ export async function listAdminProducts(
     rows.map((row) => ({
       id: row.id,
       title: row.title,
+      description: row.description,
       price: row.price,
+      categoryId: row.categoryId,
       status: row.status,
+      condition: row.condition,
+      city: row.city,
+      hasOpenOrder: row.orders.length > 0,
       category: row.category.name,
       seller: { id: row.seller.id, name: row.seller.name },
       createdAt: row.createdAt.toISOString(),
@@ -236,6 +256,14 @@ export async function listAdminProducts(
     query.pageSize,
     total,
   );
+}
+
+export async function getAdminProductCategories() {
+  await requireAdminActor();
+  return db.category.findMany({
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  });
 }
 
 export async function listAdminOrders(
@@ -375,4 +403,69 @@ export async function revealAdminUserEmail(targetUserId: string) {
     });
     return { email: target.email };
   });
+}
+
+function safeAuditMetadata(
+  value: Prisma.JsonValue | null,
+): AdminAuditLogDTO["metadata"] {
+  if (typeof value !== "object" || value === null || Array.isArray(value))
+    return null;
+  const output: NonNullable<AdminAuditLogDTO["metadata"]> = {};
+  for (const key of [
+    "changedFields",
+    "fromDisabled",
+    "toDisabled",
+    "fromStatus",
+    "toStatus",
+  ] as const) {
+    const item = value[key];
+    if (typeof item === "string" || typeof item === "boolean")
+      output[key] = item;
+  }
+  return output;
+}
+
+export async function listAdminAuditLogs(
+  rawQuery: unknown,
+): Promise<AdminPage<AdminAuditLogDTO>> {
+  await requireAdminActor();
+  const query = adminAuditLogQuerySchema.parse(rawQuery);
+  const where: Prisma.AuditLogWhereInput = {
+    ...(query.action ? { action: query.action } : {}),
+    ...(query.targetType ? { targetType: query.targetType } : {}),
+  };
+  const [rows, total] = await Promise.all([
+    db.auditLog.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: (query.page - 1) * query.pageSize,
+      take: query.pageSize,
+      select: {
+        id: true,
+        action: true,
+        targetType: true,
+        targetId: true,
+        requestId: true,
+        metadata: true,
+        createdAt: true,
+        actor: { select: { id: true, name: true } },
+      },
+    }),
+    db.auditLog.count({ where }),
+  ]);
+  return pageOf(
+    rows.map((row) => ({
+      id: row.id,
+      actor: row.actor,
+      action: row.action,
+      targetType: row.targetType,
+      targetId: row.targetId,
+      requestId: row.requestId,
+      metadata: safeAuditMetadata(row.metadata),
+      createdAt: row.createdAt.toISOString(),
+    })),
+    query.page,
+    query.pageSize,
+    total,
+  );
 }

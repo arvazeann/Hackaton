@@ -1,4 +1,5 @@
 import { AdminPagination } from "@/components/admin/admin-pagination";
+import { AdminOrderCancelAction } from "@/components/admin/admin-mutation-actions";
 import { adminOrderQuerySchema } from "@/schemas";
 import { listAdminOrders } from "@/server/services/admin";
 
@@ -87,6 +88,7 @@ export default async function AdminOrdersPage({
                 "Pembeli",
                 "Penjual",
                 "Dibuat",
+                "Tindakan",
               ].map((heading) => (
                 <th className="px-4 py-3 font-semibold" key={heading}>
                   {heading}
@@ -108,13 +110,20 @@ export default async function AdminOrdersPage({
                 <td className="px-4 py-3">
                   {new Date(item.createdAt).toLocaleDateString("id-ID")}
                 </td>
+                <td className="px-4 py-3">
+                  {item.status === "pending" ? (
+                    <AdminOrderCancelAction orderId={item.id} />
+                  ) : (
+                    "—"
+                  )}
+                </td>
               </tr>
             ))}
             {result.items.length === 0 && (
               <tr>
                 <td
                   className="px-4 py-8 text-center text-stone-500"
-                  colSpan={7}
+                  colSpan={8}
                 >
                   Tidak ada pesanan untuk filter ini.
                 </td>

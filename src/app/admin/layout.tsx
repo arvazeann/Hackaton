@@ -22,6 +22,7 @@ export default async function AdminLayout({
             <Link href="/admin/products">Produk</Link>
             <Link href="/admin/orders">Pesanan</Link>
             <Link href="/admin/addresses">Alamat</Link>
+            <Link href="/admin/audit-logs">Audit log</Link>
             <Link href="/">Kembali ke toko</Link>
           </nav>
         </div>

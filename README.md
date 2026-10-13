@@ -10,8 +10,8 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 
 ## Current Status
 
-- Current stage: Stage 6 follow-up: Admin Area Phase 1 (implemented; automated and migration checks complete; browser checks pending).
-- Last completed stage: Stage 6 follow-up: Admin Area Phase 1; B1 and B2 extend Stage 6's original scope without renumbering.
+- Current stage: Stage 6 follow-up: Admin Area Phase 2 (implemented; migration applied; automated checks complete; browser checks pending).
+- Last completed stage: Stage 6 follow-up: Admin Area Phase 2; B1, B2, and Admin Phases 1–2 extend Stage 6's original scope without renumbering.
 - Interim local-disk product image storage is implemented for the single-machine demo. Stage 7 Cloudflare R2 remains proposed and has not started.
 
 ## Architecture
@@ -29,7 +29,7 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 
 - Registration validates on the server, normalizes email, handles duplicate-email races, and stores bcrypt hashes.
 - Auth.js Credentials verifies credentials against PostgreSQL and uses JWT sessions.
-- Session JWT contains the user ID and standard JWT timing identifiers; the session query only selects user ID, name, and email.
+- Session JWT contains the user ID, session version, and standard JWT timing identifiers; session resolution checks the current enabled account and role from PostgreSQL.
 - Authenticated pages use server-side session checks and redirect visitors to login with a return path.
 - Navigation displays signed-in state and provides Auth.js logout.
 - Product listing, detail, seller dashboard, create, update, and archive use Prisma through `src/server/services/products.ts`.
@@ -46,6 +46,7 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 - Seeded seller profiles use collision-safe URL slugs and keep province nullable until store profile completion.
 - Public stores use a strict allowlist DTO; phone, email, pickup addresses, and payment data are excluded. Store vacation hides listings and blocks new orders while preserving existing order processing.
 - In-app order notifications use transactional status updates and owner-scoped access; disabled types are not created. Wishlist reuses the private unique `Favorite` relation and rejects own products.
+- Admin Phase 2 adds audited account name and enable/disable actions, active-product edit/archive, pending-order cancellation, and a paginated audit-log view. Disabling revokes sessions with `sessionVersion`; account, product, and order changes share transactions with their audit rows. Cancellation notifications run after commit with bounded retries and respect recipient preferences.
 
 ## Important Decisions
 
@@ -64,6 +65,7 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 - Seller payment accounts are soft-deactivated, limited to three active entries, and do not modify payment snapshots on existing orders. Address/order shipping snapshots are likewise immutable.
 - Replaced avatar/logo uploads remain on disk pending orphan cleanup. Uploaded product image ownership is recorded; enforcing PRODUCT-purpose ownership when attaching images remains TODO.
 - Notification preferences default to enabled without creating preference rows; disabled types skip notification creation while order status remains visible on the order page.
+- Admin changes never modify platform roles, password credentials, product images/ownership, or order snapshots. Audit metadata contains allowlisted field names and state transitions only.
 
 ## Verification
 
@@ -113,6 +115,21 @@ Migration verification: PASS. `preloved_b2_full_verify_20261013` applied all 10 
 Migration verification: PASS. The full 11-migration chain applied to `preloved_admin_verify_20261013`; Prisma 7.10 drift check reported “No difference detected” using `preloved_admin_shadow_verify_20261013`. A pre-Admin database with a synthetic existing user applied the Admin migration and retained the expected USER role, null activity timestamps, and no audit rows. The Admin migration was deployed to `preloved_dev` with `prisma migrate deploy`; the latest `npm run db:status` reports 11 migrations and “Database schema is up to date.” No reset, db push, or seed was run against `preloved_dev`.
 
 Cleanup note: automatic command review rejected the requested temporary-database drop operation. `preloved_admin_verify_20261013`, `preloved_admin_shadow_verify_20261013`, and `preloved_admin_preverify_20261013` remain; the first two contain only verification schema state and the last contains one synthetic user. Remove them manually when convenient. Vitest reports the existing Vite CJS Node API deprecation warning.
+
+### Stage 6 follow-up: Admin Area Phase 2 (2026-10-13)
+
+| Check                 | Status  | Command / notes                                                           |
+| --------------------- | ------- | ------------------------------------------------------------------------- |
+| Typecheck             | PASS    | `npm run typecheck`                                                       |
+| Lint                  | PASS    | `npm run lint`                                                            |
+| Format check          | PASS    | `npm run format:check`                                                    |
+| Tests                 | PASS    | `npm test` — 161 passed across 32 files                                   |
+| Build                 | PASS    | `npm run build`                                                           |
+| Prisma validation     | PASS    | `npm run db:validate`                                                     |
+| Migration status      | PASS    | `npm run db:status` — Phase 2 migration applied; full chain current       |
+| Manual browser checks | NOT RUN | No browser runner/session available; see Admin checklist in Handoff Notes |
+
+Migration `20261013150000_admin_area_phase2` was applied to `preloved_dev` using `npm run db:migrate`. No reset, seed, or destructive database operation was run. Vitest reports the existing Vite CJS Node API deprecation warning. Automated tests use Prisma mocks; no isolated PostgreSQL concurrency/rollback integration run was available in this task.
 
 Date: 2026-10-13 (Asia/Jakarta). Stage 6 verification.
 
@@ -257,6 +274,7 @@ No further implementation step is approved. Admin Area Phase 1 and Stage 6 follo
 - Manual browser checklist (NOT RUN): verify `/profile` loads for a seller and a plain buyer; activate a store; add and soft-delete payment accounts and verify the three-active limit; add addresses and verify the default rule; change a password; upload an avatar; verify the seller dashboard banner without an account; confirm an order with and without an account; verify the buyer sees payment instructions only after confirmation; verify old confirmed orders show “Contact the seller for payment details”; sign in as a second user and verify they cannot open the first user's addresses or payment accounts. Also try assigning another user's uploaded key and a wrong-purpose key to avatar/logo; upload matching AVATAR/LOGO keys; replace avatar/logo and confirm prior files remain available.
 - B1 and B2 are Stage 6 follow-ups; no stage numbers changed. Keep public store DTOs allowlisted and notification messages free of contact/payment data.
 - B1, B2, and Admin migrations are applied to `preloved_dev`; do not reset, db push, or seed that database without separate approval.
-- Admin migration `20261013140000_admin_area` is applied to `preloved_dev`; latest status is up to date. Three isolated Admin verification databases remain because automated command review rejected their deletion: `preloved_admin_verify_20261013`, `preloved_admin_shadow_verify_20261013`, and `preloved_admin_preverify_20261013` (the latter has one synthetic user).
+- Admin migrations `20261013140000_admin_area` and `20261013150000_admin_area_phase2` are applied to `preloved_dev`; latest status is up to date. Three isolated Admin verification databases remain because automated command review rejected their deletion: `preloved_admin_verify_20261013`, `preloved_admin_shadow_verify_20261013`, and `preloved_admin_preverify_20261013` (the latter has one synthetic user).
 - Admin browser checklist (NOT RUN; use an admin and a regular account): verify anonymous and USER access are denied on every admin page/API; ADMIN dashboard, filters and 12/48 pagination; emails masked until explicit audited reveal; address summaries remain masked; order lists disclose no contact/payment data; each service and route rejects non-admin calls; bootstrap promotes only a pre-existing account and reruns safely. Confirm no admin UI mutation controls are present.
+- Admin Phase 2 browser checklist (NOT RUN; use an enabled ADMIN, a second ADMIN, and a regular account): verify name edits and role/password fields are rejected; disable blocks a user's next request and login, and the old session remains invalid after re-enable; self-disable and disabling the last enabled ADMIN are rejected; active products edit/archive only without pending/confirmed orders and keep images/ownership/order snapshots; only pending orders cancel with a 5–500 character reason, without changing product/payment/shipping snapshots; both recipients honor notification preferences; retries do not duplicate notifications; audit rows omit personal values and cancellation reason.
 - B2 manual browser checklist (NOT RUN; use two accounts): open a public store without login and verify its safe fields/products and unknown-slug 404; turn vacation mode on and confirm the seller disappears from home/listing while its store/direct product remain visible, new orders are blocked, and existing orders can still be processed; exercise notification bell/count, every order notification, disabled/enabled preferences, mark-one/read-all, and verify disabled types create no notification while order status remains visible; save products to the private wishlist and confirm reserved/sold labels and disabled order actions; attempt to favorite one's own product; as the second account, try direct access to the first user's wishlist and notifications.

@@ -14,6 +14,8 @@ const mocks = vi.hoisted(() => {
     product: { groupBy: vi.fn(), findMany: vi.fn(), count: vi.fn() },
     order: { groupBy: vi.fn(), findMany: vi.fn(), count: vi.fn() },
     address: { findMany: vi.fn(), count: vi.fn() },
+    category: { findMany: vi.fn() },
+    auditLog: { findMany: vi.fn(), count: vi.fn() },
   };
 });
 
@@ -24,6 +26,8 @@ vi.mock("@/lib/db", () => ({
     product: mocks.product,
     order: mocks.order,
     address: mocks.address,
+    category: mocks.category,
+    auditLog: mocks.auditLog,
     $transaction: mocks.transaction,
   },
 }));
@@ -31,6 +35,8 @@ vi.mock("@/lib/db", () => ({
 import {
   getAdminOverview,
   listAdminAddresses,
+  listAdminAuditLogs,
+  getAdminProductCategories,
   listAdminOrders,
   listAdminProducts,
   listAdminUsers,
@@ -45,13 +51,19 @@ const adminCalls = [
   () => listAdminProducts({}),
   () => listAdminOrders({}),
   () => listAdminAddresses({}),
+  () => listAdminAuditLogs({}),
+  () => getAdminProductCategories(),
   () => revealAdminUserEmail(targetId),
 ];
 
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.auth.mockResolvedValue({ user: { id: adminId } });
-  mocks.user.findUnique.mockResolvedValue({ id: adminId, role: "ADMIN" });
+  mocks.user.findUnique.mockResolvedValue({
+    id: adminId,
+    role: "ADMIN",
+    disabledAt: null,
+  });
   mocks.user.count.mockResolvedValue(0);
   mocks.user.findMany.mockResolvedValue([]);
   mocks.product.groupBy.mockResolvedValue([]);
@@ -62,6 +74,9 @@ beforeEach(() => {
   mocks.order.count.mockResolvedValue(0);
   mocks.address.findMany.mockResolvedValue([]);
   mocks.address.count.mockResolvedValue(0);
+  mocks.category.findMany.mockResolvedValue([]);
+  mocks.auditLog.findMany.mockResolvedValue([]);
+  mocks.auditLog.count.mockResolvedValue(0);
   mocks.tx.$queryRaw.mockResolvedValue([{ id: adminId }]);
   mocks.tx.user.findUnique.mockResolvedValue({
     id: targetId,
@@ -102,6 +117,7 @@ describe("admin services", () => {
         createdAt,
         lastLoginAt: null,
         lastActiveAt: null,
+        disabledAt: null,
         passwordHash: "NEVER_SELECT_ME",
         phone: "PRIVATE_PHONE_08123456789",
       },
@@ -110,10 +126,15 @@ describe("admin services", () => {
       {
         id: "product-1",
         title: "Tas",
+        description: "Bagus",
         price: 100,
+        categoryId: "category-1",
         status: "active",
+        condition: "good",
+        city: "Bandung",
         createdAt,
         category: { name: "Aksesori" },
+        orders: [],
         seller: {
           id: targetId,
           name: "Ayu",

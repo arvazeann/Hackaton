@@ -1,5 +1,6 @@
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminRevealEmailButton } from "@/components/admin/admin-reveal-email-button";
+import { AdminUserActions } from "@/components/admin/admin-mutation-actions";
 import { adminUserQuerySchema } from "@/schemas";
 import { listAdminUsers } from "@/server/services/admin";
 
@@ -36,7 +37,7 @@ export default async function AdminUsersPage({
         Email disamarkan. Pembukaan email dicatat di AuditLog.
       </p>
       <form
-        className="mt-5 grid gap-3 rounded-xl border bg-white p-4 sm:grid-cols-4"
+        className="mt-5 grid gap-3 rounded-xl border bg-white p-4 sm:grid-cols-5"
         method="get"
       >
         <label className="text-sm">
@@ -60,6 +61,18 @@ export default async function AdminUsersPage({
           </select>
         </label>
         <label className="text-sm">
+          Status akun
+          <select
+            className="mt-1 w-full rounded-lg border px-3 py-2"
+            name="accountState"
+            defaultValue={query.data.accountState ?? ""}
+          >
+            <option value="">Semua</option>
+            <option value="enabled">Aktif</option>
+            <option value="disabled">Nonaktif</option>
+          </select>
+        </label>
+        <label className="text-sm">
           Daftar sejak
           <input
             className="mt-1 w-full rounded-lg border px-3 py-2"
@@ -77,7 +90,7 @@ export default async function AdminUsersPage({
             defaultValue={query.data.dateTo ?? ""}
           />
         </label>
-        <div className="flex gap-2 sm:col-span-4">
+        <div className="flex gap-2 sm:col-span-5">
           <button
             className="rounded-lg bg-emerald-800 px-4 py-2 text-white"
             type="submit"
@@ -100,6 +113,8 @@ export default async function AdminUsersPage({
                 "Terdaftar",
                 "Login terakhir",
                 "Aktivitas terakhir",
+                "Status akun",
+                "Tindakan",
               ].map((heading) => (
                 <th className="px-4 py-3 font-semibold" key={heading}>
                   {heading}
@@ -138,13 +153,23 @@ export default async function AdminUsersPage({
                     "Belum tercatat"
                   )}
                 </td>
+                <td className="px-4 py-3">
+                  {user.isDisabled ? "Nonaktif" : "Aktif"}
+                </td>
+                <td className="px-4 py-3">
+                  <AdminUserActions
+                    id={user.id}
+                    name={user.name}
+                    isDisabled={user.isDisabled}
+                  />
+                </td>
               </tr>
             ))}
             {result.items.length === 0 && (
               <tr>
                 <td
                   className="px-4 py-8 text-center text-stone-500"
-                  colSpan={6}
+                  colSpan={8}
                 >
                   Tidak ada pengguna untuk filter ini.
                 </td>

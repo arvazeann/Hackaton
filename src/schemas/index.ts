@@ -278,8 +278,36 @@ export const adminUserQuerySchema = adminPaginationSchema
   .extend({
     q: adminSearchSchema,
     role: z.enum(["USER", "ADMIN"]).optional(),
+    accountState: z.enum(["enabled", "disabled"]).optional(),
     dateFrom: z.iso.date().optional(),
     dateTo: z.iso.date().optional(),
+  })
+  .strict();
+
+export const adminUserNameUpdateSchema = profileSchema
+  .pick({ name: true })
+  .strict();
+export const adminUserAccountStateSchema = z
+  .object({ action: z.enum(["disable", "enable"]) })
+  .strict();
+export const adminProductUpdateSchema = productSchema
+  .pick({
+    title: true,
+    description: true,
+    price: true,
+    categoryId: true,
+    condition: true,
+    city: true,
+  })
+  .strict();
+export const adminProductArchiveSchema = z.object({}).strict();
+export const adminOrderCancelSchema = z
+  .object({ reason: cancelReasonSchema.shape.reason })
+  .strict();
+export const adminAuditLogQuerySchema = adminPaginationSchema
+  .extend({
+    action: z.string().trim().max(80).optional(),
+    targetType: z.string().trim().max(80).optional(),
   })
   .strict();
 export const adminProductQuerySchema = adminPaginationSchema

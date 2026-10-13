@@ -22,6 +22,8 @@ describe("Auth.js Credentials", () => {
       name: "Ayu",
       email: "ayu@example.test",
       passwordHash,
+      disabledAt: null,
+      sessionVersion: 4,
       phone: "08123456789",
     });
 
@@ -36,10 +38,18 @@ describe("Auth.js Credentials", () => {
       id: "user-1",
       name: "Ayu",
       email: "ayu@example.test",
+      sessionVersion: 4,
     });
     expect(findUnique).toHaveBeenCalledWith({
       where: { email: "ayu@example.test" },
-      select: { id: true, name: true, email: true, passwordHash: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        passwordHash: true,
+        disabledAt: true,
+        sessionVersion: true,
+      },
     });
     expect(update).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -55,6 +65,8 @@ describe("Auth.js Credentials", () => {
       name: "Ayu",
       email: "ayu@example.test",
       passwordHash: await bcrypt.hash("password-valid", 4),
+      disabledAt: null,
+      sessionVersion: 0,
     });
     await expect(
       authorizeCredentials({
@@ -73,5 +85,23 @@ describe("Auth.js Credentials", () => {
     await expect(
       authorizeCredentials({ email: "bad", password: "x" }),
     ).resolves.toBeNull();
+  });
+
+  it("menolak akun nonaktif walaupun password cocok", async () => {
+    findUnique.mockResolvedValue({
+      id: "user-1",
+      name: "Ayu",
+      email: "ayu@example.test",
+      passwordHash: await bcrypt.hash("password-valid", 4),
+      disabledAt: new Date(),
+      sessionVersion: 1,
+    });
+    await expect(
+      authorizeCredentials({
+        email: "ayu@example.test",
+        password: "password-valid",
+      }),
+    ).resolves.toBeNull();
+    expect(update).not.toHaveBeenCalled();
   });
 });

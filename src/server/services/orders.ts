@@ -95,6 +95,13 @@ export async function createOrder(
 
   try {
     return await db.$transaction(async (tx) => {
+      const lockedProduct = await tx.$queryRaw<Array<{ id: string }>>`
+        SELECT "id" FROM "products"
+        WHERE "id" = ${parsed.data.productId}
+        FOR UPDATE
+      `;
+      if (lockedProduct.length !== 1)
+        return fail("NOT_FOUND", "Produk tidak ditemukan.");
       const product = await tx.product.findUnique({
         where: { id: parsed.data.productId },
       });

@@ -11,6 +11,7 @@ export type AdminUserDTO = {
   name: string;
   emailMasked: string;
   role: "USER" | "ADMIN";
+  isDisabled: boolean;
   createdAt: string;
   lastLoginAt: string | null;
   lastActiveAt: string | null;
@@ -20,8 +21,13 @@ export type AdminUserDTO = {
 export type AdminProductDTO = {
   id: string;
   title: string;
+  description: string;
   price: number;
+  categoryId: string;
   status: "active" | "reserved" | "sold" | "archived";
+  condition: "like_new" | "good" | "fair";
+  city: string;
+  hasOpenOrder: boolean;
   category: string;
   seller: { id: string; name: string };
   createdAt: string;
@@ -67,4 +73,15 @@ export type AdminOverviewDTO = {
     AdminOrderDTO,
     "id" | "orderCode" | "productTitle" | "status" | "createdAt"
   >[];
+};
+
+export type AdminAuditLogDTO = {
+  id: string;
+  actor: { id: string; name: string } | null;
+  action: string;
+  targetType: string;
+  targetId: string;
+  requestId: string | null;
+  metadata: Record<string, string | boolean | null> | null;
+  createdAt: string;
 };

@@ -29,15 +29,19 @@ export async function requireAdminActor(): Promise<{ id: string }> {
 
   const actor = await db.user.findUnique({
     where: { id: actorId },
-    select: { id: true, role: true },
+    select: { id: true, role: true, disabledAt: true },
   });
-  if (!actor || actor.role !== "ADMIN") throw new AdminAuthorizationError(403);
+  if (!actor || actor.role !== "ADMIN" || actor.disabledAt !== null)
+    throw new AdminAuthorizationError(403);
   return { id: actor.id };
 }
 
 export function adminErrorResponse(error: unknown) {
   if (error instanceof AdminRecordNotFoundError) {
     return Response.json({ message: error.message }, { status: 404 });
+  }
+  if (error instanceof Error && error.name === "AdminMutationConflictError") {
+    return Response.json({ message: error.message }, { status: 409 });
   }
   if (error instanceof z.ZodError) {
     return Response.json(

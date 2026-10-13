@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import { authorizeCredentials } from "@/lib/auth/credentials";
 import { logAuthFailure } from "@/lib/auth/logging";
 import { db } from "@/lib/db";
+import { isSessionVersionCurrent } from "@/lib/auth/session-version";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
@@ -20,6 +21,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     jwt({ token, user }) {
       return {
         sub: user?.id ?? token.sub,
+        ...(typeof user?.sessionVersion === "number"
+          ? { sessionVersion: user.sessionVersion }
+          : typeof token.sessionVersion === "number"
+            ? { sessionVersion: token.sessionVersion }
+            : {}),
         ...(token.iat === undefined ? {} : { iat: token.iat }),
         ...(token.exp === undefined ? {} : { exp: token.exp }),
         ...(token.jti === undefined ? {} : { jti: token.jti }),
@@ -30,9 +36,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         try {
           const user = await db.user.findUnique({
             where: { id: token.sub },
-            select: { id: true, name: true, email: true, role: true },
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+              disabledAt: true,
+              sessionVersion: true,
+            },
           });
-          if (user) {
+          if (
+            isSessionVersionCurrent(
+              typeof token.sessionVersion === "number"
+                ? token.sessionVersion
+                : undefined,
+              user,
+            ) &&
+            user
+          ) {
             session.user.id = user.id;
             session.user.name = user.name;
             session.user.email = user.email;

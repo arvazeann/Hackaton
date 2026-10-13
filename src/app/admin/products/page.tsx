@@ -1,6 +1,10 @@
 import { AdminPagination } from "@/components/admin/admin-pagination";
+import { AdminProductActions } from "@/components/admin/admin-mutation-actions";
 import { adminProductQuerySchema } from "@/schemas";
-import { listAdminProducts } from "@/server/services/admin";
+import {
+  getAdminProductCategories,
+  listAdminProducts,
+} from "@/server/services/admin";
 
 export default async function AdminProductsPage({
   searchParams,
@@ -21,12 +25,16 @@ export default async function AdminProductsPage({
         Filter atau halaman tidak valid. Atur ulang filter.
       </p>
     );
-  const result = await listAdminProducts(query.data);
+  const [result, categories] = await Promise.all([
+    listAdminProducts(query.data),
+    getAdminProductCategories(),
+  ]);
   return (
     <section>
       <h1 className="text-3xl font-black">Produk</h1>
       <p className="mt-2 text-sm text-stone-600">
-        Informasi baca-saja; tidak ada tindakan perubahan status.
+        Hanya produk aktif tanpa pesanan terbuka yang dapat diedit atau
+        diarsipkan.
       </p>
       <form
         className="mt-5 grid gap-3 rounded-xl border bg-white p-4 sm:grid-cols-3"
@@ -84,6 +92,7 @@ export default async function AdminProductsPage({
                 "Kategori",
                 "Penjual",
                 "Dibuat",
+                "Tindakan",
               ].map((heading) => (
                 <th className="px-4 py-3 font-semibold" key={heading}>
                   {heading}
@@ -104,13 +113,16 @@ export default async function AdminProductsPage({
                 <td className="px-4 py-3">
                   {new Date(item.createdAt).toLocaleDateString("id-ID")}
                 </td>
+                <td className="px-4 py-3">
+                  <AdminProductActions product={item} categories={categories} />
+                </td>
               </tr>
             ))}
             {result.items.length === 0 && (
               <tr>
                 <td
                   className="px-4 py-8 text-center text-stone-500"
-                  colSpan={6}
+                  colSpan={7}
                 >
                   Tidak ada produk untuk filter ini.
                 </td>

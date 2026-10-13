@@ -59,7 +59,12 @@ describe("POST /api/auth/register", () => {
     const [args] = create.mock.calls[0] as [
       { data: { name: string; email: string; passwordHash: string } },
     ];
-    findUnique.mockResolvedValue({ id: "new-user", ...args.data });
+    findUnique.mockResolvedValue({
+      id: "new-user",
+      ...args.data,
+      disabledAt: null,
+      sessionVersion: 0,
+    });
 
     await expect(
       authorizeCredentials({

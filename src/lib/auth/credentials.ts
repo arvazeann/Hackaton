@@ -14,9 +14,20 @@ export async function authorizeCredentials(credentials: unknown) {
   const email = parsed.data.email.trim().toLowerCase();
   const user = await db.user.findUnique({
     where: { email },
-    select: { id: true, name: true, email: true, passwordHash: true },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      passwordHash: true,
+      disabledAt: true,
+      sessionVersion: true,
+    },
   });
-  if (!user || !(await bcrypt.compare(parsed.data.password, user.passwordHash)))
+  if (
+    !user ||
+    user.disabledAt !== null ||
+    !(await bcrypt.compare(parsed.data.password, user.passwordHash))
+  )
     return null;
 
   await db.user.update({
@@ -25,5 +36,10 @@ export async function authorizeCredentials(credentials: unknown) {
     select: { id: true },
   });
 
-  return { id: user.id, name: user.name, email: user.email };
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    sessionVersion: user.sessionVersion,
+  };
 }

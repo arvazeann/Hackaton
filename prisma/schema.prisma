@@ -86,6 +86,8 @@ model User {
   role                    UserRole                 @default(USER)
   lastLoginAt             DateTime?                @map("last_login_at") @db.Timestamptz(6)
   lastActiveAt            DateTime?                @map("last_active_at") @db.Timestamptz(6)
+  disabledAt              DateTime?                @map("disabled_at") @db.Timestamptz(6)
+  sessionVersion          Int                      @default(0) @map("session_version")
   createdAt               DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt               DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   products                Product[]
@@ -292,6 +294,7 @@ model AuditLog {
   targetType String   @map("target_type") @db.VarChar(80)
   targetId   String   @map("target_id") @db.VarChar(255)
   requestId  String?  @map("request_id") @db.VarChar(64)
+  metadata   Json?    @db.JsonB
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
 

@@ -11,6 +11,7 @@ const prisma = vi.hoisted(() => ({
   product: { findUnique: vi.fn(), updateMany: vi.fn() },
   paymentAccount: { findFirst: vi.fn() },
   sellerProfile: { findUnique: vi.fn() },
+  $queryRaw: vi.fn(),
   $transaction: vi.fn(),
 }));
 const notification = vi.hoisted(() => ({ createOrderNotification: vi.fn() }));
@@ -105,6 +106,7 @@ beforeEach(() => {
     ...state.product,
   }));
   prisma.sellerProfile.findUnique.mockResolvedValue({ isOnVacation: false });
+  prisma.$queryRaw.mockResolvedValue([{ id: ids.product }]);
   prisma.paymentAccount.findFirst.mockResolvedValue({
     id: "ffffffff-ffff-4fff-8fff-ffffffffffff",
     sellerProfileId: ids.seller,

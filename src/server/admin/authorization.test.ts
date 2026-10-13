@@ -26,7 +26,11 @@ const adminId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.auth.mockResolvedValue({ user: { id: adminId } });
-  mocks.findUnique.mockResolvedValue({ id: adminId, role: "ADMIN" });
+  mocks.findUnique.mockResolvedValue({
+    id: adminId,
+    role: "ADMIN",
+    disabledAt: null,
+  });
   mocks.recordCurrentUserActivity.mockResolvedValue(undefined);
 });
 
@@ -37,13 +41,17 @@ describe("admin authorization", () => {
     expect(mocks.findUnique).not.toHaveBeenCalled();
 
     mocks.auth.mockResolvedValue({ user: { id: adminId } });
-    mocks.findUnique.mockResolvedValue({ id: adminId, role: "USER" });
+    mocks.findUnique.mockResolvedValue({
+      id: adminId,
+      role: "USER",
+      disabledAt: null,
+    });
     await expect(requireAdminActor()).rejects.toBeInstanceOf(
       AdminAuthorizationError,
     );
     expect(mocks.findUnique).toHaveBeenCalledWith({
       where: { id: adminId },
-      select: { id: true, role: true },
+      select: { id: true, role: true, disabledAt: true },
     });
   });
 
