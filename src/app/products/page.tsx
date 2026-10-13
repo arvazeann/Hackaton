@@ -41,22 +41,24 @@ export default async function Products({
             className="w-full rounded-full border border-[#e3ded2] bg-[#fffefa] p-3"
           />
         </form>
-        <div className="mt-6 grid gap-4 md:mt-8 md:grid-cols-[250px_minmax(0,1fr)] md:gap-8">
+        <div className="mt-6 grid gap-4 md:mt-8 lg:grid-cols-[250px_minmax(0,1fr)] lg:gap-8">
           <aside
             aria-label="Filter katalog"
-            className="md:sticky md:top-24 md:self-start"
+            className="lg:sticky lg:top-24 lg:self-start"
           >
             <FilterPanel categories={categories} />
           </aside>
           <div>
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[#eeeae1] px-4 py-3 text-sm text-stone-600">
-              <span>
-                {result.total} barang ditemukan
-                {query.q ? ` untuk “${query.q}”` : ""}
-              </span>
-              <span>
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-2 border-b border-[#d9d4c8] pb-4 text-sm text-stone-600">
+              <p>
+                <span className="font-semibold text-[#342d25]">
+                  {result.total} barang
+                </span>{" "}
+                ditemukan{query.q ? ` untuk “${query.q}”` : ""}
+              </p>
+              <p>
                 Halaman {query.page} dari {Math.max(1, pageCount)}
-              </span>
+              </p>
             </div>
             <ProductGrid products={result.items} favoriteDisabled={!user} />
             <div className="mt-8 flex justify-center gap-2">

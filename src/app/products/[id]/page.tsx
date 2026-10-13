@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Shell } from "@/components/layout/shell";
-import { StatusBadge } from "@/components/product/cards";
+import { ConditionBadge, StatusBadge } from "@/components/product/cards";
 import { getProduct } from "@/server/services/products";
 import { formatRupiah } from "@/lib/format";
 import { getCurrentUser } from "@/lib/session";
@@ -25,7 +25,7 @@ export default async function Detail({
           {p.images.map((img, i) => (
             <div
               key={img.id}
-              className={`relative aspect-square overflow-hidden rounded-3xl bg-[#eeeae1] p-2 sm:p-4 ${i === 0 ? "col-span-2" : ""}`}
+              className={`relative overflow-hidden rounded-2xl bg-[#eeeae1] p-3 sm:p-5 ${i === 0 ? "col-span-2 aspect-[4/3]" : "aspect-square"}`}
             >
               <Image
                 src={img.url}
@@ -38,21 +38,31 @@ export default async function Detail({
           ))}
         </div>
         <div className="py-1 md:py-3">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <StatusBadge status={p.status} />
+            <ConditionBadge condition={p.condition} />
             <span className="text-sm text-stone-500">
-              {p.category.name} · {p.condition.replace("_", " ")}
+              {p.category.name} <span aria-hidden="true">·</span> {p.city}
             </span>
           </div>
           <h1 className="mt-5 font-serif text-3xl font-bold leading-tight text-[#342d25] lg:text-4xl">
             {p.title}
           </h1>
-          <p className="mt-3 text-3xl font-bold text-[#174c3c]">
+          <p className="mt-4 text-3xl font-bold tracking-tight text-[#174c3c] lg:text-4xl">
             {formatRupiah(p.price)}
           </p>
-          <p className="mt-5 leading-7 text-stone-600">{p.description}</p>
-          <div className="mt-7 rounded-2xl border border-[#e3ded2] bg-[#fffefa] p-5 shadow-sm">
-            <p className="text-sm text-stone-500">Dijual oleh</p>
+          <div className="mt-6 border-t border-[#e3ded2] pt-5">
+            <h2 className="text-xs font-bold uppercase tracking-[.12em] text-stone-500">
+              Deskripsi barang
+            </h2>
+            <p className="mt-2 whitespace-pre-wrap leading-7 text-[#554f47]">
+              {p.description}
+            </p>
+          </div>
+          <div className="mt-6 border-l-2 border-[#a65b3f] bg-[#f0ede5] px-4 py-3">
+            <p className="text-xs font-bold uppercase tracking-[.12em] text-stone-500">
+              Penjual
+            </p>
             <p className="mt-1 font-semibold">{p.seller.name}</p>
             <p className="text-sm text-stone-500">{p.seller.city}</p>
             {p.seller.storeSlug && (
@@ -64,7 +74,7 @@ export default async function Detail({
               </Link>
             )}
             {p.seller.isOnVacation && (
-              <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+              <p className="mt-3 border-l-2 border-amber-500 bg-amber-50 p-3 text-sm text-amber-900">
                 Toko sedang libur dan belum menerima pesanan baru.
               </p>
             )}

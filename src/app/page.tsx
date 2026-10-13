@@ -1,8 +1,10 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Shell } from "@/components/layout/shell";
 import { ProductGrid } from "@/components/product/cards";
 import { listProducts, getProductCategories } from "@/server/services/products";
 import { getCurrentUser } from "@/lib/session";
+import { formatRupiah } from "@/lib/format";
 
 export default async function Home() {
   const user = await getCurrentUser();
@@ -10,34 +12,61 @@ export default async function Home() {
     listProducts({}, user?.id),
     getProductCategories(),
   ]);
+  const newestProduct = items[0];
   return (
     <Shell>
       <section className="mx-auto max-w-[1536px] px-4 pt-6 sm:px-6 sm:pt-8 lg:px-8">
-        <div className="relative overflow-hidden rounded-[2rem] bg-[#174c3c] px-6 py-12 text-white shadow-[0_18px_50px_rgba(23,76,60,0.16)] sm:px-14 sm:py-20 lg:px-20 lg:py-24">
-          <div className="relative z-10 max-w-3xl">
-            <span className="rounded-full bg-white/15 px-4 py-2 text-xs font-semibold uppercase tracking-[.16em]">
-              Temukan cerita berikutnya
+        <div
+          className={`grid overflow-hidden rounded-[1.75rem] bg-[#174c3c] text-white ${newestProduct ? "lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,.95fr)]" : "lg:grid-cols-1"}`}
+        >
+          <div className="flex flex-col items-start justify-center px-6 py-10 sm:px-12 sm:py-14 lg:px-16 lg:py-16">
+            <span className="text-xs font-semibold uppercase tracking-[.16em] text-[#c6d8cc]">
+              Marketplace barang preloved
             </span>
-            <h1 className="mt-6 font-serif text-4xl font-bold leading-tight sm:text-6xl lg:text-7xl">
+            <h1 className="mt-4 font-serif text-4xl font-bold leading-tight sm:text-6xl lg:text-7xl">
               Barang baik,
               <br />
               <span className="text-[#f2b46d]">cerita baru.</span>
             </h1>
             <p className="mt-5 max-w-lg leading-7 text-[#e5eee8]">
-              Jual dan temukan barang preloved pilihan yang masih punya banyak
-              cerita.
+              Jual dan temukan barang preloved yang masih punya banyak cerita.
             </p>
             <Link
               href="/products"
-              className="mt-8 inline-flex min-h-12 items-center rounded-full bg-[#a65b3f] px-6 py-3 font-bold text-white shadow-sm transition hover:bg-[#914b34] focus-visible:outline-offset-4"
+              className="mt-7 inline-flex min-h-12 items-center rounded-full bg-[#a65b3f] px-6 py-3 font-bold text-white transition hover:bg-[#914b34] focus-visible:outline-offset-4"
             >
               Jelajahi barang
             </Link>
           </div>
-          <div
-            aria-hidden="true"
-            className="absolute -right-24 -top-36 hidden size-[28rem] rounded-full border-[44px] border-white/10 sm:block"
-          />
+          {newestProduct && (
+            <Link
+              href={`/products/${newestProduct.id}`}
+              className="group grid min-w-0 grid-rows-[minmax(0,1fr)_auto] gap-3 p-4 pt-0 focus-visible:outline-offset-[-2px] sm:p-6 sm:pt-0 lg:p-8 lg:pl-0"
+            >
+              <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-[#f0ede5]">
+                <Image
+                  src={newestProduct.coverImageUrl}
+                  alt={newestProduct.title}
+                  fill
+                  priority
+                  className="object-contain p-4 transition duration-300 group-hover:scale-[1.02] sm:p-7"
+                />
+              </div>
+              <div className="flex items-end justify-between gap-4 px-1 pb-1">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[.14em] text-[#c6d8cc]">
+                    Baru ditemukan
+                  </p>
+                  <h2 className="mt-1 line-clamp-1 text-base font-semibold sm:text-lg">
+                    {newestProduct.title}
+                  </h2>
+                </div>
+                <p className="shrink-0 font-bold text-[#f2b46d]">
+                  {formatRupiah(newestProduct.price)}
+                </p>
+              </div>
+            </Link>
+          )}
         </div>
         <div className="py-10 sm:py-12 lg:py-14">
           <div className="mb-5 flex items-end justify-between gap-4">
@@ -53,7 +82,7 @@ export default async function Home() {
               href="/products"
               className="shrink-0 text-sm font-semibold text-[#174c3c] hover:underline"
             >
-              Semua kategori →
+              Semua kategori <span aria-hidden="true">→</span>
             </Link>
           </div>
           <div className="flex gap-3 overflow-x-auto pb-3">
@@ -81,7 +110,10 @@ export default async function Home() {
               Barang pilihan hari ini
             </h2>
           </div>
-          <ProductGrid products={items.slice(0, 12)} favoriteDisabled={!user} />
+          <ProductGrid
+            products={items.slice(newestProduct ? 1 : 0, 12)}
+            favoriteDisabled={!user}
+          />
         </div>
       </section>
     </Shell>

@@ -10,6 +10,14 @@ const conditionLabels: Record<string, string> = {
   fair: "Cukup",
 };
 
+export function ConditionBadge({ condition }: { condition: string }) {
+  return (
+    <span className="rounded-full border border-[#e3ded2] bg-[#fffefa] px-2.5 py-1 text-[11px] font-semibold text-[#342d25]">
+      {conditionLabels[condition] ?? condition.replaceAll("_", " ")}
+    </span>
+  );
+}
+
 export function ProductGrid({
   products,
   favoriteDisabled = false,
@@ -45,33 +53,33 @@ export function ProductGrid({
       </div>
     );
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 2xl:grid-cols-5">
+    <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-x-5 sm:gap-y-8 lg:grid-cols-3 xl:grid-cols-4">
       {products.map((p) => (
         <article
           key={p.id}
-          className="group overflow-hidden rounded-2xl border border-[#e3ded2] bg-[#fffefa] shadow-[0_2px_10px_rgba(39,52,44,0.035)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(39,52,44,0.11)]"
+          className="group flex h-full flex-col overflow-hidden rounded-xl border border-transparent transition duration-200 hover:border-[#e3ded2] hover:bg-[#fffefa] hover:shadow-[0_10px_24px_rgba(39,52,44,0.08)]"
         >
-          <div className="relative aspect-[4/3] bg-[#eeeae1]">
+          <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-[#eeeae1]">
             <Link
               href={`/products/${p.id}`}
               aria-label={`Lihat ${p.title}`}
-              className="absolute inset-0 z-0 rounded-t-2xl focus-visible:outline-offset-[-4px]"
+              className="absolute inset-0 z-0 rounded-xl focus-visible:outline-offset-[-4px]"
             />
             <Image
               src={p.coverImageUrl}
               alt={p.title}
               fill
-              className="pointer-events-none object-cover transition duration-300 group-hover:scale-[1.025]"
+              className="pointer-events-none object-contain p-2 transition duration-300 group-hover:scale-[1.02] sm:p-3"
             />
             {p.status !== "active" && (
               <div className="pointer-events-none absolute left-3 top-3 z-10">
                 <StatusBadge status={p.status} />
               </div>
             )}
-            <span className="pointer-events-none absolute bottom-3 left-3 z-10 rounded-full border border-white/70 bg-white/95 px-2.5 py-1 text-[11px] font-semibold text-[#342d25] shadow-sm">
-              {conditionLabels[p.condition] ?? p.condition.replaceAll("_", " ")}
+            <span className="pointer-events-none absolute bottom-3 left-3 z-10">
+              <ConditionBadge condition={p.condition} />
             </span>
-            <div className="absolute right-3 top-3 z-10 rounded-full bg-[#fffefa]/95 p-2 shadow-sm">
+            <div className="absolute right-3 top-3 z-10 rounded-full border border-[#e3ded2] bg-[#fffefa] p-2">
               <FavoriteButton
                 productId={p.id}
                 initial={p.isFavorited}
@@ -79,29 +87,33 @@ export function ProductGrid({
               />
             </div>
           </div>
-          <div className="space-y-1.5 p-3 sm:p-4">
+          <div className="flex flex-1 flex-col px-1.5 pb-1 pt-3 sm:px-2 sm:pt-4">
             <Link
               href={`/products/${p.id}`}
-              className="line-clamp-2 block min-h-10 text-sm font-semibold leading-5 text-[#26332d] hover:text-[#174c3c]"
+              className="line-clamp-2 block min-h-10 text-sm font-semibold leading-5 text-[#342d25] hover:text-[#174c3c]"
             >
               {p.title}
             </Link>
-            <p className="font-bold text-[#174c3c]">{formatRupiah(p.price)}</p>
-            <p className="text-xs text-stone-600">
-              {p.city} · {p.category.name}
+            <p className="mt-2 text-base font-bold tracking-tight text-[#174c3c] sm:text-lg">
+              {formatRupiah(p.price)}
             </p>
-            {p.seller.storeSlug ? (
-              <Link
-                href={`/store/${p.seller.storeSlug}`}
-                className="block truncate pt-1 text-xs font-semibold text-[#174c3c] hover:underline"
-              >
-                Toko {p.seller.name}
-              </Link>
-            ) : (
-              <p className="truncate pt-1 text-xs text-stone-500">
-                {p.seller.name}
-              </p>
-            )}
+            <p className="mt-1 line-clamp-1 text-xs text-stone-600">
+              {p.category.name} <span aria-hidden="true">·</span> {p.city}
+            </p>
+            <div className="mt-auto min-h-7 pt-2">
+              {p.seller.storeSlug ? (
+                <Link
+                  href={`/store/${p.seller.storeSlug}`}
+                  className="block truncate text-xs font-semibold text-[#568270] hover:text-[#174c3c] hover:underline"
+                >
+                  Toko {p.seller.name}
+                </Link>
+              ) : (
+                <p className="truncate text-xs text-stone-500">
+                  {p.seller.name}
+                </p>
+              )}
+            </div>
             {showOrderAction &&
               (p.status === "active" &&
               p.seller.id !== viewerId &&

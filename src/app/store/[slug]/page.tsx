@@ -37,7 +37,7 @@ export default async function PublicStorePage({
             menerima pesanan baru.
           </div>
         )}
-        <header className="flex flex-col gap-5 rounded-3xl border border-[#e3ded2] bg-[#fffefa] p-5 shadow-sm sm:flex-row sm:items-center sm:p-7">
+        <header className="flex flex-col gap-5 border-l-2 border-[#a65b3f] bg-[#fffefa] p-5 sm:flex-row sm:items-center sm:p-6">
           {store.logoUrl ? (
             <Image
               src={store.logoUrl}
@@ -45,12 +45,12 @@ export default async function PublicStorePage({
               width={96}
               height={96}
               unoptimized
-              className="size-24 rounded-2xl object-cover"
+              className="size-20 rounded-xl object-cover sm:size-24"
             />
           ) : (
             <div
               aria-hidden="true"
-              className="grid size-24 shrink-0 place-items-center rounded-2xl bg-[#e6eee7] text-3xl font-bold text-[#174c3c]"
+              className="grid size-20 shrink-0 place-items-center rounded-xl bg-[#e6eee7] text-3xl font-bold text-[#174c3c] sm:size-24"
             >
               {store.storeName.slice(0, 1).toUpperCase()}
             </div>
@@ -80,7 +80,7 @@ export default async function PublicStorePage({
             </p>
           </div>
         </header>
-        <div className="mt-10">
+        <div className="mt-8">
           <h2 className="mb-5 font-serif text-2xl font-bold text-[#342d25] lg:text-3xl">
             Produk aktif
           </h2>

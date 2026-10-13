@@ -86,7 +86,7 @@ export function FilterPanel({ categories }: { categories: CategoryOption[] }) {
   const search = useSearchParams();
   return (
     <>
-      <details className="rounded-2xl border border-[#e3ded2] bg-[#fffefa] p-4 md:hidden">
+      <details className="rounded-2xl border border-[#e3ded2] bg-[#fffefa] p-4 lg:hidden">
         <summary className="cursor-pointer list-none font-semibold text-[#26332d] marker:hidden">
           Filter &amp; urutkan
         </summary>
@@ -99,7 +99,7 @@ export function FilterPanel({ categories }: { categories: CategoryOption[] }) {
       </details>
       <form
         action="/products"
-        className="hidden gap-3 rounded-2xl border border-[#e3ded2] bg-[#fffefa] p-4 md:grid"
+        className="hidden gap-3 rounded-2xl border border-[#e3ded2] bg-[#fffefa] p-4 lg:grid"
       >
         <h2 className="font-semibold text-[#26332d]">Filter barang</h2>
         <FilterFields categories={categories} search={search} />
