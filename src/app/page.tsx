@@ -12,13 +12,13 @@ export default async function Home() {
   ]);
   return (
     <Shell>
-      <section className="mx-auto max-w-7xl px-4 pt-6 sm:pt-8">
-        <div className="relative overflow-hidden rounded-[2rem] bg-[#174c3c] px-6 py-12 text-white shadow-[0_18px_50px_rgba(23,76,60,0.16)] sm:px-14 sm:py-20">
-          <div className="relative z-10 max-w-2xl">
+      <section className="mx-auto max-w-[1536px] px-4 pt-6 sm:px-6 sm:pt-8 lg:px-8">
+        <div className="relative overflow-hidden rounded-[2rem] bg-[#174c3c] px-6 py-12 text-white shadow-[0_18px_50px_rgba(23,76,60,0.16)] sm:px-14 sm:py-20 lg:px-20 lg:py-24">
+          <div className="relative z-10 max-w-3xl">
             <span className="rounded-full bg-white/15 px-4 py-2 text-xs font-semibold uppercase tracking-[.16em]">
               Temukan cerita berikutnya
             </span>
-            <h1 className="mt-6 text-4xl font-bold leading-tight sm:text-6xl">
+            <h1 className="mt-6 font-serif text-4xl font-bold leading-tight sm:text-6xl lg:text-7xl">
               Barang baik,
               <br />
               <span className="text-[#f2b46d]">cerita baru.</span>
@@ -29,7 +29,7 @@ export default async function Home() {
             </p>
             <Link
               href="/products"
-              className="mt-8 inline-flex min-h-12 items-center rounded-full bg-[#e99a45] px-6 py-3 font-bold text-[#26332d] shadow-sm transition hover:bg-[#f2ad62] focus-visible:outline-offset-4"
+              className="mt-8 inline-flex min-h-12 items-center rounded-full bg-[#a65b3f] px-6 py-3 font-bold text-white shadow-sm transition hover:bg-[#914b34] focus-visible:outline-offset-4"
             >
               Jelajahi barang
             </Link>
@@ -39,13 +39,13 @@ export default async function Home() {
             className="absolute -right-24 -top-36 hidden size-[28rem] rounded-full border-[44px] border-white/10 sm:block"
           />
         </div>
-        <div className="py-10 sm:py-12">
+        <div className="py-10 sm:py-12 lg:py-14">
           <div className="mb-5 flex items-end justify-between gap-4">
             <div>
               <p className="text-xs font-bold tracking-[.14em] text-[#568270]">
                 PILIHAN UNTUKMU
               </p>
-              <h2 className="mt-1 text-2xl font-bold text-[#26332d]">
+              <h2 className="mt-1 font-serif text-2xl font-bold text-[#342d25] lg:text-3xl">
                 Jelajahi kategori
               </h2>
             </div>
@@ -77,7 +77,7 @@ export default async function Home() {
             <p className="text-xs font-bold tracking-[.14em] text-[#568270]">
               BARU DITEMUKAN
             </p>
-            <h2 className="mt-1 text-2xl font-bold text-[#26332d]">
+            <h2 className="mt-1 font-serif text-2xl font-bold text-[#342d25] lg:text-3xl">
               Barang pilihan hari ini
             </h2>
           </div>

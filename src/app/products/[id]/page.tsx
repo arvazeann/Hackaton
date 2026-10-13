@@ -20,7 +20,7 @@ export default async function Detail({
   const canOrder = p.status === "active" && !isOwner && !p.seller.isOnVacation;
   return (
     <Shell>
-      <section className="mx-auto grid max-w-6xl gap-7 px-4 py-7 sm:py-10 md:grid-cols-2 md:gap-10">
+      <section className="mx-auto grid max-w-7xl gap-7 px-4 py-7 sm:px-6 sm:py-10 lg:px-8 md:grid-cols-[1.05fr_.95fr] md:gap-12">
         <div className="grid grid-cols-2 gap-3 self-start">
           {p.images.map((img, i) => (
             <div
@@ -44,7 +44,7 @@ export default async function Detail({
               {p.category.name} · {p.condition.replace("_", " ")}
             </span>
           </div>
-          <h1 className="mt-5 text-3xl font-bold leading-tight text-[#26332d]">
+          <h1 className="mt-5 font-serif text-3xl font-bold leading-tight text-[#342d25] lg:text-4xl">
             {p.title}
           </h1>
           <p className="mt-3 text-3xl font-bold text-[#174c3c]">

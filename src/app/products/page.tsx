@@ -26,11 +26,11 @@ export default async function Products({
   const pageCount = result.totalPages;
   return (
     <Shell>
-      <section className="mx-auto max-w-7xl px-4 py-8 sm:py-10">
+      <section className="mx-auto max-w-[1536px] px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
         <p className="text-xs font-bold tracking-[.14em] text-[#568270]">
           KATALOG RUANGLAGI
         </p>
-        <h1 className="mt-1 text-3xl font-bold text-[#26332d]">
+        <h1 className="mt-1 font-serif text-3xl font-bold text-[#342d25] lg:text-4xl">
           Temukan barang favoritmu
         </h1>
         <form action="/products" className="mt-6 md:hidden">
@@ -41,7 +41,7 @@ export default async function Products({
             className="w-full rounded-full border border-[#e3ded2] bg-[#fffefa] p-3"
           />
         </form>
-        <div className="mt-6 grid gap-4 md:mt-8 md:grid-cols-[240px_1fr] md:gap-7">
+        <div className="mt-6 grid gap-4 md:mt-8 md:grid-cols-[250px_minmax(0,1fr)] md:gap-8">
           <aside
             aria-label="Filter katalog"
             className="md:sticky md:top-24 md:self-start"

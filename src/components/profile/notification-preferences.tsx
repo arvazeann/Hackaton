@@ -69,7 +69,10 @@ export function NotificationPreferences() {
   }
 
   return (
-    <section className="rounded-2xl border bg-white p-5">
+    <section
+      id="notification-preferences"
+      className="scroll-mt-24 rounded-2xl border bg-white p-5"
+    >
       <h2 className="text-xl font-bold">Preferensi notifikasi</h2>
       <p className="mt-1 text-sm text-stone-600">
         Status pesanan tetap tersedia di halaman pesanan meski notifikasi

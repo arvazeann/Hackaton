@@ -13,13 +13,13 @@ export default async function Dashboard() {
   ]);
   return (
     <Shell>
-      <section className="mx-auto max-w-6xl px-4 py-10">
+      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-bold tracking-[.14em] text-[#568270]">
               TOKO SAYA
             </p>
-            <h1 className="mt-1 text-3xl font-bold text-[#26332d]">
+            <h1 className="mt-1 font-serif text-3xl font-bold text-[#342d25] lg:text-4xl">
               Produk saya
             </h1>
           </div>

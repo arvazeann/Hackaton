@@ -4,31 +4,32 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #f6f3ec;
-  --foreground: #26332d;
-  --card: #fffefa;
-  --card-foreground: #26332d;
-  --popover: #fffefa;
-  --popover-foreground: #26332d;
+  --background: #f7f5ef;
+  --foreground: #342d25;
+  --card: #ffffff;
+  --card-foreground: #342d25;
+  --popover: #ffffff;
+  --popover-foreground: #342d25;
   --primary: #174c3c;
   --primary-foreground: #fffefa;
   --secondary: #ece9df;
-  --secondary-foreground: #26332d;
+  --secondary-foreground: #342d25;
   --muted: #eeeae1;
   --muted-foreground: #706f68;
-  --accent: #f5e5d0;
-  --accent-foreground: #593817;
+  --accent: #f3e5dd;
+  --accent-foreground: #7d3f2c;
   --destructive: oklch(0.577 0.245 27.325);
   --border: #e3ded2;
   --input: #d9d4c8;
   --ring: #568270;
-  --radius: 0.875rem;
+  --radius: 0.75rem;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: Arial, Helvetica, sans-serif;
+  --font-serif: Georgia, "Times New Roman", serif;
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);

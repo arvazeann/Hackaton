@@ -141,7 +141,7 @@ export function ProfileHub({ hub }: { hub: Hub }) {
   }
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-5 px-4 py-7 sm:py-10 lg:grid-cols-[220px_1fr] lg:gap-8">
+    <div className="mx-auto grid max-w-7xl gap-5 px-4 py-7 sm:px-6 sm:py-10 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-8">
       <nav
         aria-label="Bagian profil"
         className="flex gap-2 overflow-x-auto rounded-2xl border border-[#e3ded2] bg-[#fffefa] p-2 lg:sticky lg:top-20 lg:h-fit lg:flex-col"
@@ -151,7 +151,9 @@ export function ProfileHub({ hub }: { hub: Hub }) {
           ["account", "Akun"],
           ["addresses", "Alamat"],
           ["store", "Toko"],
-          ["payments", "Akun pembayaran"],
+          ["notification-preferences", "Notifikasi"],
+          ["vacation", "Mode liburan"],
+          ["payments", "Pembayaran"],
         ].map(([id, title]) => (
           <a
             key={id}
@@ -161,8 +163,14 @@ export function ProfileHub({ hub }: { hub: Hub }) {
             {title}
           </a>
         ))}
+        <Link
+          href="/dashboard/products"
+          className="whitespace-nowrap rounded-full border border-transparent px-4 py-2 text-sm text-[#46564c] transition hover:border-[#d9d4c8] hover:bg-[#f6f3ec] hover:text-[#174c3c] focus-visible:ring-2 focus-visible:ring-[#568270]"
+        >
+          Produk saya
+        </Link>
       </nav>
-      <main className="grid gap-8">
+      <div className="grid min-w-0 gap-8">
         {(message || error) && (
           <p
             role={error ? "alert" : "status"}
@@ -510,7 +518,10 @@ export function ProfileHub({ hub }: { hub: Hub }) {
         </section>
         <NotificationPreferences />
         {hub.store && (
-          <section className="rounded-2xl border bg-white p-5">
+          <section
+            id="vacation"
+            className="scroll-mt-24 rounded-2xl border bg-white p-5"
+          >
             <h2 className="text-xl font-bold">Mode liburan toko</h2>
             <p className="mt-1 text-sm text-stone-600">
               Saat aktif, produk tidak tampil di beranda atau pencarian dan
@@ -713,7 +724,7 @@ export function ProfileHub({ hub }: { hub: Hub }) {
             </form>
           </section>
         )}
-      </main>
+      </div>
     </div>
   );
 }

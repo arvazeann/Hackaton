@@ -15,11 +15,11 @@ export default async function NotificationsPage({
   });
   return (
     <Shell>
-      <section className="mx-auto max-w-3xl px-4 py-12">
+      <section className="mx-auto max-w-4xl px-4 py-9 sm:px-6 sm:py-12">
         <p className="text-xs font-bold tracking-[.14em] text-[#568270]">
           PEMBARUAN AKUN
         </p>
-        <h1 className="mb-7 mt-1 text-3xl font-bold text-[#26332d]">
+        <h1 className="mb-7 mt-1 font-serif text-3xl font-bold text-[#342d25] lg:text-4xl">
           Notifikasi
         </h1>
         <NotificationList data={result} />

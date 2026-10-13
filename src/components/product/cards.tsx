@@ -4,6 +4,12 @@ import { formatRupiah } from "@/lib/format";
 import type { ProductListItem } from "@/types";
 import { FavoriteButton } from "@/components/product/favorite-button";
 
+const conditionLabels: Record<string, string> = {
+  like_new: "Seperti baru",
+  good: "Baik",
+  fair: "Cukup",
+};
+
 export function ProductGrid({
   products,
   favoriteDisabled = false,
@@ -39,7 +45,7 @@ export function ProductGrid({
       </div>
     );
   return (
-    <div className="grid grid-cols-2 gap-3 sm:gap-5 sm:grid-cols-3 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 2xl:grid-cols-5">
       {products.map((p) => (
         <article
           key={p.id}
@@ -62,6 +68,9 @@ export function ProductGrid({
                 <StatusBadge status={p.status} />
               </div>
             )}
+            <span className="pointer-events-none absolute bottom-3 left-3 z-10 rounded-full border border-white/70 bg-white/95 px-2.5 py-1 text-[11px] font-semibold text-[#342d25] shadow-sm">
+              {conditionLabels[p.condition] ?? p.condition.replaceAll("_", " ")}
+            </span>
             <div className="absolute right-3 top-3 z-10 rounded-full bg-[#fffefa]/95 p-2 shadow-sm">
               <FavoriteButton
                 productId={p.id}
@@ -125,15 +134,15 @@ export function ProductGrid({
 
 export function StatusBadge({ status }: { status: string }) {
   const style: Record<string, string> = {
-    active: "bg-emerald-100 text-emerald-800",
-    reserved: "bg-amber-100 text-amber-900",
-    sold: "bg-stone-200 text-stone-700",
+    active: "bg-[#e6eee7] text-[#174c3c]",
+    reserved: "bg-[#f7e9ce] text-[#6e4b19]",
+    sold: "bg-[#eeeae1] text-[#524d46]",
     archived: "bg-stone-100 text-stone-600",
-    pending: "bg-amber-100 text-amber-900",
-    confirmed: "bg-blue-100 text-blue-800",
-    completed: "bg-emerald-100 text-emerald-800",
-    rejected: "bg-rose-100 text-rose-800",
-    cancelled: "bg-stone-200 text-stone-700",
+    pending: "bg-[#f7e9ce] text-[#6e4b19]",
+    confirmed: "bg-[#e5edf0] text-[#315562]",
+    completed: "bg-[#e6eee7] text-[#174c3c]",
+    rejected: "bg-[#f8e7e4] text-[#8a4032]",
+    cancelled: "bg-[#eeeae1] text-[#524d46]",
   };
   return (
     <span

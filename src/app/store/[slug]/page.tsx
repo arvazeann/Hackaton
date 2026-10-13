@@ -30,7 +30,7 @@ export default async function PublicStorePage({
   if (!store) notFound();
   return (
     <Shell>
-      <section className="mx-auto max-w-7xl px-4 py-10">
+      <section className="mx-auto max-w-[1536px] px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
         {store.isOnVacation && (
           <div className="mb-6 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-950">
             Toko sedang libur. Produk dapat dilihat, tetapi penjual belum
@@ -59,7 +59,7 @@ export default async function PublicStorePage({
             <p className="text-xs font-bold tracking-[.14em] text-[#568270]">
               TOKO
             </p>
-            <h1 className="mt-1 text-3xl font-bold text-[#26332d]">
+            <h1 className="mt-1 font-serif text-3xl font-bold text-[#342d25] lg:text-4xl">
               {store.storeName}
             </h1>
             <p className="mt-2 text-sm text-stone-600">
@@ -81,7 +81,7 @@ export default async function PublicStorePage({
           </div>
         </header>
         <div className="mt-10">
-          <h2 className="mb-5 text-2xl font-bold text-[#26332d]">
+          <h2 className="mb-5 font-serif text-2xl font-bold text-[#342d25] lg:text-3xl">
             Produk aktif
           </h2>
           <ProductGrid
