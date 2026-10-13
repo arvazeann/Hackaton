@@ -7,6 +7,13 @@ import { orderSchema } from "@/schemas";
 import type { z } from "zod";
 import { FieldError } from "@/components/forms/field-error";
 import { requestApi } from "@/components/forms/request-api";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { OrderDTO } from "@/types";
 type Values = z.infer<typeof orderSchema>;
 type SavedAddress = {
@@ -23,6 +30,7 @@ type SavedAddress = {
 export function OrderForm({ productId }: { productId: string }) {
   const router = useRouter();
   const [addresses, setAddresses] = useState<SavedAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState("");
   const {
     register,
     handleSubmit,
@@ -73,13 +81,11 @@ export function OrderForm({ productId }: { productId: string }) {
       {addresses.length > 0 && (
         <label className="grid gap-2 text-sm font-medium">
           Gunakan alamat tersimpan
-          <select
-            className="rounded-xl border px-4 py-3 font-normal"
-            defaultValue=""
-            onChange={(event) => {
-              const selected = addresses.find(
-                ({ id }) => id === event.target.value,
-              );
+          <Select
+            value={selectedAddressId}
+            onValueChange={(addressId) => {
+              setSelectedAddressId(addressId);
+              const selected = addresses.find(({ id }) => id === addressId);
               if (selected) {
                 setValue("shippingName", selected.contactName, {
                   shouldValidate: true,
@@ -100,13 +106,21 @@ export function OrderForm({ productId }: { productId: string }) {
               }
             }}
           >
-            <option value="">Isi manual</option>
-            {addresses.map((address) => (
-              <option key={address.id} value={address.id}>
-                {address.label} · {address.city}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger
+              aria-label="Gunakan alamat tersimpan"
+              className="w-full min-w-0 justify-start rounded-xl px-4 py-3 font-normal shadow-none"
+            >
+              <SelectValue placeholder="Isi manual" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Isi manual</SelectItem>
+              {addresses.map((address) => (
+                <SelectItem key={address.id} value={address.id}>
+                  {address.label} · {address.city}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </label>
       )}
       <label className="grid gap-2 text-sm font-medium">

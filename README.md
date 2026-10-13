@@ -10,8 +10,8 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 
 ## Current Status
 
-- Current stage: Stage 6 follow-up: Admin Area Phase 2 (implemented; migration applied; automated checks complete; browser checks pending).
-- Last completed stage: Stage 6 follow-up: Admin Area Phase 2; B1, B2, and Admin Phases 1–2 extend Stage 6's original scope without renumbering.
+- Current stage: UI refresh follow-up — UI-1 (implementation in progress; typecheck, lint, format check, and Vitest verified; production build is pending because `next dev` is still active).
+- Last completed implementation stage: Stage 6 follow-up: Admin Area Phase 2; B1, B2, and Admin Phases 1–2 extend Stage 6 without renumbering. UI refresh is a presentation-only follow-up.
 - Interim local-disk product image storage is implemented for the single-machine demo. Stage 7 Cloudflare R2 remains proposed and has not started.
 
 ## Architecture
@@ -51,6 +51,7 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 - Desktop-first marketplace refinement: one-row desktop navbar with account disclosure, compact guest actions, seller/account shortcuts, expanded desktop content widths, editorial serif headings, and visible product-condition labels. The seller CTA keeps its existing route and server-side activation requirements.
 - Product presentation refinement: shared product cards preserve full product imagery and clarify price, condition, category, location, and seller hierarchy; the catalog uses three or four desktop columns according to viewport width. The homepage highlights the actual newest product from the existing listing query, and detail/store layouts use a tighter editorial composition.
 - Product interaction and homepage refinement: product cards and wishlist controls use subtle lift, image and icon transitions, and reduced-motion support. The desktop hero is capped at 1440 px wide, its feature image at 280–340 px high, and category spacing is tighter so product listings appear sooner.
+- UI refresh UI-1 implementation in progress: approved warm-cream/green/orange tokens and DM Sans/DM Serif Display fonts; shared navbar/footer/page-header; peach product cards and status labels; responsive category, condition, price/location filters; sort toolbar and numbered pagination. No service, schema, API, action, or business-rule changes. UI-2 page layout work has not started.
 
 ## Important Decisions
 
@@ -72,6 +73,34 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 - Admin changes never modify platform roles, password credentials, product images/ownership, or order snapshots. Audit metadata contains allowlisted field names and state transitions only.
 
 ## Verification
+
+### UI refresh — UI-1 shared components — 2026-10-13
+
+| Check                 | Status  | Command / notes                                                                                                                                        |
+| --------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Typecheck             | PASS    | `npm run typecheck`                                                                                                                                    |
+| Lint                  | PASS    | `npm run lint`                                                                                                                                         |
+| Format check          | PASS    | `npm run format:check`                                                                                                                                 |
+| Tests                 | PASS    | `npm test` — 164 passed across 33 files; existing Vite CJS Node API deprecation warning                                                                |
+| Build                 | NOT RUN | The project's `next dev` processes are active; do not run build and dev together on Windows because of `.next` EPERM conflicts. Stop dev before build. |
+| Manual browser checks | NOT RUN | No browser runner is available; the two named reference screenshots are not in the repository. Use the manual checklist below.                         |
+
+The four automated checks passed after the latest UI-1 code changes. Production build remains required before UI-1 can be marked complete. No database or migration was touched.
+
+### Catalog sort dropdown follow-up — 2026-10-13
+
+All native choice `<select>` controls under `src/app` and `src/components` now use the shared Radix Select presentation. This covers catalog sorting, admin filters and product editing, product category/condition, saved addresses, payment selection, and profile address/payment forms. The catalog category and condition filters remain their existing radio controls. The shared component maps empty options back to empty form values and preserves names used by GET forms and `FormData`; React Hook Form fields remain connected through `Controller`. No business rules or backend behavior changed.
+
+| Check                 | Status  | Command / notes                                                                                                                                                                                                                                                                                                                                 |
+| --------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Typecheck             | PASS    | `npm run typecheck`                                                                                                                                                                                                                                                                                                                             |
+| Lint                  | PASS    | `npm run lint`                                                                                                                                                                                                                                                                                                                                  |
+| Format check          | PASS    | `npm run format:check`                                                                                                                                                                                                                                                                                                                          |
+| Tests                 | PASS    | `npm test` — 164 passed across 33 files; existing Vite CJS Node API deprecation warning                                                                                                                                                                                                                                                         |
+| Build                 | NOT RUN | Existing `next dev` process is active; build was not run alongside it due the project's Windows `.next` EPERM risk.                                                                                                                                                                                                                             |
+| Manual browser checks | NOT RUN | Desktop Chrome verified `/products` in closed/open states, pointer opening, outside-click closing, selected styling, and pointer/keyboard selection with the expected `sort` form value. Admin/profile/order/product-edit dropdown routes were not exercised because they require authenticated sessions not available in this browser session. |
+
+No database or migration was touched.
 
 ### Homepage hero sizing follow-up — 2026-10-13
 
@@ -329,10 +358,13 @@ Build completed without warnings after adding a Turbopack ignore annotation for 
 - Registration/login rate limiting remains a pre-launch TODO from the Blueprint.
 - `npm install` reported 15 dependency vulnerabilities (3 moderate, 10 high, 2 critical); review with a separate dependency-audit task before release.
 - Vitest reports the existing Vite CJS Node API deprecation warning.
+- UI refresh browser checks remain NOT RUN. `docs/design-reference/reference-dribbble.png` and `docs/design-reference/current-home.png` were not found; implementation follows the written approved brief.
+- The product DTO does not distinguish an uploaded/seed image from the legacy `/products/item-1.svg` no-image fallback. The card renders a neutral inline placeholder only for an empty image URL; replacing the legacy fallback reliably would require a service/DTO change, outside the approved presentation-only scope.
+- `/favorites` and `/wishlist` both exist and remain unchanged; review whether to consolidate them in a later approved task.
 
 ## Next Approved Step
 
-No further implementation step is approved. Admin Area Phase 1 and Stage 6 follow-ups B1/B2 are implemented; Stage 7 Cloudflare R2 has not started.
+Finish UI-1 by stopping the active `next dev` process and running the production build, then complete manual browser review when a browser is available. Do not start UI-2 until the user approves it. Stage 7 Cloudflare R2 remains unstarted.
 
 ## Handoff Notes
 
@@ -348,4 +380,5 @@ No further implementation step is approved. Admin Area Phase 1 and Stage 6 follo
 - Admin migrations `20261013140000_admin_area` and `20261013150000_admin_area_phase2` are applied to `preloved_dev`; latest status is up to date. Three isolated Admin verification databases remain because automated command review rejected their deletion: `preloved_admin_verify_20261013`, `preloved_admin_shadow_verify_20261013`, and `preloved_admin_preverify_20261013` (the latter has one synthetic user).
 - Admin browser checklist (NOT RUN; use an admin and a regular account): verify anonymous and USER access are denied on every admin page/API; ADMIN dashboard, filters and 12/48 pagination; emails masked until explicit audited reveal; address summaries remain masked; order lists disclose no contact/payment data; each service and route rejects non-admin calls; bootstrap promotes only a pre-existing account and reruns safely. Confirm no admin UI mutation controls are present.
 - Admin Phase 2 browser checklist (NOT RUN; use an enabled ADMIN, a second ADMIN, and a regular account): verify name edits and role/password fields are rejected; disable blocks a user's next request and login, and the old session remains invalid after re-enable; self-disable and disabling the last enabled ADMIN are rejected; active products edit/archive only without pending/confirmed orders and keep images/ownership/order snapshots; only pending orders cancel with a 5–500 character reason, without changing product/payment/shipping snapshots; both recipients honor notification preferences; retries do not duplicate notifications; audit rows omit personal values and cancellation reason.
+- UI-1 manual visual checklist (NOT RUN): inspect desktop, tablet, and mobile navbar/footer; page-header typography and breadcrumb when wired in UI-2; active/reserved/sold/new product card states and missing-image placeholder; favorite behavior; category/condition/price/location controls and mobile filter disclosure; sort and numbered pagination with filters preserved; keyboard order and focus rings on cream and green surfaces; check text contrast at rendered sizes.
 - B2 manual browser checklist (NOT RUN; use two accounts): open a public store without login and verify its safe fields/products and unknown-slug 404; turn vacation mode on and confirm the seller disappears from home/listing while its store/direct product remain visible, new orders are blocked, and existing orders can still be processed; exercise notification bell/count, every order notification, disabled/enabled preferences, mark-one/read-all, and verify disabled types create no notification while order status remains visible; save products to the private wishlist and confirm reserved/sold labels and disabled order actions; attempt to favorite one's own product; as the second account, try direct access to the first user's wishlist and notifications.

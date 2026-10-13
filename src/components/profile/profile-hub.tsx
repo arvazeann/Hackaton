@@ -8,6 +8,13 @@ import type { AddressDTO, PaymentAccountDTO, StoreProfileDTO } from "@/types";
 import { ProfileForm } from "@/components/forms/profile-form";
 import { CollectionEmptyState } from "@/components/profile/collection-empty-state";
 import { NotificationPreferences } from "@/components/profile/notification-preferences";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Hub = {
   account: {
@@ -349,15 +356,22 @@ export function ProfileHub({ hub }: { hub: Hub }) {
             <h3 className="sm:col-span-2 font-semibold">
               {editingAddress ? "Edit alamat" : "Tambah alamat"}
             </h3>
-            <select
+            <Select
               aria-label="Jenis alamat"
-              className={inputClass}
               value={String(address.kind)}
-              onChange={(e) => setAddress({ ...address, kind: e.target.value })}
+              onValueChange={(kind) => setAddress({ ...address, kind })}
             >
-              <option value="SHIPPING">Pengiriman</option>
-              <option value="PICKUP">Pickup</option>
-            </select>
+              <SelectTrigger
+                aria-label="Jenis alamat"
+                className={`${inputClass} min-w-0 justify-start shadow-none`}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="SHIPPING">Pengiriman</SelectItem>
+                <SelectItem value="PICKUP">Pickup</SelectItem>
+              </SelectContent>
+            </Select>
             <input
               aria-label="Label alamat"
               placeholder="Label"
@@ -655,17 +669,21 @@ export function ProfileHub({ hub }: { hub: Hub }) {
                   ? "Ganti rincian akun (nomor lama tidak dapat dibaca)"
                   : "Tambah akun aktif (maksimal tiga)"}
               </h3>
-              <select
-                aria-label="Jenis akun"
-                className={inputClass}
+              <Select
                 value={payment.type}
-                onChange={(e) =>
-                  setPayment({ ...payment, type: e.target.value })
-                }
+                onValueChange={(type) => setPayment({ ...payment, type })}
               >
-                <option value="BANK">Bank</option>
-                <option value="EWALLET">E-wallet</option>
-              </select>
+                <SelectTrigger
+                  aria-label="Jenis akun"
+                  className={`${inputClass} min-w-0 justify-start shadow-none`}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="BANK">Bank</SelectItem>
+                  <SelectItem value="EWALLET">E-wallet</SelectItem>
+                </SelectContent>
+              </Select>
               <input
                 aria-label="Nama bank atau penyedia"
                 required

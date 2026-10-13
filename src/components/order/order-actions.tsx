@@ -9,6 +9,13 @@ import type { OrderStatus } from "@/types";
 import type { PaymentAccountDTO } from "@/types";
 import { FieldError } from "@/components/forms/field-error";
 import { requestApi } from "@/components/forms/request-api";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 type CancelValues = z.infer<typeof cancelReasonSchema>;
 export function OrderActions({
   orderId,
@@ -86,18 +93,25 @@ export function OrderActions({
           {accounts.length ? (
             <label className="grid w-full gap-1 text-xs font-medium">
               Instruksi pembayaran untuk pesanan ini
-              <select
+              <Select
                 value={paymentAccountId}
-                onChange={(event) => setPaymentAccountId(event.target.value)}
-                className="rounded-lg border bg-white px-3 py-2"
+                onValueChange={setPaymentAccountId}
               >
-                {accounts.map((account) => (
-                  <option key={account.id} value={account.id}>
-                    {account.providerName} ···· {account.accountNumberLast4} (
-                    {account.accountHolderName})
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger
+                  aria-label="Instruksi pembayaran untuk pesanan ini"
+                  className="w-full min-w-0 justify-start rounded-lg bg-white px-3 py-2"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {accounts.map((account) => (
+                    <SelectItem key={account.id} value={account.id}>
+                      {account.providerName} ···· {account.accountNumberLast4} (
+                      {account.accountHolderName})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </label>
           ) : (
             <a

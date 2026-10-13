@@ -3,6 +3,13 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import type { AdminProductDTO } from "@/types/admin";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 async function send(url: string, method: "PATCH" | "POST", body: unknown) {
   const response = await fetch(url, {
@@ -205,29 +212,37 @@ export function AdminProductActions({
           </label>
           <label className="text-xs">
             Kategori
-            <select
-              className="mt-1 w-full rounded border p-2 text-sm"
-              name="categoryId"
-              defaultValue={product.categoryId}
-            >
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
+            <Select name="categoryId" defaultValue={product.categoryId}>
+              <SelectTrigger
+                aria-label="Kategori produk"
+                className="mt-1 w-full min-w-0 justify-start rounded p-2 text-sm shadow-none"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </label>
           <label className="text-xs">
             Kondisi
-            <select
-              className="mt-1 w-full rounded border p-2 text-sm"
-              name="condition"
-              defaultValue={product.condition}
-            >
-              <option value="like_new">Like new</option>
-              <option value="good">Good</option>
-              <option value="fair">Fair</option>
-            </select>
+            <Select name="condition" defaultValue={product.condition}>
+              <SelectTrigger
+                aria-label="Kondisi produk"
+                className="mt-1 w-full min-w-0 justify-start rounded p-2 text-sm shadow-none"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="like_new">Like new</SelectItem>
+                <SelectItem value="good">Good</SelectItem>
+                <SelectItem value="fair">Fair</SelectItem>
+              </SelectContent>
+            </Select>
           </label>
           <label className="text-xs">
             Kota

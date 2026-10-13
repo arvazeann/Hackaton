@@ -433,6 +433,19 @@ All route names are **[PROPOSED]**.
 - **[APPROVED]** Actions shown must match the state machine (§6.2) and the viewer's role.
 - **[APPROVED]** The cancellation dialog requires a valid reason (5–500 characters) before the confirm button is enabled.
 
+### 11.4 UI Refresh Follow-up — RuangLagi **[APPROVED]**
+
+This is a presentation-only follow-up and does not renumber or replace implementation stages. Work proceeds one UI subtask at a time; the next subtask must not start automatically.
+
+- **[APPROVED] Design direction:** warm cream page surfaces, deep-green brand surfaces, orange accents, serif display headings, sans-serif body text, compact green page headers with breadcrumbs, peach product cards with white image tiles, a wishlist heart and product-detail link, responsive listing filters, numbered pagination, and a dark-green footer. Use the `ruanglagi` brand. Do not copy reference branding, images, or copy.
+- **[APPROVED] Tokens:** page `#FBF1E3`; card/surface `#FFFEFA`; warm card `#F8E2CC`; foreground `#342D25`; brand green `#174C3C`; brand orange `#A65B3F`; orange ink `#7D3F2C`; decorative bright orange `#F07824`; border `#E7D8C7`; body font DM Sans; display font DM Serif Display. Use the bright orange for non-text accents such as dots and borders only, never as text or behind white text. Normal text and focus states must meet WCAG AA contrast. Fonts use `next/font` and must not silently fall back if build-time download fails.
+- **[APPROVED] Product badges:** show “Baru diunggah” only for active products created within the last seven days, using one named duration constant. Reserved and sold products use “Dipesan” and “Terjual”; existing orderability rules remain unchanged.
+- **[APPROVED] Listing design:** category counts are omitted. Filters use existing category, condition, price range, and location query parameters. No size/color/brand fields or new filter data are added. Presentation may add a sort control and numbered pagination while preserving page size default 12 and maximum 48.
+- **[APPROVED] Product cards:** retain wishlist/favorite behavior and link to product detail; do not add cart actions. Continue using existing product images; use a neutral placeholder where the presentation layer can determine an image is missing.
+- **[APPROVED] Footer:** use link columns only for existing routes. Private account links are shown only to authenticated users. Keep the existing `/favorites` and `/wishlist` routes unchanged; their duplication is a TODO for a later approved task.
+- **[APPROVED] UI refresh subtasks:** UI-1 shared tokens/fonts, navbar, footer, page-header component, cards/badges, listing filters, pagination; UI-2 homepage and `/products` page layout; UI-3 product detail, profile, orders, dashboard/store, wishlist/favorites, notifications, forms, and Admin Area; UI-4 consistency and accessibility polish. UI-1 is being implemented and remains incomplete until its verification is complete.
+- **[APPROVED] Constraints:** presentation only; do not change schema, service, action, API, validation, privacy, or business rules. Keep active-only listings, reserved/sold viewability with ordering disabled, and public seller/buyer privacy rules. Keep server components by default, use no reference image assets, and do not alter marketplace data.
+
 ---
 
 ## 12. Architecture and Module Boundaries

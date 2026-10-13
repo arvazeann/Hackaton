@@ -4,32 +4,45 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #f7f5ef;
+  --background: #fbf1e3;
   --foreground: #342d25;
-  --card: #ffffff;
+  --card: #fffefa;
   --card-foreground: #342d25;
-  --popover: #ffffff;
+  --popover: #fffefa;
   --popover-foreground: #342d25;
   --primary: #174c3c;
   --primary-foreground: #fffefa;
-  --secondary: #ece9df;
+  --secondary: #f2e6d6;
   --secondary-foreground: #342d25;
-  --muted: #eeeae1;
-  --muted-foreground: #706f68;
+  --muted: #f3e9dc;
+  --muted-foreground: #625c53;
   --accent: #f3e5dd;
   --accent-foreground: #7d3f2c;
+  --accent-bright: #f07824;
+  --brand-orange: #a65b3f;
+  --orange-ink: #7d3f2c;
+  --surface-warm: #f8e2cc;
+  --status-warning-bg: #f7e9ce;
+  --status-warning-ink: #6e4b19;
+  --status-info-bg: #e5edf0;
+  --status-info-ink: #315562;
+  --status-error-bg: #f8e7e4;
+  --status-error-ink: #8a4032;
+  --focus: #174c3c;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: #e3ded2;
-  --input: #d9d4c8;
-  --ring: #568270;
-  --radius: 0.75rem;
+  --border: #e7d8c7;
+  --input: #d9cbb9;
+  --ring: #174c3c;
+  --radius: 1.25rem;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: Arial, Helvetica, sans-serif;
-  --font-serif: Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-dm-sans), Arial, Helvetica, sans-serif;
+  --font-serif: var(--font-dm-serif-display), Georgia, "Times New Roman", serif;
+  --font-heading:
+    var(--font-dm-serif-display), Georgia, "Times New Roman", serif;
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
@@ -42,14 +55,27 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-accent-bright: var(--accent-bright);
+  --color-brand-orange: var(--brand-orange);
+  --color-orange-ink: var(--orange-ink);
+  --color-surface-warm: var(--surface-warm);
+  --color-status-warning-bg: var(--status-warning-bg);
+  --color-status-warning-ink: var(--status-warning-ink);
+  --color-status-info-bg: var(--status-info-bg);
+  --color-status-info-ink: var(--status-info-ink);
+  --color-status-error-bg: var(--status-error-bg);
+  --color-status-error-ink: var(--status-error-ink);
+  --color-focus: var(--focus);
   --color-destructive: var(--destructive);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
+  --radius-sm: 0.75rem;
+  --radius-md: 1rem;
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-xl: 1.75rem;
+  --shadow-card: 0 10px 24px rgb(23 76 60 / 10%);
+  --shadow-menu: 0 14px 36px rgb(52 45 37 / 16%);
 }
 
 * {
@@ -67,8 +93,9 @@ body {
 }
 
 :focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--ring) 70%, transparent);
-  outline-offset: 3px;
+  outline: 2px solid var(--card);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--focus);
 }
 
 @media (prefers-reduced-motion: reduce) {

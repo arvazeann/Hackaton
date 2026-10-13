@@ -2,7 +2,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { productSchema } from "@/schemas";
 import type { ProductDetail } from "@/types";
 import type { z } from "zod";
@@ -12,6 +12,13 @@ import {
   type UploadImage,
 } from "@/components/forms/image-uploader";
 import { requestApi } from "@/components/forms/request-api";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 type Values = z.infer<typeof productSchema>;
 type Category = { id: string; name: string; slug: string };
 export function ProductForm({
@@ -126,33 +133,65 @@ export function ProductForm({
         />
         <FieldError message={errors.price?.message} />
       </label>
-      <label className="grid gap-2 text-sm font-medium">
+      <div className="grid gap-2 text-sm font-medium">
         Kategori
-        <select
-          {...register("categoryId")}
-          className="rounded-xl border border-[#d9d4c8] bg-[#fffefa] px-4 py-3 font-normal outline-none focus:border-[#568270] focus:ring-2 focus:ring-[#568270]/20"
-        >
-          <option value="">Pilih kategori</option>
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
+        <Controller
+          control={control}
+          name="categoryId"
+          render={({ field }) => (
+            <Select
+              value={field.value}
+              onValueChange={field.onChange}
+              disabled={field.disabled}
+            >
+              <SelectTrigger
+                ref={field.ref}
+                aria-label="Kategori"
+                className="min-h-12 w-full min-w-0 justify-start rounded-xl px-4 py-3 font-normal shadow-none"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Pilih kategori</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        />
         <FieldError message={errors.categoryId?.message} />
-      </label>
-      <label className="grid gap-2 text-sm font-medium">
+      </div>
+      <div className="grid gap-2 text-sm font-medium">
         Kondisi
-        <select
-          {...register("condition")}
-          className="rounded-xl border border-[#d9d4c8] bg-[#fffefa] px-4 py-3 font-normal outline-none focus:border-[#568270] focus:ring-2 focus:ring-[#568270]/20"
-        >
-          <option value="like_new">Seperti baru</option>
-          <option value="good">Baik</option>
-          <option value="fair">Cukup</option>
-        </select>
+        <Controller
+          control={control}
+          name="condition"
+          render={({ field }) => (
+            <Select
+              value={field.value}
+              onValueChange={field.onChange}
+              disabled={field.disabled}
+            >
+              <SelectTrigger
+                ref={field.ref}
+                aria-label="Kondisi"
+                className="min-h-12 w-full min-w-0 justify-start rounded-xl px-4 py-3 font-normal shadow-none"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="like_new">Seperti baru</SelectItem>
+                <SelectItem value="good">Baik</SelectItem>
+                <SelectItem value="fair">Cukup</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        />
         <FieldError message={errors.condition?.message} />
-      </label>
+      </div>
       <label className="grid gap-2 text-sm font-medium">
         Kota
         <input

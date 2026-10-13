@@ -4,6 +4,16 @@ import { formatRupiah } from "@/lib/format";
 import type { ProductListItem } from "@/types";
 import { FavoriteButton } from "@/components/product/favorite-button";
 
+export const NEWLY_UPLOADED_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+
+export function isNewlyUploaded(createdAt: string, now = Date.now()) {
+  const uploadedAt = Date.parse(createdAt);
+  const age = now - uploadedAt;
+  return (
+    Number.isFinite(uploadedAt) && age >= 0 && age <= NEWLY_UPLOADED_WINDOW_MS
+  );
+}
+
 const conditionLabels: Record<string, string> = {
   like_new: "Seperti baru",
   good: "Baik",
@@ -12,7 +22,7 @@ const conditionLabels: Record<string, string> = {
 
 export function ConditionBadge({ condition }: { condition: string }) {
   return (
-    <span className="rounded-full border border-[#e3ded2] bg-[#fffefa] px-2.5 py-1 text-[11px] font-semibold text-[#342d25]">
+    <span className="rounded-full border border-border bg-background px-3 py-1 text-[11px] font-semibold text-foreground shadow-sm">
       {conditionLabels[condition] ?? condition.replaceAll("_", " ")}
     </span>
   );
@@ -37,90 +47,118 @@ export function ProductGrid({
 }) {
   if (!products.length)
     return (
-      <div className="rounded-3xl border border-dashed border-[#d6d0c3] bg-[#fffefa] px-6 py-14 text-center sm:px-12">
-        <p className="text-lg font-semibold text-[#26332d]">{emptyTitle}</p>
-        <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-stone-600">
+      <div className="rounded-[1.75rem] border border-dashed border-border bg-card px-6 py-14 text-center sm:px-12">
+        <p className="font-serif text-xl text-foreground">{emptyTitle}</p>
+        <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
           {emptyDescription}
         </p>
         {emptyAction && (
           <Link
             href={emptyAction.href}
-            className="mt-5 inline-flex min-h-11 items-center rounded-full bg-[#174c3c] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#103d30]"
+            className="mt-5 inline-flex min-h-11 items-center rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus"
           >
             {emptyAction.label}
           </Link>
         )}
       </div>
     );
+
   return (
-    <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-x-5 sm:gap-y-8 lg:grid-cols-3 xl:grid-cols-4">
-      {products.map((p) => (
+    <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 lg:gap-5">
+      {products.map((product) => (
         <article
-          key={p.id}
-          className="group flex h-full flex-col overflow-hidden rounded-xl border border-transparent transition-[transform,box-shadow,border-color,background-color] duration-300 ease-out hover:-translate-y-0.5 hover:border-[#e3ded2] hover:bg-[#fffefa] hover:shadow-[0_10px_24px_rgba(39,52,44,0.08)] focus-within:-translate-y-0.5 focus-within:border-[#e3ded2] focus-within:bg-[#fffefa] focus-within:shadow-[0_10px_24px_rgba(39,52,44,0.08)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:focus-within:translate-y-0"
+          key={product.id}
+          className="group/card group relative flex h-full flex-col rounded-[1.5rem] border border-transparent bg-surface-warm p-2.5 transition-[transform,border-color,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:border-accent-bright hover:shadow-card focus-within:-translate-y-0.5 focus-within:border-accent-bright focus-within:shadow-card motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:focus-within:translate-y-0 sm:rounded-[1.75rem] sm:p-3"
         >
-          <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-[#eeeae1]">
-            <Link
-              href={`/products/${p.id}`}
-              aria-label={`Lihat ${p.title}`}
-              className="absolute inset-0 z-0 rounded-xl focus-visible:outline-offset-[-4px]"
-            />
-            <Image
-              src={p.coverImageUrl}
-              alt={p.title}
-              fill
-              className="pointer-events-none object-contain p-2 transition-transform duration-300 ease-out group-hover:scale-[1.02] group-focus-within:scale-[1.02] motion-reduce:transition-none sm:p-3"
-            />
-            {p.status !== "active" && (
-              <div className="pointer-events-none absolute left-3 top-3 z-10">
-                <StatusBadge status={p.status} />
+          <Link
+            href={`/products/${product.id}`}
+            aria-label={`Lihat ${product.title}`}
+            className="absolute inset-0 z-0 rounded-[1.5rem] focus-visible:outline-offset-[-4px] sm:rounded-[1.75rem]"
+          />
+          <div className="pointer-events-none relative aspect-[4/3] overflow-hidden rounded-[1.1rem] bg-card sm:rounded-[1.25rem]">
+            {product.coverImageUrl.trim() ? (
+              <Image
+                src={product.coverImageUrl}
+                alt={product.title}
+                fill
+                sizes="(max-width: 1023px) 50vw, 33vw"
+                className="object-contain p-3 transition-transform duration-300 ease-out group-hover/card:scale-[1.025] group-focus-within/card:scale-[1.025] motion-reduce:transition-none sm:p-4"
+              />
+            ) : (
+              <div className="grid size-full place-items-center bg-background">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 120 100"
+                  className="w-1/2 max-w-32 text-primary"
+                  fill="none"
+                >
+                  <circle cx="60" cy="48" r="40" fill="var(--background)" />
+                  <path
+                    d="M36 56h48l-4-26a5 5 0 0 0-5-4H45a5 5 0 0 0-5 4l-4 26Z"
+                    fill="currentColor"
+                  />
+                  <path
+                    d="M32 56h56v8a7 7 0 0 1-7 7H39a7 7 0 0 1-7-7v-8Z"
+                    fill="var(--brand-orange)"
+                  />
+                  <circle cx="60" cy="43" r="9" fill="var(--card)" />
+                </svg>
+                <span className="sr-only">Gambar belum tersedia</span>
               </div>
             )}
-            <span className="pointer-events-none absolute bottom-3 left-3 z-10">
-              <ConditionBadge condition={p.condition} />
+            <div className="pointer-events-none absolute left-2 top-2 z-10 sm:left-3 sm:top-3">
+              {product.status === "active" ? (
+                isNewlyUploaded(product.createdAt) && <NewlyUploadedBadge />
+              ) : (
+                <StatusBadge status={product.status} />
+              )}
+            </div>
+            <span className="pointer-events-none absolute bottom-2 left-2 z-10 sm:bottom-3 sm:left-3">
+              <ConditionBadge condition={product.condition} />
             </span>
-            <div className="absolute right-3 top-3 z-10">
+            <div className="absolute right-2 top-2 z-20 sm:right-3 sm:top-3">
               <FavoriteButton
-                productId={p.id}
-                initial={p.isFavorited}
+                productId={product.id}
+                initial={product.isFavorited}
                 loginRequired={favoriteDisabled}
               />
             </div>
           </div>
-          <div className="flex flex-1 flex-col px-1.5 pb-1 pt-3 sm:px-2 sm:pt-4">
+          <div className="pointer-events-none relative z-10 flex flex-1 flex-col px-1.5 pb-1 pt-3 sm:px-2 sm:pt-4">
             <Link
-              href={`/products/${p.id}`}
-              className="line-clamp-2 block min-h-10 text-sm font-semibold leading-5 text-[#342d25] hover:text-[#174c3c]"
+              href={`/products/${product.id}`}
+              className="pointer-events-auto line-clamp-2 block min-h-10 rounded text-sm font-semibold leading-5 text-foreground transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus"
             >
-              {p.title}
+              {product.title}
             </Link>
-            <p className="mt-2 text-base font-bold tracking-tight text-[#174c3c] sm:text-lg">
-              {formatRupiah(p.price)}
+            <p className="mt-1 text-sm font-bold tracking-tight text-primary sm:text-base">
+              {formatRupiah(product.price)}
             </p>
-            <p className="mt-1 line-clamp-1 text-xs text-stone-600">
-              {p.category.name} <span aria-hidden="true">·</span> {p.city}
+            <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
+              {product.category.name} <span aria-hidden="true">·</span>{" "}
+              {product.city}
             </p>
             <div className="mt-auto min-h-7 pt-2">
-              {p.seller.storeSlug ? (
+              {product.seller.storeSlug ? (
                 <Link
-                  href={`/store/${p.seller.storeSlug}`}
-                  className="block truncate text-xs font-semibold text-[#568270] hover:text-[#174c3c] hover:underline"
+                  href={`/store/${product.seller.storeSlug}`}
+                  className="pointer-events-auto block truncate rounded text-xs font-semibold text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus"
                 >
-                  Toko {p.seller.name}
+                  Toko {product.seller.name}
                 </Link>
               ) : (
-                <p className="truncate text-xs text-stone-500">
-                  {p.seller.name}
+                <p className="truncate text-xs text-muted-foreground">
+                  {product.seller.name}
                 </p>
               )}
             </div>
             {showOrderAction &&
-              (p.status === "active" &&
-              p.seller.id !== viewerId &&
-              !p.seller.isOnVacation ? (
+              (product.status === "active" &&
+              product.seller.id !== viewerId &&
+              !product.seller.isOnVacation ? (
                 <Link
-                  href={`/products/${p.id}/order`}
-                  className="mt-3 block rounded-full bg-[#174c3c] px-3 py-2.5 text-center text-xs font-semibold text-white transition hover:bg-[#103d30] focus-visible:outline-offset-2"
+                  href={`/products/${product.id}/order`}
+                  className="pointer-events-auto mt-3 inline-flex min-h-10 items-center justify-center rounded-full bg-primary px-3 text-center text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus"
                 >
                   Pesan produk
                 </Link>
@@ -128,11 +166,11 @@ export function ProductGrid({
                 <button
                   type="button"
                   disabled
-                  className="mt-3 block w-full cursor-not-allowed rounded-full bg-stone-200 px-3 py-2 text-xs font-semibold text-stone-600"
+                  className="pointer-events-auto mt-3 min-h-10 w-full cursor-not-allowed rounded-full bg-muted px-3 text-xs font-semibold text-muted-foreground"
                 >
-                  {p.seller.id === viewerId
+                  {product.seller.id === viewerId
                     ? "Produk milikmu"
-                    : p.seller.isOnVacation
+                    : product.seller.isOnVacation
                       ? "Toko sedang libur"
                       : "Tidak dapat dipesan"}
                 </button>
@@ -144,23 +182,44 @@ export function ProductGrid({
   );
 }
 
+export function NewlyUploadedBadge() {
+  return (
+    <span className="inline-flex min-h-7 items-center rounded-full bg-background px-3 text-[11px] font-bold text-primary shadow-sm">
+      Baru diunggah
+    </span>
+  );
+}
+
+const statusLabels: Record<string, string> = {
+  active: "Tersedia",
+  reserved: "Dipesan",
+  sold: "Terjual",
+  archived: "Diarsipkan",
+  pending: "Menunggu",
+  confirmed: "Dikonfirmasi",
+  completed: "Selesai",
+  rejected: "Ditolak",
+  cancelled: "Dibatalkan",
+};
+
+const statusStyles: Record<string, string> = {
+  active: "bg-secondary text-primary",
+  reserved: "bg-status-warning-bg text-status-warning-ink",
+  sold: "bg-muted text-foreground",
+  archived: "bg-muted text-muted-foreground",
+  pending: "bg-status-warning-bg text-status-warning-ink",
+  confirmed: "bg-status-info-bg text-status-info-ink",
+  completed: "bg-secondary text-primary",
+  rejected: "bg-status-error-bg text-status-error-ink",
+  cancelled: "bg-muted text-foreground",
+};
+
 export function StatusBadge({ status }: { status: string }) {
-  const style: Record<string, string> = {
-    active: "bg-[#e6eee7] text-[#174c3c]",
-    reserved: "bg-[#f7e9ce] text-[#6e4b19]",
-    sold: "bg-[#eeeae1] text-[#524d46]",
-    archived: "bg-stone-100 text-stone-600",
-    pending: "bg-[#f7e9ce] text-[#6e4b19]",
-    confirmed: "bg-[#e5edf0] text-[#315562]",
-    completed: "bg-[#e6eee7] text-[#174c3c]",
-    rejected: "bg-[#f8e7e4] text-[#8a4032]",
-    cancelled: "bg-[#eeeae1] text-[#524d46]",
-  };
   return (
     <span
-      className={`rounded-full px-3 py-1 text-xs font-semibold ${style[status] ?? "bg-stone-100"}`}
+      className={`inline-flex min-h-7 items-center rounded-full px-3 text-xs font-semibold ${statusStyles[status] ?? "bg-muted text-foreground"}`}
     >
-      {status.replaceAll("_", " ")}
+      {statusLabels[status] ?? status.replaceAll("_", " ")}
     </span>
   );
 }

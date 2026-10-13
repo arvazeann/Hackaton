@@ -3,6 +3,13 @@ import { AdminRevealEmailButton } from "@/components/admin/admin-reveal-email-bu
 import { AdminUserActions } from "@/components/admin/admin-mutation-actions";
 import { adminUserQuerySchema } from "@/schemas";
 import { listAdminUsers } from "@/server/services/admin";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default async function AdminUsersPage({
   searchParams,
@@ -50,27 +57,35 @@ export default async function AdminUsersPage({
         </label>
         <label className="text-sm">
           Role
-          <select
-            className="mt-1 w-full rounded-lg border px-3 py-2"
-            name="role"
-            defaultValue={query.data.role ?? ""}
-          >
-            <option value="">Semua</option>
-            <option value="USER">USER</option>
-            <option value="ADMIN">ADMIN</option>
-          </select>
+          <Select name="role" defaultValue={query.data.role ?? ""}>
+            <SelectTrigger aria-label="Role" className="mt-1 w-full min-w-0">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Semua</SelectItem>
+              <SelectItem value="USER">USER</SelectItem>
+              <SelectItem value="ADMIN">ADMIN</SelectItem>
+            </SelectContent>
+          </Select>
         </label>
         <label className="text-sm">
           Status akun
-          <select
-            className="mt-1 w-full rounded-lg border px-3 py-2"
+          <Select
             name="accountState"
             defaultValue={query.data.accountState ?? ""}
           >
-            <option value="">Semua</option>
-            <option value="enabled">Aktif</option>
-            <option value="disabled">Nonaktif</option>
-          </select>
+            <SelectTrigger
+              aria-label="Status akun"
+              className="mt-1 w-full min-w-0"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Semua</SelectItem>
+              <SelectItem value="enabled">Aktif</SelectItem>
+              <SelectItem value="disabled">Nonaktif</SelectItem>
+            </SelectContent>
+          </Select>
         </label>
         <label className="text-sm">
           Daftar sejak

@@ -1,6 +1,13 @@
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { adminAddressQuerySchema } from "@/schemas";
 import { listAdminAddresses } from "@/server/services/admin";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default async function AdminAddressesPage({
   searchParams,
@@ -43,15 +50,19 @@ export default async function AdminAddressesPage({
         </label>
         <label className="text-sm">
           Jenis
-          <select
-            className="mt-1 w-full rounded-lg border px-3 py-2"
-            name="kind"
-            defaultValue={query.data.kind ?? ""}
-          >
-            <option value="">Semua</option>
-            <option value="SHIPPING">Pengiriman</option>
-            <option value="PICKUP">Ambil di tempat</option>
-          </select>
+          <Select name="kind" defaultValue={query.data.kind ?? ""}>
+            <SelectTrigger
+              aria-label="Jenis alamat"
+              className="mt-1 w-full min-w-0"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Semua</SelectItem>
+              <SelectItem value="SHIPPING">Pengiriman</SelectItem>
+              <SelectItem value="PICKUP">Ambil di tempat</SelectItem>
+            </SelectContent>
+          </Select>
         </label>
         <label className="text-sm">
           Kota

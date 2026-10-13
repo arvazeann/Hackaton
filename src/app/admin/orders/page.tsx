@@ -2,6 +2,13 @@ import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminOrderCancelAction } from "@/components/admin/admin-mutation-actions";
 import { adminOrderQuerySchema } from "@/schemas";
 import { listAdminOrders } from "@/server/services/admin";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default async function AdminOrdersPage({
   searchParams,
@@ -43,18 +50,28 @@ export default async function AdminOrdersPage({
         </label>
         <label className="text-sm">
           Status
-          <select
-            className="mt-1 w-full rounded-lg border px-3 py-2"
-            name="status"
-            defaultValue={query.data.status ?? ""}
-          >
-            <option value="">Semua</option>
-            {["pending", "confirmed", "completed", "cancelled", "rejected"].map(
-              (status) => (
-                <option key={status}>{status}</option>
-              ),
-            )}
-          </select>
+          <Select name="status" defaultValue={query.data.status ?? ""}>
+            <SelectTrigger
+              aria-label="Status pesanan"
+              className="mt-1 w-full min-w-0"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Semua</SelectItem>
+              {[
+                "pending",
+                "confirmed",
+                "completed",
+                "cancelled",
+                "rejected",
+              ].map((status) => (
+                <SelectItem key={status} value={status}>
+                  {status}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </label>
         <label className="text-sm">
           ID pembeli/penjual
