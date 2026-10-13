@@ -10,7 +10,7 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 
 ## Current Status
 
-- Current stage: UI refresh follow-up — UI-1 (implementation in progress; latest typecheck, lint, format check, Vitest, Prisma validation, migration status, and desktop LAN authentication browser checks passed; production build currently fails with Windows `EPERM` while unlinking an existing `.next/build` chunk).
+- Current stage: Login/register redesign follow-up (implementation complete; typecheck, lint, format check, 168 Vitest tests, and desktop/mobile-viewport browser checks passed; production build was not run because a dev server was already active). UI refresh UI-1 remains in progress.
 - Last completed implementation stage: Stage 6 follow-up: Admin Area Phase 2; B1, B2, and Admin Phases 1–2 extend Stage 6 without renumbering. UI refresh is a presentation-only follow-up.
 - Interim local-disk product image storage is implemented for the single-machine demo. Stage 7 Cloudflare R2 remains proposed and has not started.
 
@@ -29,6 +29,8 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 
 - Registration validates on the server, normalizes email, handles duplicate-email races, and stores bcrypt hashes.
 - Auth.js Credentials verifies credentials against PostgreSQL and uses JWT sessions.
+- `/login` and `/register` share a responsive animated auth experience while retaining both URLs; optional Google OAuth is enabled only when both server credentials are configured.
+- Google sign-in requires Google's verified email and maps it to the existing User row; new Google users receive a random, unusable bcrypt password. No OAuth `Account` table or adapter exists, so provider linking is by verified email and no Google subject is persisted.
 - Session JWT contains the user ID, session version, and standard JWT timing identifiers; session resolution checks the current enabled account and role from PostgreSQL.
 - Authenticated pages use server-side session checks and redirect visitors to login with a return path.
 - Navigation displays signed-in state and provides Auth.js logout.
@@ -57,9 +59,10 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 
 - PostgreSQL is the database; Prisma is used for ORM and migrations.
 - Auth.js Credentials uses JWT sessions; bcryptjs with cost 12 hashes passwords.
+- Optional Google OAuth requires both `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET`; email linking accepts only a Google profile with `email_verified: true`. The current schema does not persist provider account IDs.
 - `passwordHash` is never sent to the client or included in session data.
 - Buyers can always view their own shipping data; sellers see phone/address only for `confirmed` or `completed` orders.
-- Order cancellation requires a 5â€“500 character reason; cancelled orders require `cancel_reason`.
+- Order cancellation requires a 5-500 character reason; cancelled orders require `cancel_reason`.
 - `/api/mock` and its client helper were removed after all product, order, favorite, and profile mutations moved to domain routes.
 - Product, order, favorite, and profile operations use authenticated database UUIDs directly; no UUID-to-mock-ID mapping is used.
 - A new order remains `pending` while its product stays `active`; confirming reserves the product, completing marks it sold, and cancelling a confirmed order restores it to active.
@@ -73,6 +76,19 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 - Admin changes never modify platform roles, password credentials, product images/ownership, or order snapshots. Audit metadata contains allowlisted field names and state transitions only.
 
 ## Verification
+
+### Login/register redesign — 2026-10-13
+
+| Check                 | Status  | Command / notes                                                                                                                                                                                                                                                                                                                                                                            |
+| --------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Typecheck             | PASS    | `npm run typecheck`                                                                                                                                                                                                                                                                                                                                                                        |
+| Lint                  | PASS    | `npm run lint`                                                                                                                                                                                                                                                                                                                                                                             |
+| Format check          | PASS    | `npm run format:check`                                                                                                                                                                                                                                                                                                                                                                     |
+| Tests                 | PASS    | `npm test` — 168 passed across 34 files; Vite CJS Node API deprecation warning remains.                                                                                                                                                                                                                                                                                                    |
+| Build                 | NOT RUN | A Next.js dev server was already active on port 3000. Build was not run alongside it to avoid `.next` conflicts on Windows.                                                                                                                                                                                                                                                                |
+| Manual browser checks | PASS    | Headless Chrome desktop on localhost and laptop LAN IP, plus 390 px mobile viewport: Login/Register switch both ways, URL compatibility, validation, registration/duplicate, pending/double-submit guard, Credentials wrong/correct, callback redirect, session reload, and no horizontal overflow. Physical phone: NOT RUN. Google OAuth: NOT RUN because credentials are not configured. |
+
+Google setup: create a Google OAuth Web client, set `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` in ignored `.env.local`, and authorize `http://localhost:3000/api/auth/callback/google` for local testing. For remote/phone access, use an HTTPS domain or tunnel and authorize its exact `/api/auth/callback/google` URI; Google Web OAuth rejects raw non-loopback IP redirect hosts. The Google button remains hidden until both server variables are set. No schema or migration was changed.
 
 ### Local-network authentication follow-up — 2026-10-13
 
