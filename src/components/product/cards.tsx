@@ -57,7 +57,7 @@ export function ProductGrid({
       {products.map((p) => (
         <article
           key={p.id}
-          className="group flex h-full flex-col overflow-hidden rounded-xl border border-transparent transition duration-200 hover:border-[#e3ded2] hover:bg-[#fffefa] hover:shadow-[0_10px_24px_rgba(39,52,44,0.08)]"
+          className="group flex h-full flex-col overflow-hidden rounded-xl border border-transparent transition-[transform,box-shadow,border-color,background-color] duration-300 ease-out hover:-translate-y-0.5 hover:border-[#e3ded2] hover:bg-[#fffefa] hover:shadow-[0_10px_24px_rgba(39,52,44,0.08)] focus-within:-translate-y-0.5 focus-within:border-[#e3ded2] focus-within:bg-[#fffefa] focus-within:shadow-[0_10px_24px_rgba(39,52,44,0.08)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:focus-within:translate-y-0"
         >
           <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-[#eeeae1]">
             <Link
@@ -69,7 +69,7 @@ export function ProductGrid({
               src={p.coverImageUrl}
               alt={p.title}
               fill
-              className="pointer-events-none object-contain p-2 transition duration-300 group-hover:scale-[1.02] sm:p-3"
+              className="pointer-events-none object-contain p-2 transition-transform duration-300 ease-out group-hover:scale-[1.02] group-focus-within:scale-[1.02] motion-reduce:transition-none sm:p-3"
             />
             {p.status !== "active" && (
               <div className="pointer-events-none absolute left-3 top-3 z-10">
@@ -79,7 +79,7 @@ export function ProductGrid({
             <span className="pointer-events-none absolute bottom-3 left-3 z-10">
               <ConditionBadge condition={p.condition} />
             </span>
-            <div className="absolute right-3 top-3 z-10 rounded-full border border-[#e3ded2] bg-[#fffefa] p-2">
+            <div className="absolute right-3 top-3 z-10">
               <FavoriteButton
                 productId={p.id}
                 initial={p.isFavorited}

@@ -24,6 +24,7 @@ export function FavoriteButton({
       aria-disabled={false}
       aria-label={favorite ? "Hapus dari favorit" : "Tambah ke favorit"}
       aria-pressed={favorite}
+      className="group grid size-10 place-items-center rounded-full border border-[#e3ded2] bg-[#fffefa] transition-[background-color,transform] duration-200 ease-out hover:bg-[#f3e5dd] active:scale-95 focus-visible:outline-offset-2 motion-reduce:transition-none motion-reduce:active:scale-100"
       onClick={(event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -59,7 +60,7 @@ export function FavoriteButton({
     >
       <Heart
         size={16}
-        className={favorite ? "fill-rose-500 text-rose-500" : "text-stone-500"}
+        className={`transition-[color,fill,transform] duration-200 ease-out group-hover:scale-110 motion-reduce:transition-none ${favorite ? "fill-rose-500 text-rose-500" : "text-stone-500 group-hover:text-[#a65b3f]"}`}
       />
       <span
         className="sr-only"

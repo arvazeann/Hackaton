@@ -50,6 +50,7 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 - Warm visual refresh: cream-and-forest color tokens, responsive search/navigation and catalog filters, consistent product cards, and clearer empty/auth/form states across client marketplace pages. Existing service contracts and business rules remain unchanged.
 - Desktop-first marketplace refinement: one-row desktop navbar with account disclosure, compact guest actions, seller/account shortcuts, expanded desktop content widths, editorial serif headings, and visible product-condition labels. The seller CTA keeps its existing route and server-side activation requirements.
 - Product presentation refinement: shared product cards preserve full product imagery and clarify price, condition, category, location, and seller hierarchy; the catalog uses three or four desktop columns according to viewport width. The homepage highlights the actual newest product from the existing listing query, and detail/store layouts use a tighter editorial composition.
+- Product interaction and homepage refinement: product cards and wishlist controls use subtle lift, image and icon transitions, and reduced-motion support. The homepage hero has tighter desktop proportions while keeping the actual newest product image and price prominent.
 
 ## Important Decisions
 
@@ -71,6 +72,19 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 - Admin changes never modify platform roles, password credentials, product images/ownership, or order snapshots. Audit metadata contains allowlisted field names and state transitions only.
 
 ## Verification
+
+### Product motion and homepage hero refinement — 2026-10-13
+
+| Check          | Status  | Command / notes                                                                                                      |
+| -------------- | ------- | -------------------------------------------------------------------------------------------------------------------- |
+| Typecheck      | PASS    | `npm run typecheck`                                                                                                  |
+| Lint           | PASS    | `npm run lint`                                                                                                       |
+| Format check   | PASS    | `npm run format:check`                                                                                               |
+| Tests          | PASS    | `npm test` — 161 passed across 32 files; existing Vite CJS deprecation warning                                       |
+| Build          | PASS    | `npm run build -- --webpack` in an isolated temporary worktree to avoid sharing `.next` with the active dev process. |
+| Browser checks | NOT RUN | No browser runner is available; actual desktop render and reduced-motion behavior remain pending manual review.      |
+
+No service, API, database, or business logic changes were made. Prisma Client generation and build ran only in the isolated temporary worktree; no database operation was performed.
 
 ### Product presentation refinement — 2026-10-13
 

@@ -17,13 +17,13 @@ export default async function Home() {
     <Shell>
       <section className="mx-auto max-w-[1536px] px-4 pt-6 sm:px-6 sm:pt-8 lg:px-8">
         <div
-          className={`grid overflow-hidden rounded-[1.75rem] bg-[#174c3c] text-white ${newestProduct ? "lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,.95fr)]" : "lg:grid-cols-1"}`}
+          className={`grid overflow-hidden rounded-2xl bg-[#174c3c] text-white ${newestProduct ? "lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,.95fr)]" : "lg:grid-cols-1"}`}
         >
-          <div className="flex flex-col items-start justify-center px-6 py-10 sm:px-12 sm:py-14 lg:px-16 lg:py-16">
+          <div className="flex flex-col items-start justify-center px-6 py-8 sm:px-10 sm:py-10 lg:px-12 lg:py-10">
             <span className="text-xs font-semibold uppercase tracking-[.16em] text-[#c6d8cc]">
               Marketplace barang preloved
             </span>
-            <h1 className="mt-4 font-serif text-4xl font-bold leading-tight sm:text-6xl lg:text-7xl">
+            <h1 className="mt-4 font-serif text-4xl font-bold leading-tight sm:text-6xl lg:text-6xl">
               Barang baik,
               <br />
               <span className="text-[#f2b46d]">cerita baru.</span>
@@ -41,9 +41,9 @@ export default async function Home() {
           {newestProduct && (
             <Link
               href={`/products/${newestProduct.id}`}
-              className="group grid min-w-0 grid-rows-[minmax(0,1fr)_auto] gap-3 p-4 pt-0 focus-visible:outline-offset-[-2px] sm:p-6 sm:pt-0 lg:p-8 lg:pl-0"
+              className="group grid min-w-0 grid-rows-[minmax(0,1fr)_auto] gap-3 p-3 pt-0 focus-visible:outline-offset-[-2px] sm:p-4 sm:pt-0 lg:p-6 lg:pl-0"
             >
-              <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-[#f0ede5]">
+              <div className="relative aspect-[3/2] overflow-hidden rounded-xl bg-[#f0ede5]">
                 <Image
                   src={newestProduct.coverImageUrl}
                   alt={newestProduct.title}
@@ -68,7 +68,7 @@ export default async function Home() {
             </Link>
           )}
         </div>
-        <div className="py-10 sm:py-12 lg:py-14">
+        <div className="py-7 sm:py-8 lg:py-9">
           <div className="mb-5 flex items-end justify-between gap-4">
             <div>
               <p className="text-xs font-bold tracking-[.14em] text-[#568270]">
