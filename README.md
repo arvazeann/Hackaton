@@ -10,7 +10,7 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 
 ## Current Status
 
-- Current stage: UI refresh follow-up — UI-1 (implementation in progress; typecheck, lint, format check, and Vitest verified; production build is pending because `next dev` is still active).
+- Current stage: UI refresh follow-up — UI-1 (implementation in progress; latest typecheck, lint, format check, Vitest, Prisma validation, migration status, and desktop LAN authentication browser checks passed; production build currently fails with Windows `EPERM` while unlinking an existing `.next/build` chunk).
 - Last completed implementation stage: Stage 6 follow-up: Admin Area Phase 2; B1, B2, and Admin Phases 1–2 extend Stage 6 without renumbering. UI refresh is a presentation-only follow-up.
 - Interim local-disk product image storage is implemented for the single-machine demo. Stage 7 Cloudflare R2 remains proposed and has not started.
 
@@ -73,6 +73,21 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 - Admin changes never modify platform roles, password credentials, product images/ownership, or order snapshots. Audit metadata contains allowlisted field names and state transitions only.
 
 ## Verification
+
+### Local-network authentication follow-up — 2026-10-13
+
+| Check                 | Status | Command / notes                                                                                                                                                                                                                                         |
+| --------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Typecheck             | PASS   | `npm run typecheck`                                                                                                                                                                                                                                     |
+| Lint                  | PASS   | `npm run lint`                                                                                                                                                                                                                                          |
+| Format check          | PASS   | `npm run format:check`                                                                                                                                                                                                                                  |
+| Tests                 | PASS   | `npm test` — 164 passed across 33 files; existing Vite CJS Node API deprecation warning                                                                                                                                                                 |
+| Build                 | FAIL   | `npm run build` and `npm run build -- --webpack` returned Windows `EPERM` unlinking an existing `.next` chunk after dev stopped. Isolated worktree retries failed resolving generated Prisma/Next client modules. No existing `.next` file was deleted. |
+| Prisma validation     | PASS   | `npm run db:validate`                                                                                                                                                                                                                                   |
+| Migration status      | PASS   | `npm run db:status` — 12 migrations, database up to date                                                                                                                                                                                                |
+| Manual browser checks | PASS   | Headless Chrome desktop on laptop LAN IP and `localhost`: registration, validation/duplicate, auto-login, wrong/correct login, session reload, protected redirect/callback, logout, and host-scoped cookies. Physical phone: NOT RUN.                   |
+
+Cause verified from the Next.js dev-server warning: the ignored local `.env.local` allowed the stale LAN IP `192.168.10.12`, while this laptop currently uses `10.28.71.37`. Updated only `NEXT_ALLOWED_DEV_ORIGIN` in `.env.local` to the active IP and documented the expected hostname/IP format in `.env.example`. After restart, browser requests from the LAN IP loaded the app resources without the previous blocked-origin warning. Auth.js needs no static `AUTH_URL` for this setup; callbacks followed the request host and cookies remained scoped to the host used for login. No schema, migration, or authentication code changed. Synthetic registration accounts remain in the local development database; no database reset or cleanup was performed.
 
 ### UI refresh — UI-1 shared components — 2026-10-13
 
@@ -350,7 +365,7 @@ Build completed without warnings after adding a Turbopack ignore annotation for 
 - Files uploaded and then replaced as an avatar/logo remain on disk; orphan cleanup is TODO. Product upload records are written, but validating PRODUCT-purpose ownership when attaching keys is TODO.
 - Existing confirmed/completed orders intentionally have no payment snapshot. Buyers see “Contact the seller for payment details”; sellers must provide payment details outside this feature for those in-flight orders.
 - B2 implementation is complete; its own browser checks remain pending as recorded above.
-- Browser scenarios remain NOT RUN; the manual checklist is below. Migration and SQL constraint checks ran only on isolated temporary databases, which were dropped after verification.
+- Physical-phone browser scenarios remain NOT RUN; desktop browser auth flows from the laptop LAN IP and localhost are recorded above. Other feature/browser scenarios remain NOT RUN; the manual checklists below still apply. Migration and SQL constraint checks ran only on isolated temporary databases, which were dropped after verification.
 - Historical Stage 3 audit scenarios below describe the behavior at that audit date; the P2 UUID mismatch was resolved by the Stage 4–6 Prisma migrations.
 - **Image storage limitation:** local uploads persist only on the machine running the app and are unsuitable for multi-instance/production hosting. Cloudflare R2 remains planned for Stage 7. Files uploaded from abandoned forms can remain unreferenced; a cleanup script is a TODO.
 - Manual image browser checks (single/multiple selection, remove/re-add, detail/list/home display, server restart persistence, traversal and invalid-upload cases) remain NOT RUN.
@@ -364,7 +379,7 @@ Build completed without warnings after adding a Turbopack ignore annotation for 
 
 ## Next Approved Step
 
-Finish UI-1 by stopping the active `next dev` process and running the production build, then complete manual browser review when a browser is available. Do not start UI-2 until the user approves it. Stage 7 Cloudflare R2 remains unstarted.
+Finish UI-1 by resolving the Windows `.next` EPERM build failure and completing the remaining manual visual review. Do not start UI-2 until the user approves it. Stage 7 Cloudflare R2 remains unstarted.
 
 ## Handoff Notes
 
