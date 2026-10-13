@@ -17,13 +17,13 @@ export default async function Home() {
     <Shell>
       <section className="mx-auto max-w-[1536px] px-4 pt-6 sm:px-6 sm:pt-8 lg:px-8">
         <div
-          className={`grid overflow-hidden rounded-2xl bg-[#174c3c] text-white ${newestProduct ? "lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,.95fr)]" : "lg:grid-cols-1"}`}
+          className={`mx-auto grid max-w-[1440px] overflow-hidden rounded-2xl bg-[#174c3c] text-white ${newestProduct ? "lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,.95fr)]" : "lg:grid-cols-1"}`}
         >
-          <div className="flex flex-col items-start justify-center px-6 py-8 sm:px-10 sm:py-10 lg:px-12 lg:py-10">
+          <div className="flex flex-col items-start justify-center px-6 py-8 sm:px-10 sm:py-10 lg:px-10 lg:py-8">
             <span className="text-xs font-semibold uppercase tracking-[.16em] text-[#c6d8cc]">
               Marketplace barang preloved
             </span>
-            <h1 className="mt-4 font-serif text-4xl font-bold leading-tight sm:text-6xl lg:text-6xl">
+            <h1 className="mt-4 font-serif text-4xl font-bold leading-tight sm:text-6xl lg:text-5xl">
               Barang baik,
               <br />
               <span className="text-[#f2b46d]">cerita baru.</span>
@@ -43,7 +43,7 @@ export default async function Home() {
               href={`/products/${newestProduct.id}`}
               className="group grid min-w-0 grid-rows-[minmax(0,1fr)_auto] gap-3 p-3 pt-0 focus-visible:outline-offset-[-2px] sm:p-4 sm:pt-0 lg:p-6 lg:pl-0"
             >
-              <div className="relative aspect-[3/2] overflow-hidden rounded-xl bg-[#f0ede5]">
+              <div className="relative aspect-[3/2] overflow-hidden rounded-xl bg-[#f0ede5] lg:aspect-auto lg:h-[clamp(280px,24vw,340px)]">
                 <Image
                   src={newestProduct.coverImageUrl}
                   alt={newestProduct.title}
@@ -68,8 +68,8 @@ export default async function Home() {
             </Link>
           )}
         </div>
-        <div className="py-7 sm:py-8 lg:py-9">
-          <div className="mb-5 flex items-end justify-between gap-4">
+        <div className="py-5 sm:py-6 lg:py-7">
+          <div className="mb-4 flex items-end justify-between gap-4">
             <div>
               <p className="text-xs font-bold tracking-[.14em] text-[#568270]">
                 PILIHAN UNTUKMU
@@ -90,7 +90,7 @@ export default async function Home() {
               <Link
                 key={category.id}
                 href={`/products?category=${category.slug}`}
-                className="shrink-0 rounded-full border border-[#e3ded2] bg-[#fffefa] px-5 py-3 text-sm font-medium text-[#34453b] shadow-sm transition hover:border-[#568270] hover:bg-[#edf2ec]"
+                className="shrink-0 rounded-full border border-[#e3ded2] bg-[#fffefa] px-5 py-2.5 text-sm font-medium text-[#34453b] shadow-sm transition hover:border-[#568270] hover:bg-[#edf2ec]"
               >
                 <span
                   aria-hidden="true"
