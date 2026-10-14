@@ -1,8 +1,10 @@
 import Link from "next/link";
-import Image from "next/image";
+import { ArrowUpRight, Store } from "lucide-react";
 import { formatRupiah } from "@/lib/format";
 import type { ProductListItem } from "@/types";
 import { FavoriteButton } from "@/components/product/favorite-button";
+import { ProductCardImage } from "@/components/product/product-card-image";
+import { ProductCardReveal } from "@/components/product/product-card-reveal";
 import { buttonVariants } from "@/components/ui/button";
 
 export const NEWLY_UPLOADED_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
@@ -44,6 +46,7 @@ export function ProductGrid({
   emptyTitle = "Belum ada barang yang cocok",
   emptyDescription = "Coba ubah kata kunci atau filter pencarian.",
   emptyAction,
+  gridClassName = "grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 lg:gap-5",
 }: {
   products: ProductListItem[];
   favoriteDisabled?: boolean;
@@ -52,6 +55,7 @@ export function ProductGrid({
   emptyTitle?: string;
   emptyDescription?: string;
   emptyAction?: { href: string; label: string };
+  gridClassName?: string;
 }) {
   if (!products.length)
     return (
@@ -72,91 +76,78 @@ export function ProductGrid({
     );
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 lg:gap-5">
-      {products.map((product) => (
-        <article
-          key={product.id}
-          className="group/card group relative flex h-full flex-col rounded-card border border-transparent bg-peach p-2.5 transition-[transform,border-color,box-shadow] duration-control ease-soft hover:-translate-y-0.5 hover:border-accent-bright hover:shadow-card focus-within:-translate-y-0.5 focus-within:border-accent-bright focus-within:shadow-card motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:focus-within:translate-y-0 sm:p-3"
-        >
+    <div className={gridClassName}>
+      {products.map((product, index) => {
+        const metadata = [
+          conditionLabels[product.condition] ??
+            product.condition.replaceAll("_", " "),
+          product.category.name,
+          product.city,
+        ].filter(Boolean);
+
+        return (
+          <ProductCardReveal key={product.id} delay={Math.min(index, 7) * 60}>
+        <article className="group/card group relative flex h-full flex-col rounded-3xl bg-peach p-2 shadow-product-card transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-safe:hover:-translate-y-1.5 motion-safe:hover:shadow-product-card-hover active:scale-[0.985] active:duration-100 motion-reduce:transition-none motion-reduce:transform-none motion-reduce:animation-none">
           <Link
             href={`/products/${product.id}`}
             aria-label={`Lihat ${product.title}`}
-            className="absolute inset-0 z-0 rounded-card focus-visible:outline-offset-[-4px]"
+            className="absolute inset-0 z-0 rounded-3xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
           />
-          <div className="pointer-events-none relative aspect-[4/3] overflow-hidden rounded-image bg-cream">
-            {product.coverImageUrl.trim() ? (
-              <Image
-                src={product.coverImageUrl}
-                alt={product.title}
-                fill
-                sizes="(max-width: 1023px) 50vw, 33vw"
-                unoptimized
-                className="object-contain p-3 transition-transform duration-image ease-soft group-hover/card:scale-[1.03] group-focus-within/card:scale-[1.03] motion-reduce:transition-none sm:p-4"
-              />
-            ) : (
-              <div className="grid size-full place-items-center bg-background">
-                <svg
-                  aria-hidden="true"
-                  viewBox="0 0 120 100"
-                  className="w-1/2 max-w-32 text-primary"
-                  fill="none"
-                >
-                  <circle cx="60" cy="48" r="40" fill="var(--background)" />
-                  <path
-                    d="M36 56h48l-4-26a5 5 0 0 0-5-4H45a5 5 0 0 0-5 4l-4 26Z"
-                    fill="currentColor"
-                  />
-                  <path
-                    d="M32 56h56v8a7 7 0 0 1-7 7H39a7 7 0 0 1-7-7v-8Z"
-                  fill="var(--peach)"
-                  />
-                  <circle cx="60" cy="43" r="9" fill="var(--card)" />
-                </svg>
-                <span className="sr-only">Gambar belum tersedia</span>
-              </div>
-            )}
-            <div className="pointer-events-none absolute left-2 top-2 z-10 sm:left-3 sm:top-3">
+          <div className="pointer-events-none relative isolate aspect-[4/5] w-full overflow-hidden rounded-2xl bg-sage/30 transform-gpu">
+            <ProductCardImage
+              src={product.coverImageUrl}
+              alt={product.title}
+              sizes="(max-width: 1023px) 50vw, 33vw"
+            />
+            <div className="pointer-events-none absolute left-2.5 top-2.5 z-10">
               {product.status === "active" ? (
                 isNewlyUploaded(product.createdAt) && <NewlyUploadedBadge />
               ) : (
                 <StatusBadge status={product.status} />
               )}
             </div>
-            <span className="pointer-events-none absolute bottom-2 left-2 z-10 sm:bottom-3 sm:left-3">
-              <ConditionBadge condition={product.condition} />
-            </span>
-            <div className="absolute right-2 top-2 z-20 sm:right-3 sm:top-3">
+            <div className="absolute right-1.5 top-1.5 z-20 grid size-11 place-items-center">
               <FavoriteButton
                 productId={product.id}
                 initial={product.isFavorited}
                 loginRequired={favoriteDisabled}
+                variant="product-card"
               />
             </div>
-          </div>
-          <div className="pointer-events-none relative z-10 flex flex-1 flex-col px-1.5 pb-1 pt-3 sm:px-2 sm:pt-4">
-            <Link
-              href={`/products/${product.id}`}
-              className="pointer-events-auto line-clamp-2 block min-h-11 rounded text-sm font-semibold leading-5 text-foreground transition-colors duration-control ease-soft hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus"
+            <span
+              aria-hidden="true"
+              className="pointer-events-none invisible absolute bottom-2.5 right-2.5 z-10 flex size-9 translate-y-2 scale-90 items-center justify-center rounded-full bg-primary text-cream opacity-0 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/card:visible group-hover/card:translate-y-0 group-hover/card:scale-100 group-hover/card:opacity-100 group-focus-within/card:visible group-focus-within/card:translate-y-0 group-focus-within/card:scale-100 group-focus-within/card:opacity-100 motion-reduce:transition-none motion-reduce:transform-none motion-reduce:animation-none"
             >
-              {product.title}
-            </Link>
-            <p className="mt-1 text-sm font-bold tracking-tight text-primary sm:text-base">
+              <ArrowUpRight aria-hidden="true" size={16} />
+            </span>
+          </div>
+          <div className="pointer-events-none relative z-10 px-2 pb-2 pt-3">
+            <p className="text-base font-semibold leading-tight text-primary sm:text-lg">
               {formatRupiah(product.price)}
             </p>
-            <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
-              {product.category.name} <span aria-hidden="true">·</span>{" "}
-              {product.city}
+            <p
+              title={product.title}
+              className="mt-1 line-clamp-1 text-sm font-medium leading-snug text-primary sm:text-[15px]"
+            >
+              {product.title}
             </p>
-            <div className="mt-auto min-h-7 pt-2">
+            {metadata.length > 0 && (
+              <p className="mt-1 line-clamp-1 text-xs text-primary/65 sm:text-[13px]">
+                {metadata.join(" \u00b7 ")}
+              </p>
+            )}
+            <div className="mt-3 border-t border-primary/10 pt-3">
               {product.seller.storeSlug ? (
                 <Link
                   href={`/store/${product.seller.storeSlug}`}
-                  className="pointer-events-auto inline-flex min-h-11 max-w-full items-center truncate rounded text-xs font-semibold text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus"
+                  className="pointer-events-auto flex min-h-5 max-w-full items-center gap-1.5 truncate text-xs font-medium text-primary/80 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cream focus-visible:ring-2 focus-visible:ring-primary"
                 >
+                    <Store aria-hidden="true" size={14} className="shrink-0" />
                   Toko {product.seller.name}
                 </Link>
               ) : (
-                <p className="truncate text-xs text-muted-foreground">
+                <p className="flex min-h-5 items-center gap-1.5 truncate text-xs font-medium text-primary/80">
+                  <Store aria-hidden="true" size={14} className="shrink-0" />
                   {product.seller.name}
                 </p>
               )}
@@ -186,14 +177,16 @@ export function ProductGrid({
               ))}
           </div>
         </article>
-      ))}
+          </ProductCardReveal>
+        );
+      })}
     </div>
   );
 }
 
 export function NewlyUploadedBadge() {
   return (
-    <span className="inline-flex min-h-7 items-center rounded-pill bg-sage px-3 text-xs font-semibold text-primary">
+    <span className="inline-flex min-h-6 items-center rounded-full bg-cream/90 px-2.5 text-[10px] font-semibold text-primary backdrop-blur-sm sm:min-h-7 sm:text-[11px]">
       Baru diunggah
     </span>
   );

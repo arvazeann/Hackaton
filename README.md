@@ -10,7 +10,7 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 
 ## Current Status
 
-- Current task: production website and repository audit completed on 2026-10-14 on `qa-remediation-20261014`. Live GETs succeeded for home/catalog/login/register and account page shells; home/catalog returned no product links or image tags. Upload handler accepts 5 MB, which conflicts with Vercel Functions' 4.5 MB request limit. 206 tests, typecheck, lint, format, and Prisma schema validation PASS; npm audit reports 15 advisories (4 High also remain in `--omit=dev`). Staging verification is blocked without isolated project refs; browser/E2E, production build, database, Storage, and current OAuth callback remain unverified. Release is NOT READY. See `docs/WEBSITE-AUDIT-REPORT.md`.
+- Current task: UX/UI and motion audit completed on 2026-10-14. Read-only production GETs for home/catalog/login/register returned 200; home/catalog included product links and image tags. Source audit and ten prioritized findings are in `docs/UX-UI-AUDIT-REPORT.md`; browser, accessibility, performance, and Storage integration remain unverified. Lint, typecheck, 208 tests, and Prisma validation PASS; full format check FAILS on 14 files. Build was not run. Existing uncommitted UI work was preserved.
 - Last completed implementation stage: Stage 6 follow-up: Admin Area Phase 2; B1, B2, and Admin Phases 1–2 extend Stage 6 without renumbering. UI refresh is a presentation-only follow-up.
 - Product, avatar, and store-logo uploads now use Supabase Storage through server-only credentials; legacy local images can be copied with the non-destructive migration script.
 
