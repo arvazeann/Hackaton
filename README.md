@@ -10,7 +10,7 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 
 ## Current Status
 
-- Current task: Supabase Storage image adapter and non-destructive local-file copy script are implemented. Wishlist image URLs now map storage keys to the same stable `/uploads/` path as catalog pages. Typecheck, lint, format, Prisma validation, and 189 tests pass. `SUPABASE_URL`, `SUPABASE_STORAGE_BUCKET`, and `SUPABASE_SERVICE_ROLE_KEY` are not set in the local env files; Vercel settings and browser flows remain unverified. Production build was not retried because a Node process may hold `.next`, after a previous build failed with Windows `EPERM` unlinking a build chunk. Earlier Vercel Prisma build work and LAN/Auth.js development are recorded below; UI refresh UI-1 remains in progress.
+- Current task: Supabase Storage image adapter and non-destructive local-file copy script are implemented. The server adapter accepts the current `SUPABASE_SECRET_KEY` format and retains compatibility with legacy `SUPABASE_SERVICE_ROLE_KEY`; Vercel settings and browser flows remain unverified. Production build was not retried because a Node process may hold `.next`, after a previous build failed with Windows `EPERM` unlinking a build chunk. Earlier Vercel Prisma build work and LAN/Auth.js development are recorded below; UI refresh UI-1 remains in progress.
 - Last completed implementation stage: Stage 6 follow-up: Admin Area Phase 2; B1, B2, and Admin Phases 1–2 extend Stage 6 without renumbering. UI refresh is a presentation-only follow-up.
 - Product, avatar, and store-logo uploads now use Supabase Storage through server-only credentials; legacy local images can be copied with the non-destructive migration script.
 
@@ -71,7 +71,7 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 - A new order remains `pending` while its product stays `active`; confirming reserves the product, completing marks it sold, and cancelling a confirmed order restores it to active.
 - At most one `pending` or `confirmed` order may exist per product. The service handles unique conflicts without exposing database details.
 - Auth.js secret is stored in ignored `.env.local`; never commit or expose it.
-- Uploaded media uses the `ruanglagi-images` public Supabase Storage bucket. `SUPABASE_URL`, `SUPABASE_STORAGE_BUCKET`, and `SUPABASE_SERVICE_ROLE_KEY` are server-only; the service-role key must never use a `NEXT_PUBLIC_` name. Public access is for image reads; uploads/deletes run only on the authenticated server.
+- Uploaded media uses the `ruanglagi-images` public Supabase Storage bucket. `SUPABASE_URL`, `SUPABASE_STORAGE_BUCKET`, and either `SUPABASE_SECRET_KEY` (preferred) or legacy `SUPABASE_SERVICE_ROLE_KEY` are server-only; never use a `NEXT_PUBLIC_` prefix. Public access is for image reads; uploads/deletes run only on the authenticated server.
 - Payment encryption uses server-only `PAYMENT_ENCRYPTION_KEY` (base64, 32 bytes) and must be generated locally using the command in `.env.example`; never commit its value.
 - Seller payment accounts are soft-deactivated, limited to three active entries, and do not modify payment snapshots on existing orders. Address/order shipping snapshots are likewise immutable.
 - Product create/update require image metadata to belong to the current seller and have purpose `PRODUCT`; product uploads also require an existing seller profile. Legacy static seed SVGs and local-disk fallback reads remain supported. Old local files are not deleted by the migration script.
@@ -83,10 +83,15 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 ### Supabase image storage migration — 2026-10-14
 
 - Create a public bucket named `ruanglagi-images` in Supabase Storage and set a 5 MB file limit with JPEG, PNG, and WebP MIME types. Public access is needed for catalog delivery; write/delete calls still use server credentials.
-- Set `SUPABASE_URL`, `SUPABASE_STORAGE_BUCKET`, and `SUPABASE_SERVICE_ROLE_KEY` in ignored `.env.local` and in Vercel Production/Preview as appropriate. Never expose the service-role key to client code.
+- Set `SUPABASE_URL`, `SUPABASE_STORAGE_BUCKET`, and preferred `SUPABASE_SECRET_KEY` (Supabase `sb_secret_...`) in ignored `.env.local` and Vercel Production/Preview. Legacy `SUPABASE_SERVICE_ROLE_KEY` JWT remains supported. The new secret key is sent as `apikey` only; legacy service-role JWT is sent as both `apikey` and Bearer authorization. Never expose either key to client code.
 - To copy old `storage/uploads` files without deleting originals, run `npx tsx scripts/migrate-local-images-to-supabase.ts` after setting the environment. The script skips already-present keys and verifies each copied object's public availability.
 - No Prisma schema or migration was needed; existing `ProductImage.storageKey`, `ProductImage.url`, and `UploadedFile.key` columns remain sufficient. `next/image` still receives same-origin `/uploads/<key>` paths, so no remote image host configuration is needed.
-- Checks: `npm run typecheck` PASS; `npm run lint` PASS; `npm test -- --reporter=dot` PASS (189 tests); `npm run format:check` PASS; `npm run db:validate` PASS. Build NOT RUN in this follow-up: a Node process is active and may be using `.next`; prior build failed with Windows `EPERM` during `.next` cleanup. The local `.env.local` and `.env` do not define the three Supabase Storage variables. Supabase upload, dashboard bucket, legacy copy, browser page coverage, and Vercel persistence are NOT RUN.
+- Checks at the time: `npm run typecheck` PASS; `npm run lint` PASS; `npm test -- --reporter=dot` PASS (189 tests); `npm run format:check` PASS; `npm run db:validate` PASS. Build NOT RUN in that follow-up after a previous Windows `EPERM` during `.next` cleanup. Supabase upload, dashboard bucket, legacy copy, browser page coverage, and Vercel persistence were NOT RUN.
+
+### Supabase secret-key compatibility — 2026-10-14
+
+- Storage uses `SUPABASE_SECRET_KEY` as the `apikey` header for current `sb_secret_...` keys and omits the Bearer header. Legacy `SUPABASE_SERVICE_ROLE_KEY` JWT remains supported using both `apikey` and Bearer authorization. Blank unused key variables are treated as unset.
+- Checks: `npm run typecheck` PASS; `npm run lint` PASS; `npm run format:check` PASS; tests NOT RUN; production build NOT RUN. Supabase credentials, bucket configuration, uploads, and Vercel deployment were not inspected or exercised.
 
 ### Vercel Prisma Client generation — 2026-10-14
 

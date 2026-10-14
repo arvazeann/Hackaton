@@ -11,11 +11,28 @@ import {
   type StoredImageType,
 } from "@/server/storage/local-image-storage";
 
-const environmentSchema = z.object({
-  SUPABASE_URL: z.url(),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().trim().min(1),
-  SUPABASE_STORAGE_BUCKET: z.string().trim().min(1).default("ruanglagi-images"),
-});
+const environmentSchema = z
+  .object({
+    SUPABASE_URL: z.url(),
+    SUPABASE_SECRET_KEY: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      z.string().trim().min(1).optional(),
+    ),
+    SUPABASE_SERVICE_ROLE_KEY: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      z.string().trim().min(1).optional(),
+    ),
+    SUPABASE_STORAGE_BUCKET: z
+      .string()
+      .trim()
+      .min(1)
+      .default("ruanglagi-images"),
+  })
+  .refine(
+    (environment) =>
+      environment.SUPABASE_SECRET_KEY || environment.SUPABASE_SERVICE_ROLE_KEY,
+    { message: "Set SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY" },
+  );
 
 const imageTypes: Record<
   StoredImageType,
@@ -27,11 +44,24 @@ const imageTypes: Record<
 };
 
 function configuration() {
-  return environmentSchema.parse({
+  const environment = environmentSchema.parse({
     SUPABASE_URL: process.env.SUPABASE_URL,
+    SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
     SUPABASE_STORAGE_BUCKET: process.env.SUPABASE_STORAGE_BUCKET,
   });
+  const apiKey =
+    environment.SUPABASE_SECRET_KEY ?? environment.SUPABASE_SERVICE_ROLE_KEY;
+  if (!apiKey) throw new Error("Set a Supabase server secret key");
+
+  return {
+    ...environment,
+    apiKey,
+    authorization:
+      environment.SUPABASE_SECRET_KEY === undefined
+        ? `Bearer ${environment.SUPABASE_SERVICE_ROLE_KEY}`
+        : undefined,
+  };
 }
 
 function objectUrl(
@@ -50,8 +80,8 @@ function headers() {
   return {
     config,
     headers: {
-      apikey: config.SUPABASE_SERVICE_ROLE_KEY,
-      Authorization: `Bearer ${config.SUPABASE_SERVICE_ROLE_KEY}`,
+      apikey: config.apiKey,
+      ...(config.authorization ? { Authorization: config.authorization } : {}),
     },
   };
 }

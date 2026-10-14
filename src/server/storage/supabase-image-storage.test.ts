@@ -14,6 +14,7 @@ const serviceKey = "server-only-test-key";
 beforeEach(() => {
   vi.stubEnv("SUPABASE_URL", "https://project-ref.supabase.co");
   vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", serviceKey);
+  vi.stubEnv("SUPABASE_SECRET_KEY", "");
   vi.stubEnv("SUPABASE_STORAGE_BUCKET", "ruanglagi-images");
 });
 
