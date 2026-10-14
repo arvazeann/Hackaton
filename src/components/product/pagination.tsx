@@ -72,7 +72,7 @@ export function ProductPagination({
             key={item}
             aria-label={`Halaman ${item}`}
             aria-current={item === page ? "page" : undefined}
-          className={`${pageLinkBase} ${item === page ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:border-accent-bright hover:text-primary"}`}
+            className={`${pageLinkBase} ${item === page ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:border-accent-bright hover:text-primary"}`}
             href={pageHref(item, searchParams)}
           >
             {String(item).padStart(2, "0")}

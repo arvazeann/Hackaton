@@ -10,7 +10,7 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 
 ## Current Status
 
-- Current task: UX/UI and motion audit completed on 2026-10-14. Read-only production GETs for home/catalog/login/register returned 200; home/catalog included product links and image tags. Source audit and ten prioritized findings are in `docs/UX-UI-AUDIT-REPORT.md`; browser, accessibility, performance, and Storage integration remain unverified. Lint, typecheck, 208 tests, and Prisma validation PASS; full format check FAILS on 14 files. Build was not run. Existing uncommitted UI work was preserved.
+- Current task: cleanup audit on 2026-10-15. Supabase staging has all 13 migrations applied; local Prisma category and product reads pass (7 categories, no products). Vercel Preview database selection, browser E2E, and Preview Google OAuth remain unverified. The previous Vercel `P2039` connection-limit issue has not been load-tested or confirmed resolved; see the latest Verification entry and `docs/STAGING-E2E-CHECKLIST.md`.
 - Last completed implementation stage: Stage 6 follow-up: Admin Area Phase 2; B1, B2, and Admin Phases 1–2 extend Stage 6 without renumbering. UI refresh is a presentation-only follow-up.
 - Product, avatar, and store-logo uploads now use Supabase Storage through server-only credentials; legacy local images can be copied with the non-destructive migration script.
 
@@ -65,6 +65,7 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 - `passwordHash` is never sent to the client or included in session data.
 - Buyers can always view their own shipping data; sellers see phone/address only for `confirmed` or `completed` orders.
 - Order cancellation requires a 5-500 character reason; cancelled orders require `cancel_reason`.
+- Current explicit upload decision: app accepts JPEG/PNG/WebP up to 3,000,000 bytes (3 MB decimal); this overrides Blueprint §10's historical 5 MB limit for implementation. The Supabase `ruanglagi-images` bucket is public and configured for 3,145,728 bytes (3 MiB); it was inspected read-only and not changed.
 - Approved category taxonomy: `furnitur-penyimpanan`, `perlengkapan-tidur`, `elektronik`, `dapur`, `kebersihan-laundry`, `belajar-kerja`, and `lainnya`; category records remain database-backed rather than being duplicated as form/filter options.
 - `/api/mock` and its client helper were removed after all product, order, favorite, and profile mutations moved to domain routes.
 - Product, order, favorite, and profile operations use authenticated database UUIDs directly; no UUID-to-mock-ID mapping is used.
@@ -79,6 +80,49 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 - Admin changes never modify platform roles, password credentials, product images/ownership, or order snapshots. Audit metadata contains allowlisted field names and state transitions only.
 
 ## Verification
+
+### Cleanup audit — 2026-10-15
+
+- Removed unused stock Next.js starter assets `public/file.svg`, `public/globe.svg`, `public/next.svg`, `public/vercel.svg`, and `public/window.svg`; product fallback SVGs and local uploaded images were retained. No dependency or application code was removed or refactored.
+- `npm test -- --reporter=dot`: PASS (42 files / 226 tests); `npm run lint`, `npm run format:check`, `npm run db:validate`, and `git diff --check`: PASS.
+- `npm run typecheck` initially failed because the user removed `.next`, which contained generated `LayoutProps` and `RouteContext` declarations. `npx next typegen` regenerated framework route types without a build; typecheck then passed.
+- Build NOT RUN: the prior Windows `.next` EPERM has not been diagnosed. No database or deployment operation was run for this cleanup.
+
+### Staging and E2E preparation — 2026-10-14
+
+- `scripts/verify-staging-target.ts` validates the staging database and Storage project refs/bucket names before dynamically importing Prisma, then runs read-only `SELECT 1`; it never prints URLs/secrets or writes data. Connection failures are categorized without echoing raw driver messages. `npm run staging:verify` exited 1 at the guard with `Distinct staging and production project refs are required.` `.env.staging.local` is absent, so no database connection was attempted; `P1001` and `P2039` remain unverified.
+- `docs/STAGING-E2E-CHECKLIST.md` contains staging setup, user journeys, database persistence queries, OAuth/Deployment Protection steps, and cleanup boundaries. No Playwright/Cypress/browser E2E dependency is installed; recommend Playwright after staging and accounts are ready, but no dependency was added. Browser E2E and Google Preview login are BLOCKED/NOT TESTED.
+- `npm test -- --reporter=dot`: PASS (41 files / 217 tests); typecheck, lint, format check, Prisma schema validation, and `git diff --check`: PASS. `npm audit --omit=dev`: FAIL (4 High package findings across Prisma dependency paths; npm proposes a breaking Prisma 6 downgrade). Candidate transitive overrides exist, but they were not applied because Prisma 7.10.0 compatibility has not been tested in this repository.
+- Build NOT RUN: `.next/dev/lock` exists and Node processes are active; no process was stopped and no `.next` files were removed. No staging DB/Storage writes, OAuth login, or deployed tests were performed.
+
+### 3 MB cap and external integration follow-up — 2026-10-14
+
+- `IMAGE_MAX_BYTES` is 3,000,000 bytes (decimal MB); the browser uploader and server share this constant. Tests accept exactly the limit and reject one byte above. The explicit user decision overrides the older 5 MB Blueprint text; the Supabase `ruanglagi-images` bucket was inspected read-only: 3,145,728 bytes (3 MiB), public, no MIME allowlist; settings were not changed. The app cap is lower at 3,000,000 bytes. Each selected file is sent in its own multipart request, so a 3 MB file plus small multipart overhead is below the documented 4.5 MB Vercel Functions body limit; this is a source/configuration assessment, not a live Vercel upload test.
+- Local Vercel/Supabase CLI commands, Vercel project link, staging env, and connected provider apps are unavailable. Vercel and Supabase connectors were found in the plugin directory but are not installed/connected. `npm run staging:verify` stops before connecting because project refs are missing. `P1001` root cause and whether deployed Preview still sees `P2039` remain **BLOCKED/NOT TESTED**.
+- Auth.js source uses the default `/api/auth` route; Production provider metadata reports `/api/auth/callback/google`. Preview metadata is behind Vercel deployment protection. Google Cloud allowlist and a real Preview OAuth login remain **NOT TESTED**.
+- Tests (40 files / 210 tests), typecheck, lint, format check, Prisma validation, and diff check: PASS. `npm audit --omit=dev`: FAIL (4 High findings: `deepmerge-ts@7.1.5` and `mysql2@3.15.3` under Prisma 7.10.0). Patched transitive versions exist, but no override was applied because this repo has not regression-tested them against Prisma 7.10.0. Build NOT RUN: Node PID 17028 remains active and `.next/dev/lock` exists. No database write, upload, migration, OAuth login, deploy, or dependency change was performed.
+- Preview DB, provider configuration, and end-to-end browser tests remain **BLOCKED**. Release remains **NOT READY FOR DEMO**.
+
+### Preview database and OAuth audit — 2026-10-14
+
+- Google Auth.js follow-up (2026-10-15): `/api/auth/callback/google` remains the provider callback. `/login` now receives Auth.js error redirects and maps known provider errors to safe Indonesian messages; callback paths are validated against same-origin URL parsing. Targeted auth tests (13), typecheck, lint, and `git diff --check` pass. Staging Google credentials/provider settings and Google Cloud redirect URI are not locally verifiable; live Preview OAuth remains NOT TESTED. No Production configuration was changed.
+
+- `npm test -- --reporter=dot`: PASS (40 files / 209 tests); typecheck, lint, format check, Prisma schema validation, and diff check: PASS. Production-only dependency audit: FAIL (4 High findings in Prisma dependency paths; npm's suggested fix is a breaking Prisma 6 downgrade, not applied). `npm run staging:verify`: BLOCKED before connection because distinct project refs are not configured.
+- `DATABASE_URL` is used by both `src/lib/db.ts` and `prisma.config.ts`; `DIRECT_URL` is not read. The existing one-connection `pg.Pool` is compatible with the configured `PrismaPg` adapter and limits connections per warm instance, but no new Preview logs were available to establish whether `P2039` persists. `P1001` root cause remains BLOCKED because `.vercel/project.json`, Vercel CLI, and isolated staging env are absent; no DB URL or secret was printed or tested.
+- Auth.js uses its default `/api/auth` handler; source and Production `/api/auth/providers` report `https://ruanglagi.vercel.app/api/auth/callback/google`. Preview auth provider endpoint redirects to Vercel deployment protection, so Preview callback and Google login were NOT TESTED. Public GETs for home/catalog/login/register returned 200; this is not E2E evidence. A sample Production upload URL returned HTTP 200 `image/jpeg`; Preview image route redirected to deployment protection.
+- Upload cap: frontend, API response, and shared storage validation use 3,000,000 bytes (3 MB decimal). This explicit user decision overrides Blueprint §10's older 5 MB setting; Blueprint remains unchanged. Supabase bucket cap is 3,145,728 bytes (3 MiB), checked read-only and not altered. Unit tests cover exact app-limit acceptance and one-byte-over rejection; real upload remains BLOCKED pending staging.
+- Build NOT RUN: local Next.js process PID 17028 still owns port 3000 and may use `.next`. Browser E2E is BLOCKED: Preview requires deployment access and no staging/test account is configured. Release remains **NOT READY FOR DEMO**.
+
+### Final prototype audit — 2026-10-15
+
+- `npm test -- --reporter=dot`: PASS (42 files / 226 tests); typecheck, lint, full format check, `git diff --check`, and Prisma schema validation: PASS. `npm run staging:verify`: PASS for project/bucket guard and read-only `SELECT 1`; no database rows were changed. This does not prove application queries or the prior Vercel `P2039` under serverless concurrency are resolved.
+- `npm audit --omit=dev`: FAIL with four High findings in the Prisma dependency tree (`deepmerge-ts` and `mysql2`); npm's offered fix downgrades Prisma to 6 and was not run. `npm run build`: FAIL before compilation with `EPERM` unlinking `.next/app-path-routes-manifest.json`; no cleanup or retry was done. Next reported `.env.local` loaded, so this was not a fully isolated build. Browser E2E, Google OAuth Preview, and real Storage upload/render remain unverified.
+
+### Website repair follow-up — 2026-10-14
+
+- `npm test -- --reporter=dot`: PASS (40 files / 209 tests); `npm run typecheck`, `npm run lint`, `npm run db:validate`, `npm run format:check`, and `git diff --check`: PASS. `npm audit --omit=dev`: FAIL (4 High findings in Prisma dependency paths; proposed npm remediation is a breaking Prisma 6 downgrade). Build and real staging DB/Storage/browser E2E were NOT RUN.
+- Source changes limit each Node `pg.Pool` to one connection per warm function instance and reduce product-card motion while displaying the full image. This mitigates per-instance session usage but does not correct an unreachable or incorrectly configured Preview `DATABASE_URL`; external deployment variables must be checked.
+- Staging is not configured and local DB/Storage are known Production targets; no remote database query, upload, migration, login, deployment, or data mutation was run. Release remains **NOT READY** pending isolated staging and provider/browser verification. Pooler URL must be copied from the intended Supabase project's Connect dialog into Vercel Preview `DATABASE_URL`; do not reuse Production values.
 
 ### Production website audit — 2026-10-14
 
@@ -103,12 +147,12 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 
 - `scripts/verify-staging-target.ts` and `scripts/reencrypt-payment-data.ts` load only ignored `.env.staging.local`, never `.env.local` or `.env`. The guard compares Supabase Storage and PostgreSQL project refs with distinct `STAGING_PROJECT_REF` and `PRODUCTION_PROJECT_REF`, and requires distinct expected bucket names. It fails before opening Prisma if values are missing, mismatched, or production. It does not print URLs or credentials.
 - Re-encryption reads both actual encrypted columns: `PaymentAccount.accountNumberCiphertext` and nullable `Order.paymentInstructionCiphertext`. It scans bounded pages, validates decrypted values, verifies each generated v2 ciphertext, and uses an atomic compare-and-swap update per row. Rerunning skips readable v2 values and retries remaining v1 values. `--apply` requires `--confirm-staging`; dry-run is `npm run payments:reencrypt -- --dry-run`.
-- Before using either script, create `.env.staging.local` with only staging database, Supabase Storage, Auth.js, Google OAuth, and payment keys; set both project refs and distinct staging/production bucket names after verifying them in Supabase. Keep all test data synthetic. `npm run staging:verify` checks identity without connecting. The current environment has no staging refs, so verification stops before database access. The re-encryption utility has only in-memory synthetic tests; no staging DB was read or written.
+- Before using either script, create `.env.staging.local` with only staging database, Supabase Storage, Auth.js, Google OAuth, and payment keys; set both project refs and distinct staging/production bucket names after verifying them in Supabase. Keep all test data synthetic. `npm run staging:verify` checks DB/Storage identity first and then issues a read-only `SELECT 1`; it never writes data. The current environment has no staging refs, so it stops before importing Prisma or connecting. The re-encryption utility has only in-memory synthetic tests; no staging DB was read or written.
 - Release status: **NOT READY**. Synthetic tests: 39 files / 206 tests PASS. `npm run staging:verify` and `npm run payments:reencrypt -- --dry-run` both stop safely because staging configuration is absent. Browser E2E, staging provider configuration, production build, dependency remediation, and Google OAuth verification remain outstanding. Never configure v2 in Production in this task.
 
 ### Supabase image storage migration — 2026-10-14
 
-- Create a public bucket named `ruanglagi-images` in Supabase Storage and set a 5 MB file limit with JPEG, PNG, and WebP MIME types. Public access is needed for catalog delivery; write/delete calls still use server credentials.
+- The current app accepts up to 3,000,000 bytes (3 MB decimal), JPEG, PNG, and WebP. Verify the `ruanglagi-images` Supabase bucket permits files at least this large before staging upload tests; do not change the remote limit without authorization. Public access is needed for catalog delivery; write/delete calls still use server credentials.
 - Set `SUPABASE_URL`, `SUPABASE_STORAGE_BUCKET`, and preferred `SUPABASE_SECRET_KEY` (Supabase `sb_secret_...`) in ignored `.env.local` and Vercel Production/Preview. Legacy `SUPABASE_SERVICE_ROLE_KEY` JWT remains supported. The new secret key is sent as `apikey` only; legacy service-role JWT is sent as both `apikey` and Bearer authorization. Never expose either key to client code.
 - To copy old `storage/uploads` files without deleting originals, run `npx tsx scripts/migrate-local-images-to-supabase.ts` after setting the environment. The script skips already-present keys and verifies each copied object's public availability.
 - No Prisma schema or migration was needed; existing `ProductImage.storageKey`, `ProductImage.url`, and `UploadedFile.key` columns remain sufficient. `next/image` still receives same-origin `/uploads/<key>` paths, so no remote image host configuration is needed.

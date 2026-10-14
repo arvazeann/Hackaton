@@ -16,7 +16,9 @@ export default async function Order({
   return (
     <Shell>
       <section className="mx-auto max-w-xl px-4 py-12">
-        <p className="mb-6 text-sm text-muted-foreground">Pesanan untuk {p.title}</p>
+        <p className="mb-6 text-sm text-muted-foreground">
+          Pesanan untuk {p.title}
+        </p>
         {p.seller.isOnVacation ? (
           <div className="rounded-2xl border border-status-warning-ink bg-status-warning-bg p-5 text-status-warning-ink">
             Toko sedang libur dan belum menerima pesanan baru. Silakan cek

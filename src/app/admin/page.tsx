@@ -95,7 +95,9 @@ export default async function AdminDashboard() {
               ))}
             </ul>
           ) : (
-            <p className="mt-3 text-sm text-muted-foreground">Belum ada pengguna.</p>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Belum ada pengguna.
+            </p>
           )}
           <Link
             className="mt-3 inline-block text-sm font-semibold text-primary"
@@ -123,7 +125,9 @@ export default async function AdminDashboard() {
               ))}
             </ul>
           ) : (
-            <p className="mt-3 text-sm text-muted-foreground">Belum ada pesanan.</p>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Belum ada pesanan.
+            </p>
           )}
           <Link
             className="mt-3 inline-block text-sm font-semibold text-primary"

@@ -26,8 +26,16 @@ export default async function Home() {
             preserveAspectRatio="none"
             fill="none"
           >
-            <path d="M0 72H1440M0 172H1440M0 272H1440M0 372H1440M0 472H1440" stroke="currentColor" strokeDasharray="2 12" />
-            <path d="M160 0V520M400 0V520M640 0V520M880 0V520M1120 0V520M1360 0V520" stroke="currentColor" strokeDasharray="2 14" />
+            <path
+              d="M0 72H1440M0 172H1440M0 272H1440M0 372H1440M0 472H1440"
+              stroke="currentColor"
+              strokeDasharray="2 12"
+            />
+            <path
+              d="M160 0V520M400 0V520M640 0V520M880 0V520M1120 0V520M1360 0V520"
+              stroke="currentColor"
+              strokeDasharray="2 14"
+            />
             <path
               d="M0 154C112 154 138 104 234 112S344 198 448 182 575 96 684 118 812 208 922 178 1058 82 1168 112 1314 182 1440 118"
               stroke="currentColor"

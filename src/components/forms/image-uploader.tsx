@@ -157,7 +157,7 @@ export function ImageUploader({
           ...(!typeValid
             ? { error: "Gunakan foto JPEG, PNG, atau WebP." }
             : !sizeValid
-              ? { error: "Ukuran foto maksimal 5 MB." }
+              ? { error: "Ukuran foto maksimal 3 MB." }
               : {}),
         };
       });
@@ -192,7 +192,7 @@ export function ImageUploader({
         htmlFor={inputId}
         className="grid cursor-pointer place-items-center rounded-2xl border-2 border-dashed p-7 text-center text-sm text-muted-foreground"
       >
-        Tambah foto (JPEG, PNG, WebP · maks. 5 MB; maksimal 5 foto)
+        Tambah foto (JPEG, PNG, WebP · maks. 3 MB; maksimal 5 foto)
       </label>
       <input
         id={inputId}

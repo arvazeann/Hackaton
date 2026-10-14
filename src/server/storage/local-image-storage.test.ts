@@ -41,7 +41,7 @@ describe("local image storage", () => {
     ).toBeNull();
   });
 
-  it("stores an image with a generated UUID filename and accepts exactly 5 MB", async () => {
+  it("stores an image with a generated UUID filename and accepts exactly 3 MB", async () => {
     const bytes = new Uint8Array(IMAGE_MAX_BYTES);
     bytes.set(jpeg);
     const filename = await saveImageFile(

@@ -10,6 +10,7 @@ import {
   saveImageToSupabase,
   supabaseImageExists,
 } from "@/server/storage/supabase-image-storage";
+import { IMAGE_MAX_BYTES } from "@/lib/product-images";
 
 const serviceKey = "server-only-test-key";
 
@@ -26,6 +27,28 @@ afterEach(() => {
 });
 
 describe("Supabase image storage", () => {
+  it("accepts a file at the 3 MB limit and rejects one byte over", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(null, { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const bytes = new Uint8Array(IMAGE_MAX_BYTES);
+    bytes.set([0xff, 0xd8, 0xff, 0xd9]);
+
+    await expect(
+      saveImageToSupabase(new File([bytes], "at-limit.jpg")),
+    ).resolves.toMatch(/\.jpg$/);
+    expect(fetchMock).toHaveBeenCalledOnce();
+
+    fetchMock.mockClear();
+    const oversized = new Uint8Array(IMAGE_MAX_BYTES + 1);
+    oversized.set([0xff, 0xd8, 0xff, 0xd9]);
+    await expect(
+      saveImageToSupabase(new File([oversized], "over-limit.jpg")),
+    ).rejects.toMatchObject({ code: "TOO_LARGE" });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("uploads validated bytes to the configured bucket with server credentials", async () => {
     const fetchMock = vi
       .fn()

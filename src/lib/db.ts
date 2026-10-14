@@ -7,9 +7,14 @@ const globalForPrisma = globalThis as typeof globalThis & {
   prismaPool?: Pool;
 };
 
+export const DATABASE_POOL_MAX = 1;
+
+export function createDatabasePool(connectionString?: string) {
+  return new Pool({ connectionString, max: DATABASE_POOL_MAX });
+}
+
 const pool =
-  globalForPrisma.prismaPool ??
-  new Pool({ connectionString: process.env.DATABASE_URL });
+  globalForPrisma.prismaPool ?? createDatabasePool(process.env.DATABASE_URL);
 const adapter = new PrismaPg(pool);
 
 export const db = globalForPrisma.prisma ?? new PrismaClient({ adapter });

@@ -45,7 +45,9 @@ export function HeroFeaturedImage({
               strokeWidth="2"
             />
           </svg>
-          <span className="text-sm font-medium">Foto produk belum tersedia</span>
+          <span className="text-sm font-medium">
+            Foto produk belum tersedia
+          </span>
         </div>
       </div>
     );

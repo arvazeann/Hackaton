@@ -12,9 +12,7 @@ export default async function WishlistPage() {
         <p className="text-xs font-bold tracking-[.14em] text-primary">
           DISIMPAN UNTUK NANTI
         </p>
-        <h1 className="mb-7 mt-1 text-3xl text-foreground">
-          Wishlist saya
-        </h1>
+        <h1 className="mb-7 mt-1 text-3xl text-foreground">Wishlist saya</h1>
         <ProductGrid
           products={items}
           showOrderAction

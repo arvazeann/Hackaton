@@ -149,7 +149,7 @@ describe("POST /api/uploads", () => {
     );
     expect(response.status).toBe(413);
     expect(await response.json()).toEqual({
-      message: "Ukuran foto maksimal 5 MB.",
+      message: "Ukuran foto maksimal 3 MB.",
     });
   });
 });

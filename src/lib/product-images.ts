@@ -1,4 +1,5 @@
-export const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+// The approved 3 MB cap uses decimal megabytes: 3 MB = 3,000,000 bytes.
+export const IMAGE_MAX_BYTES = 3_000_000;
 export const IMAGE_MAX_COUNT = 5;
 
 export const STORED_IMAGE_FILENAME_PATTERN =

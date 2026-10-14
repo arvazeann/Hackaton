@@ -25,9 +25,7 @@ const conditionLabels: Record<string, string> = {
 
 export function ConditionBadge({ condition }: { condition: string }) {
   const appearance =
-    condition === "fair"
-      ? "bg-fair-bg text-fair-text"
-      : "bg-sage text-primary";
+    condition === "fair" ? "bg-fair-bg text-fair-text" : "bg-sage text-primary";
 
   return (
     <span
@@ -87,96 +85,104 @@ export function ProductGrid({
 
         return (
           <ProductCardReveal key={product.id} delay={Math.min(index, 7) * 60}>
-        <article className="group/card group relative flex h-full flex-col rounded-3xl bg-peach p-2 shadow-product-card transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-safe:hover:-translate-y-1.5 motion-safe:hover:shadow-product-card-hover active:scale-[0.985] active:duration-100 motion-reduce:transition-none motion-reduce:transform-none motion-reduce:animation-none">
-          <Link
-            href={`/products/${product.id}`}
-            aria-label={`Lihat ${product.title}`}
-            className="absolute inset-0 z-0 rounded-3xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
-          />
-          <div className="pointer-events-none relative isolate aspect-[4/5] w-full overflow-hidden rounded-2xl bg-sage/30 transform-gpu">
-            <ProductCardImage
-              src={product.coverImageUrl}
-              alt={product.title}
-              sizes="(max-width: 1023px) 50vw, 33vw"
-            />
-            <div className="pointer-events-none absolute left-2.5 top-2.5 z-10">
-              {product.status === "active" ? (
-                isNewlyUploaded(product.createdAt) && <NewlyUploadedBadge />
-              ) : (
-                <StatusBadge status={product.status} />
-              )}
-            </div>
-            <div className="absolute right-1.5 top-1.5 z-20 grid size-11 place-items-center">
-              <FavoriteButton
-                productId={product.id}
-                initial={product.isFavorited}
-                loginRequired={favoriteDisabled}
-                variant="product-card"
+            <article className="group/card group relative flex h-full flex-col rounded-3xl bg-peach p-2 shadow-product-card transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-safe:hover:-translate-y-0.5 motion-safe:hover:shadow-product-card-hover motion-reduce:transition-none motion-reduce:transform-none motion-reduce:animation-none">
+              <Link
+                href={`/products/${product.id}`}
+                aria-label={`Lihat ${product.title}`}
+                className="absolute inset-0 z-0 rounded-3xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
               />
-            </div>
-            <span
-              aria-hidden="true"
-              className="pointer-events-none invisible absolute bottom-2.5 right-2.5 z-10 flex size-9 translate-y-2 scale-90 items-center justify-center rounded-full bg-primary text-cream opacity-0 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/card:visible group-hover/card:translate-y-0 group-hover/card:scale-100 group-hover/card:opacity-100 group-focus-within/card:visible group-focus-within/card:translate-y-0 group-focus-within/card:scale-100 group-focus-within/card:opacity-100 motion-reduce:transition-none motion-reduce:transform-none motion-reduce:animation-none"
-            >
-              <ArrowUpRight aria-hidden="true" size={16} />
-            </span>
-          </div>
-          <div className="pointer-events-none relative z-10 px-2 pb-2 pt-3">
-            <p className="text-base font-semibold leading-tight text-primary sm:text-lg">
-              {formatRupiah(product.price)}
-            </p>
-            <p
-              title={product.title}
-              className="mt-1 line-clamp-1 text-sm font-medium leading-snug text-primary sm:text-[15px]"
-            >
-              {product.title}
-            </p>
-            {metadata.length > 0 && (
-              <p className="mt-1 line-clamp-1 text-xs text-primary/65 sm:text-[13px]">
-                {metadata.join(" \u00b7 ")}
-              </p>
-            )}
-            <div className="mt-3 border-t border-primary/10 pt-3">
-              {product.seller.storeSlug ? (
-                <Link
-                  href={`/store/${product.seller.storeSlug}`}
-                  className="pointer-events-auto flex min-h-5 max-w-full items-center gap-1.5 truncate text-xs font-medium text-primary/80 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cream focus-visible:ring-2 focus-visible:ring-primary"
+              <div className="pointer-events-none relative isolate aspect-[4/5] w-full overflow-hidden rounded-2xl bg-sage/30 transform-gpu">
+                <ProductCardImage
+                  src={product.coverImageUrl}
+                  alt={product.title}
+                  sizes="(max-width: 1023px) 50vw, 33vw"
+                />
+                <div className="pointer-events-none absolute left-2.5 top-2.5 z-10">
+                  {product.status === "active" ? (
+                    isNewlyUploaded(product.createdAt) && <NewlyUploadedBadge />
+                  ) : (
+                    <StatusBadge status={product.status} />
+                  )}
+                </div>
+                <div className="absolute right-1.5 top-1.5 z-20 grid size-11 place-items-center">
+                  <FavoriteButton
+                    productId={product.id}
+                    initial={product.isFavorited}
+                    loginRequired={favoriteDisabled}
+                    variant="product-card"
+                  />
+                </div>
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none invisible absolute bottom-2.5 right-2.5 z-10 flex size-9 translate-y-2 scale-90 items-center justify-center rounded-full bg-primary text-cream opacity-0 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/card:visible group-hover/card:translate-y-0 group-hover/card:scale-100 group-hover/card:opacity-100 group-focus-within/card:visible group-focus-within/card:translate-y-0 group-focus-within/card:scale-100 group-focus-within/card:opacity-100 motion-reduce:transition-none motion-reduce:transform-none motion-reduce:animation-none"
                 >
-                    <Store aria-hidden="true" size={14} className="shrink-0" />
-                  Toko {product.seller.name}
-                </Link>
-              ) : (
-                <p className="flex min-h-5 items-center gap-1.5 truncate text-xs font-medium text-primary/80">
-                  <Store aria-hidden="true" size={14} className="shrink-0" />
-                  {product.seller.name}
+                  <ArrowUpRight aria-hidden="true" size={16} />
+                </span>
+              </div>
+              <div className="pointer-events-none relative z-10 px-2 pb-2 pt-3">
+                <p className="text-base font-semibold leading-tight text-primary sm:text-lg">
+                  {formatRupiah(product.price)}
                 </p>
-              )}
-            </div>
-            {showOrderAction &&
-              (product.status === "active" &&
-              product.seller.id !== viewerId &&
-              !product.seller.isOnVacation ? (
-                <Link
-                  href={`/products/${product.id}/order`}
-                  className={`${buttonVariants({ variant: "accent", size: "lg" })} pointer-events-auto mt-3 w-full text-center`}
+                <p
+                  title={product.title}
+                  className="mt-1 line-clamp-1 text-sm font-medium leading-snug text-primary sm:text-[15px]"
                 >
-                  Pesan produk
-                </Link>
-              ) : (
-                <button
-                  type="button"
-                  disabled
-                  className="pointer-events-auto mt-3 min-h-11 w-full cursor-not-allowed rounded-pill bg-muted px-3 text-xs font-semibold text-muted-foreground"
-                >
-                  {product.seller.id === viewerId
-                    ? "Produk milikmu"
-                    : product.seller.isOnVacation
-                      ? "Toko sedang libur"
-                      : "Tidak dapat dipesan"}
-                </button>
-              ))}
-          </div>
-        </article>
+                  {product.title}
+                </p>
+                {metadata.length > 0 && (
+                  <p className="mt-1 line-clamp-1 text-xs text-primary/65 sm:text-[13px]">
+                    {metadata.join(" \u00b7 ")}
+                  </p>
+                )}
+                <div className="mt-3 border-t border-primary/10 pt-3">
+                  {product.seller.storeSlug ? (
+                    <Link
+                      href={`/store/${product.seller.storeSlug}`}
+                      className="pointer-events-auto flex min-h-5 max-w-full items-center gap-1.5 truncate text-xs font-medium text-primary/80 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cream focus-visible:ring-2 focus-visible:ring-primary"
+                    >
+                      <Store
+                        aria-hidden="true"
+                        size={14}
+                        className="shrink-0"
+                      />
+                      Toko {product.seller.name}
+                    </Link>
+                  ) : (
+                    <p className="flex min-h-5 items-center gap-1.5 truncate text-xs font-medium text-primary/80">
+                      <Store
+                        aria-hidden="true"
+                        size={14}
+                        className="shrink-0"
+                      />
+                      {product.seller.name}
+                    </p>
+                  )}
+                </div>
+                {showOrderAction &&
+                  (product.status === "active" &&
+                  product.seller.id !== viewerId &&
+                  !product.seller.isOnVacation ? (
+                    <Link
+                      href={`/products/${product.id}/order`}
+                      className={`${buttonVariants({ variant: "accent", size: "lg" })} pointer-events-auto mt-3 w-full text-center`}
+                    >
+                      Pesan produk
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled
+                      className="pointer-events-auto mt-3 min-h-11 w-full cursor-not-allowed rounded-pill bg-muted px-3 text-xs font-semibold text-muted-foreground"
+                    >
+                      {product.seller.id === viewerId
+                        ? "Produk milikmu"
+                        : product.seller.isOnVacation
+                          ? "Toko sedang libur"
+                          : "Tidak dapat dipesan"}
+                    </button>
+                  ))}
+              </div>
+            </article>
           </ProductCardReveal>
         );
       })}
@@ -186,7 +192,7 @@ export function ProductGrid({
 
 export function NewlyUploadedBadge() {
   return (
-    <span className="inline-flex min-h-6 items-center rounded-full bg-cream/90 px-2.5 text-[10px] font-semibold text-primary backdrop-blur-sm sm:min-h-7 sm:text-[11px]">
+    <span className="inline-flex min-h-7 items-center rounded-full bg-cream/90 px-2.5 text-xs font-semibold text-primary backdrop-blur-sm">
       Baru diunggah
     </span>
   );

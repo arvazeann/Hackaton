@@ -261,7 +261,9 @@ export function ProfileHub({ hub }: { hub: Hub }) {
                 </a>
               ))
             ) : (
-              <p className="text-sm text-muted-foreground">Belum ada pesanan.</p>
+              <p className="text-sm text-muted-foreground">
+                Belum ada pesanan.
+              </p>
             )}
           </div>
           <a

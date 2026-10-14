@@ -66,7 +66,7 @@ export async function Navbar({
           <Link
             href="/dashboard/products/new"
             aria-label="Jual barang"
-          className="inline-flex min-h-11 items-center gap-1 rounded-pill bg-primary px-3 text-primary-foreground transition-colors duration-control ease-soft hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus sm:gap-1.5 sm:px-4"
+            className="inline-flex min-h-11 items-center gap-1 rounded-pill bg-primary px-3 text-primary-foreground transition-colors duration-control ease-soft hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus sm:gap-1.5 sm:px-4"
           >
             <Plus aria-hidden="true" size={16} />
             <span className="hidden sm:inline">Jual</span>

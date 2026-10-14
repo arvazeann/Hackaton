@@ -119,7 +119,7 @@ export async function POST(request: Request) {
     if (error instanceof ImageStorageError) {
       if (error.code === "TOO_LARGE")
         return Response.json(
-          { message: "Ukuran foto maksimal 5 MB." },
+          { message: "Ukuran foto maksimal 3 MB." },
           { status: 413 },
         );
       return Response.json(
