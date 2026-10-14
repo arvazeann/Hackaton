@@ -219,21 +219,23 @@ export function ImageUploader({
         {items.map((image, index) => (
           <div
             key={image.id}
-            className="relative aspect-square overflow-hidden rounded-xl bg-muted"
+            className="relative aspect-square overflow-hidden rounded-card bg-peach p-2"
           >
-            {image.url ? (
-              <Image
-                src={image.url}
-                alt={`${altPrefix}, foto ${index + 1}`}
-                fill
-                unoptimized
-                className="object-cover"
-              />
-            ) : (
-              <div className="grid size-full place-items-center p-3 text-center text-sm text-muted-foreground">
-                Foto tidak dapat dipratinjau
-              </div>
-            )}
+            <div className="relative size-full overflow-hidden rounded-image bg-cream">
+              {image.url ? (
+                <Image
+                  src={image.url}
+                  alt={`${altPrefix}, foto ${index + 1}`}
+                  fill
+                  unoptimized
+                  className="rounded-image object-contain"
+                />
+              ) : (
+                <div className="grid size-full place-items-center p-3 text-center text-sm text-muted-foreground">
+                  Foto tidak dapat dipratinjau
+                </div>
+              )}
+            </div>
             <span
               role="status"
               className="absolute bottom-1 left-1 rounded bg-foreground/65 px-2 py-1 text-xs text-primary-foreground"

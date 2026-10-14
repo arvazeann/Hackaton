@@ -31,6 +31,7 @@ export default async function Detail({
                 src={img.url}
                 alt={`${p.title}, foto ${i + 1}`}
                 fill
+                unoptimized
                 className="object-contain"
                 priority={i === 0}
               />

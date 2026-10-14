@@ -43,6 +43,16 @@ const imageTypes: Record<
   webp: { mimeType: "image/webp", extension: "webp" },
 };
 
+export class SupabaseStorageUploadError extends Error {
+  constructor(
+    readonly status: number,
+    readonly providerCode: string | null,
+  ) {
+    super("Supabase Storage upload failed");
+    this.name = "SupabaseStorageUploadError";
+  }
+}
+
 function configuration() {
   const environment = environmentSchema.parse({
     SUPABASE_URL: process.env.SUPABASE_URL,
@@ -115,7 +125,30 @@ async function putImage(filename: string, bytes: Buffer, mimeType: string) {
       cache: "no-store",
     },
   );
-  if (!response.ok) throw new Error("Supabase Storage upload failed");
+  if (!response.ok) {
+    let providerCode: string | null = null;
+    try {
+      const body: unknown = await response.json();
+      if (
+        typeof body === "object" &&
+        body !== null &&
+        "error" in body &&
+        typeof body.error === "string"
+      ) {
+        providerCode = body.error;
+      } else if (
+        typeof body === "object" &&
+        body !== null &&
+        "code" in body &&
+        typeof body.code === "string"
+      ) {
+        providerCode = body.code;
+      }
+    } catch {
+      // Keep provider response bodies out of logs; status is still diagnostic.
+    }
+    throw new SupabaseStorageUploadError(response.status, providerCode);
+  }
 }
 
 export async function copyLocalImageToSupabase(

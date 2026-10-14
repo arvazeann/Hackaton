@@ -11,6 +11,14 @@ const mocks = vi.hoisted(() => ({
       super(code);
     }
   },
+  SupabaseStorageUploadError: class SupabaseStorageUploadError extends Error {
+    constructor(
+      readonly status: number,
+      readonly providerCode: string | null,
+    ) {
+      super("Supabase Storage upload failed");
+    }
+  },
 }));
 
 vi.mock("@/lib/session", () => ({ getCurrentUser: mocks.getCurrentUser }));
@@ -26,6 +34,7 @@ vi.mock("@/server/storage/local-image-storage", () => ({
 vi.mock("@/server/storage/supabase-image-storage", () => ({
   saveImageToSupabase: mocks.saveImageToSupabase,
   deleteSupabaseImage: mocks.deleteSupabaseImage,
+  SupabaseStorageUploadError: mocks.SupabaseStorageUploadError,
 }));
 
 import { POST } from "./route";

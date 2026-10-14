@@ -3,13 +3,34 @@ import { ImageStorageError } from "@/server/storage/local-image-storage";
 import {
   deleteSupabaseImage,
   saveImageToSupabase,
+  SupabaseStorageUploadError,
 } from "@/server/storage/supabase-image-storage";
 import { db } from "@/lib/db";
 
 export const runtime = "nodejs";
 
+function safeErrorDetails(error: unknown) {
+  const code =
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof error.code === "string"
+      ? error.code
+      : undefined;
+  return {
+    errorName: error instanceof Error ? error.name : "UnknownError",
+    ...(code ? { errorCode: code } : {}),
+  };
+}
+
 export async function POST(request: Request) {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser().catch((error: unknown) => {
+    console.error(
+      "[api/uploads] session lookup failed",
+      safeErrorDetails(error),
+    );
+    throw error;
+  });
   if (!user)
     return Response.json(
       { message: "Silakan masuk untuk mengunggah foto." },
@@ -37,10 +58,18 @@ export async function POST(request: Request) {
     return Response.json({ message: "Pilih satu file foto." }, { status: 400 });
 
   if (purpose === "PRODUCT") {
-    const sellerProfile = await db.sellerProfile.findUnique({
-      where: { userId: user.id },
-      select: { userId: true },
-    });
+    const sellerProfile = await db.sellerProfile
+      .findUnique({
+        where: { userId: user.id },
+        select: { userId: true },
+      })
+      .catch((error: unknown) => {
+        console.error(
+          "[api/uploads] seller profile lookup failed",
+          safeErrorDetails(error),
+        );
+        throw error;
+      });
     if (!sellerProfile)
       return Response.json(
         { message: "Lengkapi profil toko sebelum mengunggah foto produk." },
@@ -55,7 +84,11 @@ export async function POST(request: Request) {
       await db.uploadedFile.create({
         data: { key: storageKey, ownerId: user.id, purpose },
       });
-    } catch {
+    } catch (error) {
+      console.error(
+        "[api/uploads] metadata write failed",
+        safeErrorDetails(error),
+      );
       try {
         await deleteSupabaseImage(storageKey);
       } catch {
@@ -68,6 +101,14 @@ export async function POST(request: Request) {
     }
     return Response.json({ storageKey }, { status: 201 });
   } catch (error) {
+    if (error instanceof SupabaseStorageUploadError) {
+      console.error("[api/uploads] Supabase Storage rejected upload", {
+        status: error.status,
+        providerCode: error.providerCode,
+      });
+    } else if (!(error instanceof ImageStorageError)) {
+      console.error("[api/uploads] upload failed", safeErrorDetails(error));
+    }
     if (storageKey) {
       try {
         await deleteSupabaseImage(storageKey);

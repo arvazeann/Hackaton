@@ -90,6 +90,7 @@ export function ProductGrid({
                 alt={product.title}
                 fill
                 sizes="(max-width: 1023px) 50vw, 33vw"
+                unoptimized
                 className="object-contain p-3 transition-transform duration-image ease-soft group-hover/card:scale-[1.03] group-focus-within/card:scale-[1.03] motion-reduce:transition-none sm:p-4"
               />
             ) : (
