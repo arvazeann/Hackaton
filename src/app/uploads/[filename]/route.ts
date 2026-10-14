@@ -1,5 +1,9 @@
 import { Readable } from "node:stream";
 import { localImageStorage } from "@/server/storage/local-image-storage";
+import {
+  publicSupabaseImageUrl,
+  supabaseImageExists,
+} from "@/server/storage/supabase-image-storage";
 import { STORED_IMAGE_FILENAME_PATTERN } from "@/lib/product-images";
 
 export const runtime = "nodejs";
@@ -17,6 +21,23 @@ export async function GET(
 ) {
   const { filename } = await context.params;
   if (!STORED_IMAGE_FILENAME_PATTERN.test(filename)) return notFound();
+
+  try {
+    if (await supabaseImageExists(filename)) {
+      const url = publicSupabaseImageUrl(filename);
+      if (url)
+        return new Response(null, {
+          status: 307,
+          headers: {
+            Location: url,
+            "Cache-Control": "public, max-age=31536000, immutable",
+            "X-Content-Type-Options": "nosniff",
+          },
+        });
+    }
+  } catch {
+    // Keep legacy local files readable if Storage is temporarily unavailable.
+  }
 
   try {
     const fileStat = await localImageStorage.stat(filename);

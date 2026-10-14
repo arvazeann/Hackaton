@@ -13,6 +13,10 @@ import {
   STORED_IMAGE_FILENAME_PATTERN,
 } from "@/lib/product-images";
 import { localImageStorage } from "@/server/storage/local-image-storage";
+import {
+  deleteSupabaseImage,
+  supabaseImageExists,
+} from "@/server/storage/supabase-image-storage";
 import { ownsUploadedFile } from "@/server/services/uploaded-files";
 import { publicStoreDtoSchema } from "@/schemas";
 import type { PublicStoreDTO } from "@/types";
@@ -132,7 +136,7 @@ async function hasInvalidImage(input: ProductInput, ownerId: string) {
         return localImageStorage.exists(storageKey);
 
       const [exists, owned] = await Promise.all([
-        localImageStorage.exists(storageKey),
+        supabaseImageExists(storageKey),
         ownsUploadedFile(storageKey, ownerId, "PRODUCT"),
       ]);
       return exists && owned;
@@ -531,9 +535,12 @@ export async function updateProduct(
     });
     if (result.success)
       await Promise.allSettled(
-        removedImageKeys.map((storageKey) =>
-          localImageStorage.delete(storageKey),
-        ),
+        removedImageKeys.map(async (storageKey) => {
+          const stillReferenced = await db.productImage.count({
+            where: { storageKey },
+          });
+          if (stillReferenced === 0) await deleteSupabaseImage(storageKey);
+        }),
       );
     return result;
   } catch (error) {

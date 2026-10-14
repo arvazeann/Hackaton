@@ -2,8 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   getCurrentUser: vi.fn(),
-  saveImageFile: vi.fn(),
   createUploadedFile: vi.fn(),
+  saveImageToSupabase: vi.fn(),
+  deleteSupabaseImage: vi.fn(),
+  findSellerProfile: vi.fn(),
   StorageError: class StorageError extends Error {
     constructor(readonly code: string) {
       super(code);
@@ -13,11 +15,17 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/session", () => ({ getCurrentUser: mocks.getCurrentUser }));
 vi.mock("@/lib/db", () => ({
-  db: { uploadedFile: { create: mocks.createUploadedFile } },
+  db: {
+    uploadedFile: { create: mocks.createUploadedFile },
+    sellerProfile: { findUnique: mocks.findSellerProfile },
+  },
 }));
 vi.mock("@/server/storage/local-image-storage", () => ({
   ImageStorageError: mocks.StorageError,
-  localImageStorage: { save: mocks.saveImageFile },
+}));
+vi.mock("@/server/storage/supabase-image-storage", () => ({
+  saveImageToSupabase: mocks.saveImageToSupabase,
+  deleteSupabaseImage: mocks.deleteSupabaseImage,
 }));
 
 import { POST } from "./route";
@@ -35,9 +43,11 @@ function uploadRequest(file: File, purpose = "PRODUCT") {
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.getCurrentUser.mockResolvedValue({ id: "seller-uuid" });
-  mocks.saveImageFile.mockResolvedValue(
+  mocks.saveImageToSupabase.mockResolvedValue(
     "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.jpg",
   );
+  mocks.deleteSupabaseImage.mockResolvedValue(undefined);
+  mocks.findSellerProfile.mockResolvedValue({ userId: "seller-uuid" });
   mocks.createUploadedFile.mockResolvedValue({});
 });
 
@@ -46,7 +56,7 @@ describe("POST /api/uploads", () => {
     mocks.getCurrentUser.mockResolvedValue(null);
     const response = await POST(uploadRequest(new File(["image"], "x.jpg")));
     expect(response.status).toBe(401);
-    expect(mocks.saveImageFile).not.toHaveBeenCalled();
+    expect(mocks.saveImageToSupabase).not.toHaveBeenCalled();
   });
 
   it("returns the generated stored filename for an authenticated upload", async () => {
@@ -58,7 +68,7 @@ describe("POST /api/uploads", () => {
     expect(await response.json()).toEqual({
       storageKey: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.jpg",
     });
-    const savedFile = mocks.saveImageFile.mock.calls[0]?.[0] as File;
+    const savedFile = mocks.saveImageToSupabase.mock.calls[0]?.[0] as File;
     expect(savedFile).toMatchObject({
       name: file.name,
       size: file.size,
@@ -84,16 +94,32 @@ describe("POST /api/uploads", () => {
     });
   });
 
+  it("requires a seller profile for product image uploads", async () => {
+    mocks.findSellerProfile.mockResolvedValue(null);
+    const response = await POST(uploadRequest(new File(["image"], "x.jpg")));
+    expect(response.status).toBe(403);
+    expect(mocks.saveImageToSupabase).not.toHaveBeenCalled();
+  });
+
+  it("removes the remote object if metadata creation fails", async () => {
+    mocks.createUploadedFile.mockRejectedValue(new Error("database failure"));
+    const response = await POST(uploadRequest(new File(["image"], "x.jpg")));
+    expect(response.status).toBe(500);
+    expect(mocks.deleteSupabaseImage).toHaveBeenCalledWith(
+      "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.jpg",
+    );
+  });
+
   it("rejects an unrecognized purpose", async () => {
     const response = await POST(
       uploadRequest(new File(["image"], "x.jpg"), "OTHER"),
     );
     expect(response.status).toBe(400);
-    expect(mocks.saveImageFile).not.toHaveBeenCalled();
+    expect(mocks.saveImageToSupabase).not.toHaveBeenCalled();
   });
 
   it("returns a safe validation error from storage", async () => {
-    mocks.saveImageFile.mockRejectedValue(
+    mocks.saveImageToSupabase.mockRejectedValue(
       new mocks.StorageError("INVALID_TYPE"),
     );
     const response = await POST(
@@ -106,7 +132,9 @@ describe("POST /api/uploads", () => {
   });
 
   it("returns the payload-too-large status for files over the limit", async () => {
-    mocks.saveImageFile.mockRejectedValue(new mocks.StorageError("TOO_LARGE"));
+    mocks.saveImageToSupabase.mockRejectedValue(
+      new mocks.StorageError("TOO_LARGE"),
+    );
     const response = await POST(
       uploadRequest(new File(["large file"], "photo.jpg")),
     );

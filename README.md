@@ -10,9 +10,9 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 
 ## Current Status
 
-- Current task: Vercel Prisma build fix added: Prisma Client now generates on install, and npm's install-script allowlist explicitly permits the reviewed Prisma/build packages. Local generation, typecheck, lint, format check, and 179 tests pass. The Vercel deployment has not been rebuilt from these changes; the supplied URL currently shows Vercel Login (deployment protection), so the app UI is not yet verified there. Production build remains unverified. LAN/Auth.js development work is recorded below; UI refresh UI-1 remains in progress.
+- Current task: Supabase Storage image adapter and non-destructive local-file copy script are implemented. Typecheck, lint, format, and 182 tests pass; production build stopped with Windows `EPERM` unlinking a `.next` chunk while several Node processes were running. Supabase/Vercel settings and browser flows remain unverified. Earlier Vercel Prisma build work and LAN/Auth.js development are recorded below; UI refresh UI-1 remains in progress.
 - Last completed implementation stage: Stage 6 follow-up: Admin Area Phase 2; B1, B2, and Admin Phases 1–2 extend Stage 6 without renumbering. UI refresh is a presentation-only follow-up.
-- Interim local-disk product image storage is implemented for the single-machine demo. Stage 7 Cloudflare R2 remains proposed and has not started.
+- Product, avatar, and store-logo uploads now use Supabase Storage through server-only credentials; legacy local images can be copied with the non-destructive migration script.
 
 ## Architecture
 
@@ -37,7 +37,7 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 - Product listing, detail, seller dashboard, create, update, and archive use Prisma through `src/server/services/products.ts`.
 - Product UI maps Prisma category/image relations to the existing DTO shape. Public product DTOs omit seller phone and internal password data.
 - Product and order mutations use domain API routes with session-derived identity and Prisma services.
-- Product images use authenticated uploads to local disk outside `public/`; UUID filenames are persisted and served through a validated public route. Seed products continue to use existing local SVG assets.
+- Uploaded product/profile images use authenticated server-side Supabase Storage uploads; PostgreSQL stores UUID keys and ownership metadata, while a validated same-origin route redirects image reads to the public bucket. Seed products continue using existing local SVG assets.
 - Order creation, listing, and status actions use Prisma services. Product reservation/sale changes are coupled to order transitions in transactions.
 - Favorite listing and mutations use the Prisma `Favorite` relation. Authenticated product DTOs contain database-derived `isFavorited`; visitor favorite buttons are disabled.
 - Profile reads and updates use the session user's Prisma record, with explicit editable fields and no `passwordHash` in responses.
@@ -71,14 +71,22 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 - A new order remains `pending` while its product stays `active`; confirming reserves the product, completing marks it sold, and cancelling a confirmed order restores it to active.
 - At most one `pending` or `confirmed` order may exist per product. The service handles unique conflicts without exposing database details.
 - Auth.js secret is stored in ignored `.env.local`; never commit or expose it.
-- Local disk is an approved interim image store for a single-machine demo; `UPLOAD_DIR` is server-only, defaults to `./storage/uploads`, and is excluded from Git. Cloudflare R2 remains the planned production storage.
+- Uploaded media uses the `ruanglagi-images` public Supabase Storage bucket. `SUPABASE_URL`, `SUPABASE_STORAGE_BUCKET`, and `SUPABASE_SERVICE_ROLE_KEY` are server-only; the service-role key must never use a `NEXT_PUBLIC_` name. Public access is for image reads; uploads/deletes run only on the authenticated server.
 - Payment encryption uses server-only `PAYMENT_ENCRYPTION_KEY` (base64, 32 bytes) and must be generated locally using the command in `.env.example`; never commit its value.
 - Seller payment accounts are soft-deactivated, limited to three active entries, and do not modify payment snapshots on existing orders. Address/order shipping snapshots are likewise immutable.
-- Replaced avatar/logo uploads remain on disk pending orphan cleanup. Product create/update now require uploaded image records to belong to the current seller and have purpose `PRODUCT`; legacy static seed SVGs remain supported. Safe cleanup of deleted/replaced product image files remains TODO.
+- Product create/update require image metadata to belong to the current seller and have purpose `PRODUCT`; product uploads also require an existing seller profile. Legacy static seed SVGs and local-disk fallback reads remain supported. Old local files are not deleted by the migration script.
 - Notification preferences default to enabled without creating preference rows; disabled types skip notification creation while order status remains visible on the order page.
 - Admin changes never modify platform roles, password credentials, product images/ownership, or order snapshots. Audit metadata contains allowlisted field names and state transitions only.
 
 ## Verification
+
+### Supabase image storage migration — 2026-10-14
+
+- Create a public bucket named `ruanglagi-images` in Supabase Storage and set a 5 MB file limit with JPEG, PNG, and WebP MIME types. Public access is needed for catalog delivery; write/delete calls still use server credentials.
+- Set `SUPABASE_URL`, `SUPABASE_STORAGE_BUCKET`, and `SUPABASE_SERVICE_ROLE_KEY` in ignored `.env.local` and in Vercel Production/Preview as appropriate. Never expose the service-role key to client code.
+- To copy old `storage/uploads` files without deleting originals, run `npx tsx scripts/migrate-local-images-to-supabase.ts` after setting the environment. The script skips already-present keys and verifies each copied object's public availability.
+- No Prisma schema or migration was needed; existing `ProductImage.storageKey`, `ProductImage.url`, and `UploadedFile.key` columns remain sufficient. `next/image` still receives same-origin `/uploads/<key>` paths, so no remote image host configuration is needed.
+- Checks: `npm run typecheck` PASS; `npm run lint` PASS; `npm test -- --reporter=dot` PASS (182 tests); `npm run format:check` PASS; `npm run db:validate` PASS; production build FAIL (`EPERM` unlink under `.next` while Node processes were running). Supabase upload, dashboard bucket, legacy copy, browser page coverage, and Vercel persistence are NOT RUN.
 
 ### Vercel Prisma Client generation — 2026-10-14
 
@@ -470,7 +478,7 @@ Build completed without warnings after adding a Turbopack ignore annotation for 
 - B2 implementation is complete; its own browser checks remain pending as recorded above.
 - Physical-phone browser scenarios remain NOT RUN; desktop browser auth flows from the laptop LAN IP and localhost are recorded above. Other feature/browser scenarios remain NOT RUN; the manual checklists below still apply. Migration and SQL constraint checks ran only on isolated temporary databases, which were dropped after verification.
 - Historical Stage 3 audit scenarios below describe the behavior at that audit date; the P2 UUID mismatch was resolved by the Stage 4–6 Prisma migrations.
-- **Image storage limitation:** local uploads persist only on the machine running the app and are unsuitable for multi-instance/production hosting. Cloudflare R2 remains planned for Stage 7. Files uploaded from abandoned forms can remain unreferenced; a cleanup script is a TODO.
+- **Image storage rollout:** Supabase Storage code is implemented, but the dashboard bucket, Vercel environment variables, legacy-file copy, browser flows, and deployed Vercel persistence still require manual setup/verification. Abandoned uploads can remain unreferenced if compensating deletion also fails.
 - Manual image browser checks (single/multiple selection, remove/re-add, detail/list/home display, server restart persistence, traversal and invalid-upload cases) remain NOT RUN.
 - Email verification and password reset are out of MVP scope per the Stage 3 brief.
 - Registration/login rate limiting remains a pre-launch TODO from the Blueprint.
@@ -487,7 +495,7 @@ Build completed without warnings after adding a Turbopack ignore annotation for 
 
 ## Next Approved Step
 
-Review the Vercel build fix, then commit/push it and redeploy manually. Confirm the build log runs Prisma generation before Next.js build; review Vercel Deployment Protection before testing the public URL. Do not apply migrations or start Stage 7 without approval.
+Configure the Supabase Storage bucket and server environment variables, run the non-destructive legacy-image copy, then deploy the reviewed code and verify authenticated upload/display flows. Do not remove old local files until copied objects and all page views are confirmed.
 
 ## Handoff Notes
 
@@ -496,7 +504,7 @@ Review the Vercel build fix, then commit/push it and redeploy manually. Confirm 
 - LAN development uses `npm run dev:lan`; `src/lib/dev-network.ts` scopes allowed dev hosts to current private IPv4 addresses and normalizes only validated Auth.js dev requests. `.env.local` is local-only and was not changed.
 - Stage 6 domain routes and Prisma services handle all runtime marketplace reads and writes. `/api/mock`, `postMock`, and mock runtime accessors are removed; seed fixtures are intentionally retained separately.
 - Run typecheck, lint, tests, build, and read-only DB validation after relevant changes; browser checks are still pending.
-- Set `UPLOAD_DIR` only in the server environment if changing the default; keep it outside `public/`. Do not commit `storage/uploads`. Local disk is interim; R2 work remains a separate approved stage.
+- `scripts/migrate-local-images-to-supabase.ts` copies and verifies old local images while retaining source files. `src/app/uploads/[filename]/route.ts` preserves same-origin image paths and local fallback; keep bucket and service credentials configured in each hosting environment.
 - Set `PAYMENT_ENCRYPTION_KEY` to a generated base64-encoded 32-byte value before starting the server. Keep the key backed up and private; losing it makes encrypted payment data unreadable. Ciphertext carries the `v1` prefix for key-versioning.
 - Manual browser checklist (NOT RUN): verify `/profile` loads for a seller and a plain buyer; activate a store; add and soft-delete payment accounts and verify the three-active limit; add addresses and verify the default rule; change a password; upload an avatar; verify the seller dashboard banner without an account; confirm an order with and without an account; verify the buyer sees payment instructions only after confirmation; verify old confirmed orders show “Contact the seller for payment details”; sign in as a second user and verify they cannot open the first user's addresses or payment accounts. Also try assigning another user's uploaded key and a wrong-purpose key to avatar/logo; upload matching AVATAR/LOGO keys; replace avatar/logo and confirm prior files remain available.
 - B1 and B2 are Stage 6 follow-ups; no stage numbers changed. Keep public store DTOs allowlisted and notification messages free of contact/payment data.

@@ -9,7 +9,7 @@ const prisma = vi.hoisted(() => ({
     update: vi.fn(),
     updateMany: vi.fn(),
   },
-  productImage: { deleteMany: vi.fn(), findMany: vi.fn() },
+  productImage: { deleteMany: vi.fn(), findMany: vi.fn(), count: vi.fn() },
   favorite: { findMany: vi.fn(), findUnique: vi.fn() },
   category: { findMany: vi.fn() },
   sellerProfile: { findUnique: vi.fn() },
@@ -19,12 +19,20 @@ const prisma = vi.hoisted(() => ({
 
 vi.mock("@/lib/db", () => ({ db: prisma }));
 const storage = vi.hoisted(() => ({
+  delete: vi.fn(),
+  exists: vi.fn(),
+}));
+const remoteStorage = vi.hoisted(() => ({
   exists: vi.fn(),
   delete: vi.fn(),
 }));
 const uploadedFiles = vi.hoisted(() => ({ ownsUploadedFile: vi.fn() }));
 vi.mock("@/server/storage/local-image-storage", () => ({
   localImageStorage: storage,
+}));
+vi.mock("@/server/storage/supabase-image-storage", () => ({
+  supabaseImageExists: remoteStorage.exists,
+  deleteSupabaseImage: remoteStorage.delete,
 }));
 vi.mock("@/server/services/uploaded-files", () => uploadedFiles);
 
@@ -90,6 +98,9 @@ beforeEach(() => {
   vi.clearAllMocks();
   storage.exists.mockResolvedValue(true);
   storage.delete.mockResolvedValue(undefined);
+  remoteStorage.exists.mockResolvedValue(true);
+  remoteStorage.delete.mockResolvedValue(undefined);
+  prisma.productImage.count.mockResolvedValue(0);
   uploadedFiles.ownsUploadedFile.mockResolvedValue(true);
   prisma.$transaction.mockImplementation((operation: unknown) => {
     if (typeof operation === "function")
@@ -338,7 +349,7 @@ describe("product Prisma service", () => {
   });
 
   it("rejects a PRODUCT photo whose file is missing from storage", async () => {
-    storage.exists.mockResolvedValue(false);
+    remoteStorage.exists.mockResolvedValue(false);
     expect(await createProduct(input, record.sellerId)).toMatchObject({
       success: false,
       error: { code: "VALIDATION_ERROR" },
@@ -402,7 +413,7 @@ describe("product Prisma service", () => {
   });
 
   it("rejects missing upload files before writing product data", async () => {
-    storage.exists.mockResolvedValue(false);
+    remoteStorage.exists.mockResolvedValue(false);
     const result = await createProduct(input, record.sellerId);
     expect(result).toMatchObject({
       success: false,
@@ -414,7 +425,7 @@ describe("product Prisma service", () => {
     expect(prisma.product.create).not.toHaveBeenCalled();
   });
 
-  it("deletes removed local files only after a successful product edit", async () => {
+  it("deletes removed remote files only after a successful product edit", async () => {
     const removedKey = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee.webp";
     prisma.product.findUnique.mockResolvedValue(record);
     prisma.productImage.findMany.mockResolvedValue([
@@ -427,7 +438,7 @@ describe("product Prisma service", () => {
     const result = await updateProduct(record.id, input, record.sellerId);
 
     expect(result.success).toBe(true);
-    expect(storage.delete).toHaveBeenCalledWith(removedKey);
+    expect(remoteStorage.delete).toHaveBeenCalledWith(removedKey);
   });
 
   it("lists active products with filters, sorting, and pagination", async () => {
