@@ -11,6 +11,10 @@ import type { UseFormRegisterReturn } from "react-hook-form";
 import type { z } from "zod";
 import { FieldError } from "@/components/forms/field-error";
 import { signInWithCredentials } from "@/lib/auth/client";
+import {
+  getGoogleAuthErrorMessage,
+  getSafeCallbackUrl,
+} from "@/lib/auth/google-flow";
 import { loginSchema, registerFormSchema } from "@/schemas";
 
 type LoginValues = z.infer<typeof loginSchema>;
@@ -25,10 +29,6 @@ const inputClassName =
   "min-h-12 w-full rounded-2xl border border-input bg-card px-4 py-3 text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground/70 focus:border-primary focus:ring-2 focus:ring-focus/20";
 const submitClassName =
   "inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-wait disabled:opacity-65";
-
-function safeCallback(value: string | null) {
-  return value?.startsWith("/") && !value.startsWith("//") ? value : "/";
-}
 
 function GoogleButton({
   callback,
@@ -139,8 +139,11 @@ function LoginForm({
   onSwitch: () => void;
 }) {
   const router = useRouter();
-  const callback = safeCallback(useSearchParams().get("callbackUrl"));
-  const [formError, setFormError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const callback = getSafeCallbackUrl(searchParams.get("callbackUrl"));
+  const [formError, setFormError] = useState<string | null>(() =>
+    getGoogleAuthErrorMessage(searchParams.get("error")),
+  );
   const [googlePending, setGooglePending] = useState(false);
   const submitLock = useRef(false);
   const passwordId = useId();
