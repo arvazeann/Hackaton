@@ -75,12 +75,23 @@ export default async function AdminProductsPage({
           </Select>
         </label>
         <label className="text-sm">
-          Slug kategori
-          <input
-            className="mt-1 w-full rounded-lg border px-3 py-2"
-            name="category"
-            defaultValue={query.data.category ?? ""}
-          />
+          Kategori
+          <Select name="category" defaultValue={query.data.category ?? ""}>
+            <SelectTrigger
+              aria-label="Kategori produk"
+              className="mt-1 w-full min-w-0"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Semua kategori</SelectItem>
+              {categories.map((category) => (
+                <SelectItem key={category.id} value={category.slug}>
+                  {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </label>
         <div className="flex gap-2 sm:col-span-3">
           <button

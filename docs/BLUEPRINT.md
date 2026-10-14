@@ -121,18 +121,18 @@ The visibility rows in §8 and rules explicitly tagged **[APPROVED]** are final.
 
 **Product**
 
-| Field                    | Type                             | Notes                                                                |
-| ------------------------ | -------------------------------- | -------------------------------------------------------------------- |
-| `id`                     | string                           |                                                                      |
-| `sellerId`               | string                           | FK to User                                                           |
-| `title`                  | string                           |                                                                      |
-| `description`            | string                           |                                                                      |
-| `price`                  | integer (smallest currency unit) | **[APPROVED]** IDR stored as integer rupiah, no decimals             |
-| `condition`              | enum                             | **[TODO]** values; **[PROPOSED]** `like_new`, `good`, `fair`, `worn` |
-| `category`               | enum or relation                 | **[TODO]** category list                                             |
-| `status`                 | enum                             | **[APPROVED]** `active`, `reserved`, `sold`                          |
-| `images`                 | list of image refs               | Cloudflare R2 keys or URLs (planned)                                 |
-| `createdAt`, `updatedAt` | datetime                         |                                                                      |
+| Field                    | Type                             | Notes                                                                                        |
+| ------------------------ | -------------------------------- | -------------------------------------------------------------------------------------------- |
+| `id`                     | string                           |                                                                                              |
+| `sellerId`               | string                           | FK to User                                                                                   |
+| `title`                  | string                           |                                                                                              |
+| `description`            | string                           |                                                                                              |
+| `price`                  | integer (smallest currency unit) | **[APPROVED]** IDR stored as integer rupiah, no decimals                                     |
+| `condition`              | enum                             | **[TODO]** values; **[PROPOSED]** `like_new`, `good`, `fair`, `worn`                         |
+| `category`               | relation                         | **[APPROVED]** Database-managed category relation; kos-focused names/slugs are listed in §5. |
+| `status`                 | enum                             | **[APPROVED]** `active`, `reserved`, `sold`                                                  |
+| `images`                 | list of image refs               | Cloudflare R2 keys or URLs (planned)                                                         |
+| `createdAt`, `updatedAt` | datetime                         |                                                                                              |
 
 **Order**
 
@@ -202,6 +202,8 @@ The visibility rows in §8 and rules explicitly tagged **[APPROVED]** are final.
 - Requests above 48 must be rejected or clamped (**[TODO]** choose one; **[PROPOSED]** reject with a validation error).
 
 **[PROPOSED]** Query parameters: `page` (default 1), `pageSize`, `q` (search text), `category`, `minPrice`, `maxPrice`, `condition`, `sort` (`newest`, `price_asc`, `price_desc`). The query schema is `.strict()`.
+
+**[APPROVED] Category taxonomy:** `Furnitur & penyimpanan` (`furnitur-penyimpanan`), `Perlengkapan tidur` (`perlengkapan-tidur`), `Elektronik` (`elektronik`), `Dapur` (`dapur`), `Kebersihan & laundry` (`kebersihan-laundry`), `Belajar & kerja` (`belajar-kerja`), and `Lainnya` (`lainnya`). Keep categories database-managed; forms, catalog filters, and admin category filters read the same category records. Legacy slugs are migrated while product rows and order snapshots are retained.
 
 ---
 
@@ -438,6 +440,7 @@ All route names are **[PROPOSED]**.
 This is a presentation-only follow-up and does not renumber or replace implementation stages. Work proceeds one UI subtask at a time; the next subtask must not start automatically.
 
 - **[APPROVED] Design direction:** warm cream page surfaces, deep-green brand surfaces, orange accents, serif display headings, sans-serif body text, compact green page headers with breadcrumbs, peach product cards with white image tiles, a wishlist heart and product-detail link, responsive listing filters, numbered pagination, and a dark-green footer. Use the `ruanglagi` brand. Do not copy reference branding, images, or copy.
+- **[APPROVED] Business positioning:** RuangLagi is a contemporary flea market for boarding-house residents. Keep the existing e-commerce, authentication, orders, favorites, seller dashboard, and UI structure; use natural, friendly Indonesian copy around affordable preloved furniture, bedding, electronics, kitchen, cleaning/laundry, and study/work essentials.
 - **[APPROVED] Tokens:** page `#FBF1E3`; card/surface `#FFFEFA`; warm card `#F8E2CC`; foreground `#342D25`; brand green `#174C3C`; brand orange `#A65B3F`; orange ink `#7D3F2C`; decorative bright orange `#F07824`; border `#E7D8C7`; body font DM Sans; display font DM Serif Display. Use the bright orange for non-text accents such as dots and borders only, never as text or behind white text. Normal text and focus states must meet WCAG AA contrast. Fonts use `next/font` and must not silently fall back if build-time download fails.
 - **[APPROVED] Product badges:** show “Baru diunggah” only for active products created within the last seven days, using one named duration constant. Reserved and sold products use “Dipesan” and “Terjual”; existing orderability rules remain unchanged.
 - **[APPROVED] Listing design:** category counts are omitted. Filters use existing category, condition, price range, and location query parameters. No size/color/brand fields or new filter data are added. Presentation may add a sort control and numbered pagination while preserving page size default 12 and maximum 48.
@@ -445,6 +448,8 @@ This is a presentation-only follow-up and does not renumber or replace implement
 - **[APPROVED] Footer:** use link columns only for existing routes. Private account links are shown only to authenticated users. Keep the existing `/favorites` and `/wishlist` routes unchanged; their duplication is a TODO for a later approved task.
 - **[APPROVED] UI refresh subtasks:** UI-1 shared tokens/fonts, navbar, footer, page-header component, cards/badges, listing filters, pagination; UI-2 homepage and `/products` page layout; UI-3 product detail, profile, orders, dashboard/store, wishlist/favorites, notifications, forms, and Admin Area; UI-4 consistency and accessibility polish. UI-1 is being implemented and remains incomplete until its verification is complete.
 - **[APPROVED] Constraints:** presentation only; do not change schema, service, action, API, validation, privacy, or business rules. Keep active-only listings, reserved/sold viewability with ordering disabled, and public seller/buyer privacy rules. Keep server components by default, use no reference image assets, and do not alter marketplace data.
+
+- **[APPROVED] Business positioning and taxonomy follow-up:** RuangLagi serves boarding-house residents with the seven categories in §5. Existing category relations are migrated without deleting products or orders; the development demo data may be updated only for seed-owned products with no orders/favorites. Production data is changed only when this explicit migration is deployed.
 
 ---
 
@@ -623,15 +628,15 @@ This approved scope extends the read-only Admin Phase 1. Keep Phase 1 behavior a
 
 Resolve these with the user before implementing the affected area. Move each to **[APPROVED]** in the relevant section when decided.
 
-| #   | Decision                              | Affects     | Current proposal                                                       |
-| --- | ------------------------------------- | ----------- | ---------------------------------------------------------------------- |
-| 1   | Product condition and category values | §4, §7, §11 | Condition: `like_new`, `good`, `fair`, `worn`; categories to be listed |
-| 2   | Over-limit page size: reject or clamp | §5.1        | Reject                                                                 |
-| 3   | Password rules and hashing algorithm  | §9          | Min 8 chars, argon2id or bcrypt                                        |
-| 4   | Email verification and password reset | §9          | Out of MVP scope                                                       |
-| 5   | Image limits                          | §10         | 5 MB, 5 images, JPEG/PNG/WebP                                          |
-| 6   | Final route names                     | §11.2       | As listed                                                              |
-| 7   | Stage 4, 7, 8 scope                   | §13         | As listed                                                              |
+| #   | Decision                              | Affects     | Current proposal                   |
+| --- | ------------------------------------- | ----------- | ---------------------------------- |
+| 1   | Product condition values              | §4, §7, §11 | `like_new`, `good`, `fair`, `worn` |
+| 2   | Over-limit page size: reject or clamp | §5.1        | Reject                             |
+| 3   | Password rules and hashing algorithm  | §9          | Min 8 chars, argon2id or bcrypt    |
+| 4   | Email verification and password reset | §9          | Out of MVP scope                   |
+| 5   | Image limits                          | §10         | 5 MB, 5 images, JPEG/PNG/WebP      |
+| 6   | Final route names                     | §11.2       | As listed                          |
+| 7   | Stage 4, 7, 8 scope                   | §13         | As listed                          |
 
 ---
 
@@ -644,6 +649,7 @@ Resolve these with the user before implementing the affected area. Move each to 
 | 1.1     | 2026-10-13         | Approved local-disk image storage as an interim single-machine demo solution; Cloudflare R2 remains planned for production.                                                                                                                                |
 | 1.1     | 2026-10-13         | Approved and completed Stage 6: Prisma favorites and profile, per-domain API routes, visitor favorite controls disabled, `/api/mock` and mock runtime removed, with seed fixtures preserved separately.                                                    |
 | 1.1     | 2026-10-13         | Approved Stage 6 follow-up B1 profile hub, addresses, seller activation, encrypted payment accounts/snapshots, upload ownership metadata, migration backfill, dashboard scope, and the explicit exclusion of B2/admin.                                     |
+| 1.1     | 2026-10-13         | Approved RuangLagi boarding-house marketplace positioning and database-backed category taxonomy; legacy product categories are migrated while preserving product and order rows.                                                                           |
 | 1.1     | 2026-10-13         | Recorded the B1-approved AES-256-GCM/key-rotation requirements, payment-account soft deletion, seller backfill and seed slug rules, upload ownership checks and cleanup TODOs, and in-flight order messaging/banner behavior.                              |
 | 1.1     | 2026-10-13         | Approved and implemented Stage 6 follow-up B2: public store allowlist, vacation mode, transactional in-app notifications and preferences, and private wishlist on the existing Favorite model.                                                             |
 | 1.1     | 2026-10-13         | Recorded the approved rule that disabled notification types are not created and order status remains visible regardless of notification preferences.                                                                                                       |

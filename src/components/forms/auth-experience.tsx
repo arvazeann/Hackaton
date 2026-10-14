@@ -1,7 +1,6 @@
 "use client";
 
-import { ArrowRight, Circle, Sparkles } from "lucide-react";
-import Link from "next/link";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { AuthForm } from "@/components/forms/auth-form";
 
@@ -9,17 +8,17 @@ type AuthMode = "login" | "register";
 
 const panelCopy = {
   login: {
-    eyebrow: "BARANG BAIK, CERITA BARU",
-    title: "Temukan ruang untuk cerita berikutnya.",
+    eyebrow: "BARANG KOS, HARGA BERSAHABAT",
+    title: "Bikin kamar kos lebih nyaman.",
     description:
-      "Masuk dan lanjutkan perjalananmu menemukan barang preloved yang terasa pas.",
+      "Temukan perabot, alat dapur, dan kebutuhan kos preloved dari sesama anak kos.",
     action: "Buat akun",
   },
   register: {
     eyebrow: "SELAMAT DATANG DI RUANGLAGI",
-    title: "Setiap barang punya kesempatan kedua.",
+    title: "Barangmu bisa berguna lagi.",
     description:
-      "Bergabung untuk menemukan, menyimpan, dan menjual barang yang masih berarti.",
+      "Bergabung untuk menjual dan menemukan kebutuhan kos dengan harga lebih hemat.",
     action: "Masuk",
   },
 } satisfies Record<AuthMode, Record<string, string>>;
@@ -63,14 +62,13 @@ export function AuthExperience({
   const activeCopy = panelCopy[mode];
 
   return (
-    <section className="mx-auto w-full max-w-[1440px] px-4 py-7 sm:px-8 sm:py-10 lg:px-12 lg:py-14">
-      <div className="mx-auto mb-5 flex max-w-5xl items-center justify-between px-1 sm:mb-7">
-      </div>
+    <section className="mx-auto w-full min-w-0 max-w-[1440px] px-4 py-7 sm:px-8 sm:py-10 lg:px-12 lg:py-14">
+      <div className="mx-auto mb-5 flex max-w-5xl items-center justify-between px-1 sm:mb-7"></div>
 
-      <div className="mx-auto max-w-5xl overflow-hidden rounded-[2rem] border border-border bg-card shadow-[0_28px_90px_rgba(52,45,37,0.14)] sm:rounded-[2.5rem]">
-        <div className="relative min-h-[700px] md:min-h-[680px]">
+      <div className="mx-auto w-full min-w-0 max-w-5xl overflow-hidden rounded-[2rem] border border-border bg-card shadow-[0_28px_90px_rgba(52,45,37,0.14)] sm:rounded-[2.5rem]">
+        <div className="relative min-h-[700px] min-w-0 md:min-h-[680px]">
           <div
-            className={`grid min-h-[700px] w-[200%] grid-cols-2 transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none md:min-h-[680px] md:w-full md:translate-x-0 ${loginActive ? "translate-x-0" : "-translate-x-1/2"}`}
+            className={`grid min-h-[700px] min-w-0 w-[200%] grid-cols-2 transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none md:min-h-[680px] md:w-full md:translate-x-0 ${loginActive ? "translate-x-0" : "-translate-x-1/2"}`}
           >
             <section
               aria-hidden={!loginActive}

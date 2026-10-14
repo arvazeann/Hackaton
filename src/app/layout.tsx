@@ -11,8 +11,9 @@ const dmSerifDisplay = DM_Serif_Display({
 });
 
 export const metadata: Metadata = {
-  title: "RuangLagi | Marketplace Preloved",
-  description: "Fondasi marketplace preloved RuangLagi.",
+  title: "RuangLagi | Barang Preloved Anak Kos",
+  description:
+    "Jual dan temukan furnitur, alat dapur, elektronik, serta kebutuhan kos preloved dengan harga bersahabat.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

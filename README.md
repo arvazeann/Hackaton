@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-MVP marketplace barang preloved berbasis Next.js App Router.
+MVP marketplace barang preloved untuk kebutuhan anak kos, dibangun dengan Next.js App Router.
 
 ## Tech Stack
 
@@ -10,7 +10,7 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 
 ## Current Status
 
-- Current stage: Login/register redesign follow-up (implementation complete; typecheck, lint, format check, 168 Vitest tests, and desktop/mobile-viewport browser checks passed; production build was not run because a dev server was already active). UI refresh UI-1 remains in progress.
+- Current task: QA follow-up for mobile layout, product image ownership, and forwarded Server Actions origin configuration completed. Typecheck, lint, format check, 175 Vitest tests, and headless Chrome layout checks at 320, 360, 390, 430, 1280, 1440, and 1920 px passed. Production build and full interactive flows remain unverified. UI refresh UI-1 remains in progress.
 - Last completed implementation stage: Stage 6 follow-up: Admin Area Phase 2; B1, B2, and Admin Phases 1–2 extend Stage 6 without renumbering. UI refresh is a presentation-only follow-up.
 - Interim local-disk product image storage is implemented for the single-machine demo. Stage 7 Cloudflare R2 remains proposed and has not started.
 
@@ -53,6 +53,8 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 - Desktop-first marketplace refinement: one-row desktop navbar with account disclosure, compact guest actions, seller/account shortcuts, expanded desktop content widths, editorial serif headings, and visible product-condition labels. The seller CTA keeps its existing route and server-side activation requirements.
 - Product presentation refinement: shared product cards preserve full product imagery and clarify price, condition, category, location, and seller hierarchy; the catalog uses three or four desktop columns according to viewport width. The homepage highlights the actual newest product from the existing listing query, and detail/store layouts use a tighter editorial composition.
 - Product interaction and homepage refinement: product cards and wishlist controls use subtle lift, image and icon transitions, and reduced-motion support. The desktop hero is capped at 1440 px wide, its feature image at 280–340 px high, and category spacing is tighter so product listings appear sooner.
+- RuangLagi is positioned as a contemporary flea market for boarding-house residents. Homepage, catalog, navigation search, footer, metadata, seller form, and login/register marketing copy focus on affordable dorm essentials without changing authentication or transaction flows.
+- Product categories are database-managed and shared by seller create/edit, catalog filters, and admin filters: Furnitur & penyimpanan, Perlengkapan tidur, Elektronik, Dapur, Kebersihan & laundry, Belajar & kerja, and Lainnya. The migration preserves product rows and order snapshots; seed examples use explicit category slugs and boarding-house items.
 - UI refresh UI-1 implementation in progress: approved warm-cream/green/orange tokens and DM Sans/DM Serif Display fonts; shared navbar/footer/page-header; peach product cards and status labels; responsive category, condition, price/location filters; sort toolbar and numbered pagination. No service, schema, API, action, or business-rule changes. UI-2 page layout work has not started.
 
 ## Important Decisions
@@ -63,6 +65,7 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 - `passwordHash` is never sent to the client or included in session data.
 - Buyers can always view their own shipping data; sellers see phone/address only for `confirmed` or `completed` orders.
 - Order cancellation requires a 5-500 character reason; cancelled orders require `cancel_reason`.
+- Approved category taxonomy: `furnitur-penyimpanan`, `perlengkapan-tidur`, `elektronik`, `dapur`, `kebersihan-laundry`, `belajar-kerja`, and `lainnya`; category records remain database-backed rather than being duplicated as form/filter options.
 - `/api/mock` and its client helper were removed after all product, order, favorite, and profile mutations moved to domain routes.
 - Product, order, favorite, and profile operations use authenticated database UUIDs directly; no UUID-to-mock-ID mapping is used.
 - A new order remains `pending` while its product stays `active`; confirming reserves the product, completing marks it sold, and cancelling a confirmed order restores it to active.
@@ -71,11 +74,63 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 - Local disk is an approved interim image store for a single-machine demo; `UPLOAD_DIR` is server-only, defaults to `./storage/uploads`, and is excluded from Git. Cloudflare R2 remains the planned production storage.
 - Payment encryption uses server-only `PAYMENT_ENCRYPTION_KEY` (base64, 32 bytes) and must be generated locally using the command in `.env.example`; never commit its value.
 - Seller payment accounts are soft-deactivated, limited to three active entries, and do not modify payment snapshots on existing orders. Address/order shipping snapshots are likewise immutable.
-- Replaced avatar/logo uploads remain on disk pending orphan cleanup. Uploaded product image ownership is recorded; enforcing PRODUCT-purpose ownership when attaching images remains TODO.
+- Replaced avatar/logo uploads remain on disk pending orphan cleanup. Product create/update now require uploaded image records to belong to the current seller and have purpose `PRODUCT`; legacy static seed SVGs remain supported. Safe cleanup of deleted/replaced product image files remains TODO.
 - Notification preferences default to enabled without creating preference rows; disabled types skip notification creation while order status remains visible on the order page.
 - Admin changes never modify platform roles, password credentials, product images/ownership, or order snapshots. Audit metadata contains allowlisted field names and state transitions only.
 
 ## Verification
+
+### QA follow-up — 2026-10-13
+
+| Check                    | Status  | Command / notes                                                                                                                                                                                                                                                                                                            |
+| ------------------------ | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Typecheck                | PASS    | `npm run typecheck`                                                                                                                                                                                                                                                                                                        |
+| Lint                     | PASS    | `npm run lint`                                                                                                                                                                                                                                                                                                             |
+| Format check             | PASS    | `npm run format:check` after formatting the changed test file and removing the temporary browser script.                                                                                                                                                                                                                   |
+| Tests                    | PASS    | `npm test` — 175 tests in 35 files; existing Vite CJS deprecation warning remains.                                                                                                                                                                                                                                         |
+| Browser layout checks    | PASS    | Headless Chrome measured `/`, `/login`, and `/register` at 320, 360, 390, 430, 1280, 1440, and 1920 px. `document.documentElement.scrollWidth` matched `clientWidth` at every width; desktop navbar children stayed on one row. Auth transition headings must be interpreted from the active panel; no form was submitted. |
+| Image ownership tests    | PASS    | Product service tests cover current seller, another seller, missing stored file, and that create/edit stop before database writes for invalid ownership.                                                                                                                                                                   |
+| Production build         | NOT RUN | Next dev server remains active on port 3000; build was not run concurrently.                                                                                                                                                                                                                                               |
+| Login/register switch    | PASS    | At 390 px, clicking `Register` on `/login` changed the URL to `/register` and exposed the “Buat akun.” active heading; no form was submitted.                                                                                                                                                                              |
+| Forwarded Server Actions | PASS    | `next.config.ts` now allows the exact configured `NEXT_ALLOWED_DEV_ORIGIN` for Server Actions as well as dev assets. Typecheck validates the config; logout itself was not submitted during this follow-up.                                                                                                                |
+| Manual browser checks    | NOT RUN | Touch keyboard/focus/hover behavior, redirects for protected routes, and visual inspection at each viewport were not performed.                                                                                                                                                                                            |
+
+Cause/fix: homepage grid children and auth panels could retain intrinsic minimum widths; the auth transition also intentionally renders two half-width panels side-by-side. Constraining the page/grid/card/panel wrappers with `min-w-0`, keeping the animated track within its clipped card, and sizing the navbar wrapper to available width removed document-level horizontal overflow without changing desktop breakpoints. Product uploads now pass the shared owner-and-purpose check in the service layer before create/update.
+
+No form was submitted and no application data or database schema was changed. The dev server on port 3000 was left running.
+
+### Comprehensive QA — 2026-10-13
+
+| Check                                | Status  | Command / notes                                                                                                                                                                                             |
+| ------------------------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Typecheck                            | PASS    | `npm run typecheck`                                                                                                                                                                                         |
+| Lint                                 | PASS    | `npm run lint`                                                                                                                                                                                              |
+| Format check                         | PASS    | `npm run format:check`                                                                                                                                                                                      |
+| Tests                                | PASS    | `npm test` — 172 tests in 35 files; Vite CJS deprecation warning remains.                                                                                                                                   |
+| Prisma validation/status             | PASS    | `npm run db:validate`; `npm run db:status` — 13 migrations current on `preloved_dev`.                                                                                                                       |
+| Read-only database integrity         | PASS    | 10 users, 21 products, 7 categories, 8 orders, 5 favorites, 5 notifications; all queried product/category/user/order/favorite/notification references valid; cancelled orders have valid reasons.           |
+| HTTP smoke checks                    | PASS    | 13 anonymous GET checks: public pages return 200; protected pages carry the expected login redirect marker; protected APIs return 401; GET-only unsupported `/api/orders` returns 405. No data was changed. |
+| Desktop browser screenshots          | PASS    | Headless Chrome homepage at 1280, 1440, and 1920 px; navbar remained one row.                                                                                                                               |
+| Mobile browser screenshots           | FAIL    | At 390 px, homepage navbar/hero and login card content extend beyond the right viewport edge. See Known Issues.                                                                                             |
+| Production build                     | NOT RUN | Next dev server is listening on port 3000; build was not run concurrently on Windows.                                                                                                                       |
+| Authenticated/mutating browser flows | NOT RUN | No browser test account or isolated E2E database was prepared; no registration, upload, product/order/favorite/profile/admin mutation was attempted. Google provider callback was not exercised.            |
+
+QA was read-only and did not change application code or database data. Desktop/mobile screenshots were captured with local headless Chrome; browser interactions such as dropdown keyboard/outside-click and reduced-motion behavior remain unverified.
+
+### Anak kos positioning and category taxonomy — 2026-10-13
+
+| Check                 | Status  | Command / notes                                                                                                                                                                                             |
+| --------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Typecheck             | PASS    | `npm run typecheck`                                                                                                                                                                                         |
+| Lint                  | PASS    | `npm run lint`; no errors (two unused auth imports removed).                                                                                                                                                |
+| Format check          | PASS    | `npm run format:check`                                                                                                                                                                                      |
+| Tests                 | PASS    | `npm test` — 172 passed across 35 files; seed taxonomy, create/edit category persistence, admin category source, and category-plus-search filtering covered. Existing Vite CJS deprecation warning remains. |
+| Prisma validation     | PASS    | `npm run db:validate`; schema unchanged and valid.                                                                                                                                                          |
+| Migration status      | PASS    | `npm run db:migrate` applied migration 13 to `preloved_dev`; `npm run db:status` reports up to date.                                                                                                        |
+| Build                 | NOT RUN | Next dev server is listening on port 3000; build was not run concurrently on Windows.                                                                                                                       |
+| Manual browser checks | NOT RUN | Product create/edit UI, catalog filter/search, and admin category dropdown need a browser smoke check. Service/query tests passed.                                                                          |
+
+Read-only post-migration checks: `preloved_dev` has 10 users, 21 products, and 8 orders; all 3 products priced Rp715 remain with the same titles/statuses and order counts (`asd` sold/1 order, `asd` active/0, `Manggalodon` active/1); no product is missing a category. The final order snapshot digest is `3c0f4f687f7e7dccf95d312a031d530b`. Eleven seed demo products with no orders or favorites were refreshed in development. Production was not accessed.
 
 ### Login/register redesign — 2026-10-13
 
@@ -390,12 +445,16 @@ Build completed without warnings after adding a Turbopack ignore annotation for 
 - `npm install` reported 15 dependency vulnerabilities (3 moderate, 10 high, 2 critical); review with a separate dependency-audit task before release.
 - Vitest reports the existing Vite CJS Node API deprecation warning.
 - UI refresh browser checks remain NOT RUN. `docs/design-reference/reference-dribbble.png` and `docs/design-reference/current-home.png` were not found; implementation follows the written approved brief.
+- **QA-P2-01 — Mobile horizontal clipping:** resolved in the 2026-10-13 follow-up. Headless Chrome reports no document overflow at all seven tested viewport widths on `/`, `/login`, and `/register`; manual visual and touch checks remain NOT RUN.
+- **QA-P3-01 — Uploaded product image ownership:** resolved in the 2026-10-13 follow-up for product create/update. Uploaded keys require an `UploadedFile` owned by the session seller with purpose `PRODUCT`; legacy static seed SVGs remain allowed. Safe orphan cleanup remains TODO.
+- Legacy category-filter URLs using removed slugs (such as `fashion-pria` or `perabot`) are not aliases after migration; use the current database category slugs. Product records remain present and were reassigned to the new taxonomy.
+- “Paling disukai” homepage sorting/count is a future idea only; favorite behavior and ordering were not changed in this task.
 - The product DTO does not distinguish an uploaded/seed image from the legacy `/products/item-1.svg` no-image fallback. The card renders a neutral inline placeholder only for an empty image URL; replacing the legacy fallback reliably would require a service/DTO change, outside the approved presentation-only scope.
 - `/favorites` and `/wishlist` both exist and remain unchanged; review whether to consolidate them in a later approved task.
 
 ## Next Approved Step
 
-Finish UI-1 by resolving the Windows `.next` EPERM build failure and completing the remaining manual visual review. Do not start UI-2 until the user approves it. Stage 7 Cloudflare R2 remains unstarted.
+Finish UI-1 by resolving the Windows `.next` EPERM build failure and completing the remaining manual visual review. Do not start UI-2 or Stage 7 without user approval.
 
 ## Handoff Notes
 

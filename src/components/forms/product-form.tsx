@@ -105,7 +105,7 @@ export function ProductForm({
       onSubmit={handleSubmit(save)}
     >
       <h1 className="text-3xl font-bold text-[#26332d]">
-        {product ? "Edit produk" : "Jual barang preloved"}
+        {product ? "Edit produk" : "Jual barang kos preloved"}
       </h1>
       <label className="grid gap-2 text-sm font-medium">
         Nama barang

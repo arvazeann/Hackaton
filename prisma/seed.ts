@@ -27,9 +27,6 @@ const demoUsers = [
 const userIds = new Map(
   demoUsers.map((user, index) => [user.id, id(1, index + 1)]),
 );
-const categoryIds = new Map(
-  categories.map((category, index) => [category.slug, id(2, index + 1)]),
-);
 const productIds = new Map(
   seedProducts.map((product, index) => [product.id, id(3, index + 1)]),
 );
@@ -81,19 +78,18 @@ async function main() {
     process.env.VERCEL_ENV ??
     process.env.NODE_ENV ??
     "development";
+  const categoryIds = new Map<string, string>();
 
   try {
     await prisma.$transaction(async (tx) => {
       for (const category of categories) {
-        await tx.category.upsert({
+        const storedCategory = await tx.category.upsert({
           where: { slug: category.slug },
-          create: {
-            id: categoryIds.get(category.slug),
-            name: category.name,
-            slug: category.slug,
-          },
+          create: { name: category.name, slug: category.slug },
           update: { name: category.name },
+          select: { id: true },
         });
+        categoryIds.set(category.slug, storedCategory.id);
       }
 
       if (!["development", "staging"].includes(environment)) {

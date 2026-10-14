@@ -8,10 +8,12 @@ import type {
 } from "@/types";
 import type { z } from "zod";
 import {
+  LEGACY_IMAGE_KEY_PATTERN,
   productImageUrl,
   STORED_IMAGE_FILENAME_PATTERN,
 } from "@/lib/product-images";
 import { localImageStorage } from "@/server/storage/local-image-storage";
+import { ownsUploadedFile } from "@/server/services/uploaded-files";
 import { publicStoreDtoSchema } from "@/schemas";
 import type { PublicStoreDTO } from "@/types";
 
@@ -123,11 +125,20 @@ function localImages(input: ProductInput) {
   }));
 }
 
-async function hasMissingImage(input: ProductInput) {
+async function hasInvalidImage(input: ProductInput, ownerId: string) {
   const stored = await Promise.all(
-    input.images.map(({ storageKey }) => localImageStorage.exists(storageKey)),
+    input.images.map(async ({ storageKey }) => {
+      if (LEGACY_IMAGE_KEY_PATTERN.test(storageKey))
+        return localImageStorage.exists(storageKey);
+
+      const [exists, owned] = await Promise.all([
+        localImageStorage.exists(storageKey),
+        ownsUploadedFile(storageKey, ownerId, "PRODUCT"),
+      ]);
+      return exists && owned;
+    }),
   );
-  return stored.some((exists) => !exists);
+  return stored.some((valid) => !valid);
 }
 
 function imageValidationFailure(): ActionResult<never> {
@@ -419,7 +430,8 @@ export async function createProduct(
       "FORBIDDEN",
       "Aktifkan dan lengkapi profil toko sebelum membuat produk.",
     );
-  if (await hasMissingImage(parsed.data)) return imageValidationFailure();
+  if (await hasInvalidImage(parsed.data, sellerId))
+    return imageValidationFailure();
   try {
     const id = crypto.randomUUID();
     const record = await db.product.create({
@@ -461,7 +473,8 @@ export async function updateProduct(
     };
   if (!isUuid(id) || !isUuid(sellerId))
     return fail("NOT_FOUND", "Produk tidak ditemukan.");
-  if (await hasMissingImage(parsed.data)) return imageValidationFailure();
+  if (await hasInvalidImage(parsed.data, sellerId))
+    return imageValidationFailure();
   try {
     const removedImageKeys: string[] = [];
     const result = await db.$transaction(async (tx) => {

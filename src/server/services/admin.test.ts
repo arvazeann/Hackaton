@@ -89,6 +89,19 @@ beforeEach(() => {
 });
 
 describe("admin services", () => {
+  it("loads category names and slugs from the shared database taxonomy", async () => {
+    mocks.category.findMany.mockResolvedValue([
+      { id: "category-dapur", name: "Dapur", slug: "dapur" },
+    ]);
+    await expect(getAdminProductCategories()).resolves.toEqual([
+      { id: "category-dapur", name: "Dapur", slug: "dapur" },
+    ]);
+    expect(mocks.category.findMany).toHaveBeenCalledWith({
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, slug: true },
+    });
+  });
+
   it("rejects anonymous calls at every service boundary", async () => {
     mocks.auth.mockResolvedValue(null);
     for (const call of adminCalls)

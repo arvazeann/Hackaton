@@ -262,7 +262,7 @@ export async function getAdminProductCategories() {
   await requireAdminActor();
   return db.category.findMany({
     orderBy: { name: "asc" },
-    select: { id: true, name: true },
+    select: { id: true, name: true, slug: true },
   });
 }
 

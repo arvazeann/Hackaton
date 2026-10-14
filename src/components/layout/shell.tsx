@@ -34,8 +34,8 @@ export async function Shell({ children }: { children: React.ReactNode }) {
               ruanglagi
             </Link>
             <p className="mt-3 max-w-xs text-sm leading-6 text-primary-foreground/80">
-              Barang baik, cerita baru. Temukan rumah baru untuk barang yang
-              masih punya banyak cerita.
+              Furnitur kecil, alat dapur, perlengkapan tidur, dan kebutuhan kos
+              lainnya—preloved, terjangkau, siap menemani hari-hari di kos.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-8 text-sm sm:grid-cols-3">

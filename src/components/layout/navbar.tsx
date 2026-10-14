@@ -32,7 +32,7 @@ export async function Navbar({
 
   return (
     <header className="sticky top-0 z-30 border-b border-border/80 bg-background/95 shadow-sm backdrop-blur">
-      <div className="mx-auto flex max-w-[1536px] flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5 md:flex-nowrap md:gap-x-5 lg:px-8">
+      <div className="mx-auto flex w-full min-w-0 max-w-[1536px] flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5 md:flex-nowrap md:gap-x-5 lg:px-8">
         <Link
           href="/"
           className="shrink-0 rounded-lg font-serif text-2xl leading-none text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus"
@@ -53,7 +53,7 @@ export async function Navbar({
             <input
               aria-label="Cari barang"
               name="q"
-              placeholder="Cari barang preloved..."
+              placeholder="Cari kebutuhan kos..."
               className="min-h-10 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             />
           </label>
@@ -61,7 +61,7 @@ export async function Navbar({
 
         <nav
           aria-label="Navigasi utama"
-          className="ml-auto flex shrink-0 items-center gap-0.5 whitespace-nowrap text-sm font-medium sm:gap-1"
+          className="ml-auto flex max-w-full shrink-0 items-center gap-0.5 whitespace-nowrap text-sm font-medium sm:gap-1"
         >
           <Link
             href="/dashboard/products/new"
@@ -250,7 +250,7 @@ export async function Navbar({
             <input
               aria-label="Cari barang"
               name="q"
-              placeholder="Cari barang preloved..."
+              placeholder="Cari kebutuhan kos..."
               className="min-h-10 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             />
           </label>

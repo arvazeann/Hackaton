@@ -22,9 +22,11 @@ const storage = vi.hoisted(() => ({
   exists: vi.fn(),
   delete: vi.fn(),
 }));
+const uploadedFiles = vi.hoisted(() => ({ ownsUploadedFile: vi.fn() }));
 vi.mock("@/server/storage/local-image-storage", () => ({
   localImageStorage: storage,
 }));
+vi.mock("@/server/services/uploaded-files", () => uploadedFiles);
 
 import {
   archiveProduct,
@@ -88,6 +90,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   storage.exists.mockResolvedValue(true);
   storage.delete.mockResolvedValue(undefined);
+  uploadedFiles.ownsUploadedFile.mockResolvedValue(true);
   prisma.$transaction.mockImplementation((operation: unknown) => {
     if (typeof operation === "function")
       return Promise.resolve(
@@ -211,6 +214,16 @@ describe("product Prisma service", () => {
         data: expect.objectContaining({ sellerId: record.sellerId }),
       }),
     );
+    expect(prisma.product.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ categoryId: input.categoryId }),
+      }),
+    );
+    expect(uploadedFiles.ownsUploadedFile).toHaveBeenCalledWith(
+      input.images[0].storageKey,
+      record.sellerId,
+      "PRODUCT",
+    );
     if (result.success) {
       expect(result.data.category).toEqual(record.category);
       expect(result.data.images).toEqual([
@@ -226,6 +239,52 @@ describe("product Prisma service", () => {
     }
   });
 
+  it("stores a selected new category on create and edit", async () => {
+    const kitchenCategoryId = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+    const kitchenCategory = {
+      id: kitchenCategoryId,
+      name: "Dapur",
+      slug: "dapur",
+    };
+    const selectedInput = { ...input, categoryId: kitchenCategoryId };
+    prisma.product.create.mockResolvedValue({
+      ...record,
+      category: kitchenCategory,
+    });
+
+    const created = await createProduct(selectedInput, record.sellerId);
+    expect(created).toMatchObject({
+      success: true,
+      data: { category: kitchenCategory },
+    });
+    expect(prisma.product.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ categoryId: kitchenCategoryId }),
+      }),
+    );
+
+    prisma.product.findUnique.mockResolvedValue(record);
+    prisma.product.updateMany.mockResolvedValue({ count: 1 });
+    prisma.product.update.mockResolvedValue({
+      ...record,
+      category: kitchenCategory,
+    });
+    const updated = await updateProduct(
+      record.id,
+      selectedInput,
+      record.sellerId,
+    );
+    expect(updated).toMatchObject({
+      success: true,
+      data: { category: kitchenCategory },
+    });
+    expect(prisma.product.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ categoryId: kitchenCategoryId }),
+      }),
+    );
+  });
+
   it("rejects unauthenticated and invalid create requests before Prisma", async () => {
     expect(await createProduct(input, null)).toMatchObject({
       success: false,
@@ -234,6 +293,53 @@ describe("product Prisma service", () => {
     expect(
       await createProduct({ ...input, price: 0 }, record.sellerId),
     ).toMatchObject({
+      success: false,
+      error: { code: "VALIDATION_ERROR" },
+    });
+    expect(prisma.product.create).not.toHaveBeenCalled();
+  });
+
+  it("allows the current seller's PRODUCT photo on create and edit", async () => {
+    prisma.product.create.mockResolvedValue(record);
+    expect((await createProduct(input, record.sellerId)).success).toBe(true);
+
+    prisma.product.findUnique.mockResolvedValue(record);
+    prisma.product.updateMany.mockResolvedValue({ count: 1 });
+    prisma.product.update.mockResolvedValue(record);
+    expect(
+      (await updateProduct(record.id, input, record.sellerId)).success,
+    ).toBe(true);
+    expect(uploadedFiles.ownsUploadedFile).toHaveBeenCalledTimes(2);
+    expect(uploadedFiles.ownsUploadedFile).toHaveBeenCalledWith(
+      input.images[0].storageKey,
+      record.sellerId,
+      "PRODUCT",
+    );
+  });
+
+  it("rejects another seller's PRODUCT photo on both create and edit", async () => {
+    uploadedFiles.ownsUploadedFile.mockResolvedValue(false);
+
+    expect(await createProduct(input, record.sellerId)).toMatchObject({
+      success: false,
+      error: { code: "VALIDATION_ERROR" },
+    });
+    expect(prisma.product.create).not.toHaveBeenCalled();
+
+    expect(
+      await updateProduct(record.id, input, record.sellerId),
+    ).toMatchObject({ success: false, error: { code: "VALIDATION_ERROR" } });
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(uploadedFiles.ownsUploadedFile).toHaveBeenCalledWith(
+      input.images[0].storageKey,
+      record.sellerId,
+      "PRODUCT",
+    );
+  });
+
+  it("rejects a PRODUCT photo whose file is missing from storage", async () => {
+    storage.exists.mockResolvedValue(false);
+    expect(await createProduct(input, record.sellerId)).toMatchObject({
       success: false,
       error: { code: "VALIDATION_ERROR" },
     });
@@ -354,6 +460,29 @@ describe("product Prisma service", () => {
     );
   });
 
+  it("filters by the dorm-focused category slug together with search text", async () => {
+    prisma.product.findMany.mockResolvedValue([]);
+    prisma.product.count.mockResolvedValue(0);
+    await listProducts({ q: "rice cooker", category: "dapur" });
+    expect(prisma.product.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          category: { slug: "dapur" },
+          OR: [
+            { title: { contains: "rice cooker", mode: "insensitive" } },
+            {
+              description: {
+                contains: "rice cooker",
+                mode: "insensitive",
+              },
+            },
+            { city: { contains: "rice cooker", mode: "insensitive" } },
+          ],
+        }),
+      }),
+    );
+  });
+
   it("includes favorite state for the authenticated viewer in list and detail DTOs", async () => {
     prisma.product.findMany.mockResolvedValue([record]);
     prisma.product.count.mockResolvedValue(1);
@@ -415,6 +544,7 @@ describe("product Prisma service", () => {
     expect(prisma.product.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: record.id, sellerId: record.sellerId, status: "active" },
+        data: expect.objectContaining({ categoryId: input.categoryId }),
       }),
     );
 

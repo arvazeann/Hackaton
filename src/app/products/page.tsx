@@ -40,10 +40,10 @@ export default async function Products({
     <Shell>
       <section className="mx-auto max-w-[1536px] px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
         <p className="text-xs font-bold tracking-[.14em] text-primary">
-          KATALOG RUANGLAGI
+          PASAR LOAK KONTEMPORER
         </p>
         <h1 className="mt-1 font-serif text-3xl text-foreground lg:text-4xl">
-          Temukan barang favoritmu
+          Temukan kebutuhan kos preloved
         </h1>
         <div className="mt-6 flex flex-wrap items-center gap-3 rounded-[1.5rem] border border-border bg-card p-3 sm:p-4">
           <p className="shrink-0 px-2 text-sm text-muted-foreground">
@@ -66,7 +66,7 @@ export default async function Products({
                 name="q"
                 aria-label="Cari barang"
                 defaultValue={query.q}
-                placeholder="Cari barang..."
+                placeholder="Cari meja, rice cooker, lampu..."
                 className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
               />
             </label>

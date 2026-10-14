@@ -54,7 +54,7 @@ export default async function Dashboard() {
                 Belum ada produk di tokomu
               </p>
               <p className="mt-2 text-sm text-stone-600">
-                Mulai dengan mengunggah barang preloved pertamamu.
+                Mulai jual barang kos yang sudah tak terpakai.
               </p>
               <Link
                 href="/dashboard/products/new"
