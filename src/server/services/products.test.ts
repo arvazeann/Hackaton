@@ -441,6 +441,41 @@ describe("product Prisma service", () => {
     expect(remoteStorage.delete).toHaveBeenCalledWith(removedKey);
   });
 
+  it("keeps a remote image when another product row still references its key", async () => {
+    const retainedElsewhereKey = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee.webp";
+    prisma.product.findUnique.mockResolvedValue(record);
+    prisma.productImage.findMany.mockResolvedValue([
+      { storageKey: retainedElsewhereKey },
+    ]);
+    prisma.product.updateMany.mockResolvedValue({ count: 1 });
+    prisma.productImage.deleteMany.mockResolvedValue({ count: 1 });
+    prisma.product.update.mockResolvedValue(record);
+    prisma.productImage.count.mockResolvedValue(1);
+
+    await updateProduct(record.id, input, record.sellerId);
+
+    expect(remoteStorage.delete).not.toHaveBeenCalledWith(retainedElsewhereKey);
+  });
+
+  it("does not delete replaced storage if the database reference check fails", async () => {
+    const removedKey = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee.webp";
+    prisma.product.findUnique.mockResolvedValue(record);
+    prisma.productImage.findMany.mockResolvedValue([
+      { storageKey: removedKey },
+    ]);
+    prisma.product.updateMany.mockResolvedValue({ count: 1 });
+    prisma.productImage.deleteMany.mockResolvedValue({ count: 1 });
+    prisma.product.update.mockResolvedValue(record);
+    prisma.productImage.count.mockRejectedValue(
+      new Error("database unavailable"),
+    );
+
+    const result = await updateProduct(record.id, input, record.sellerId);
+
+    expect(result.success).toBe(true);
+    expect(remoteStorage.delete).not.toHaveBeenCalledWith(removedKey);
+  });
+
   it("lists active products with filters, sorting, and pagination", async () => {
     prisma.product.findMany.mockResolvedValue([record]);
     prisma.product.count.mockResolvedValue(1);

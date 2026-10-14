@@ -33,7 +33,13 @@ const product = {
   createdAt: new Date("2026-10-01T00:00:00.000Z"),
   category: { id: "category-id", name: "Elektronik", slug: "elektronik" },
   seller: { id: ids.other, name: "Nadia" },
-  images: [{ url: "/products/item-1.svg", position: 0 }],
+  images: [
+    {
+      storageKey: "/products/item-1.svg",
+      url: "/products/item-1.svg",
+      position: 0,
+    },
+  ],
 };
 
 beforeEach(() => vi.clearAllMocks());
@@ -60,6 +66,22 @@ describe("favorite Prisma service", () => {
   it("returns no favorites for a malformed account ID", async () => {
     expect(await getFavorites("u-buyer")).toEqual([]);
     expect(prisma.favorite.findMany).not.toHaveBeenCalled();
+  });
+
+  it("maps uploaded storage keys to the same stable upload path used by catalog pages", async () => {
+    const storageKey = "dddddddd-dddd-4ddd-8ddd-dddddddddddd.webp";
+    prisma.favorite.findMany.mockResolvedValue([
+      {
+        product: {
+          ...product,
+          images: [{ storageKey, url: storageKey, position: 0 }],
+        },
+      },
+    ]);
+
+    await expect(getFavorites(ids.user)).resolves.toMatchObject([
+      { coverImageUrl: `/uploads/${storageKey}` },
+    ]);
   });
 
   it("adds favorites idempotently with the session user and database product UUID", async () => {

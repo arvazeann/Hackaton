@@ -10,7 +10,7 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 
 ## Current Status
 
-- Current task: Supabase Storage image adapter and non-destructive local-file copy script are implemented. Typecheck, lint, format, and 182 tests pass; production build stopped with Windows `EPERM` unlinking a `.next` chunk while several Node processes were running. Supabase/Vercel settings and browser flows remain unverified. Earlier Vercel Prisma build work and LAN/Auth.js development are recorded below; UI refresh UI-1 remains in progress.
+- Current task: Supabase Storage image adapter and non-destructive local-file copy script are implemented. Wishlist image URLs now map storage keys to the same stable `/uploads/` path as catalog pages. Typecheck, lint, format, Prisma validation, and 189 tests pass. `SUPABASE_URL`, `SUPABASE_STORAGE_BUCKET`, and `SUPABASE_SERVICE_ROLE_KEY` are not set in the local env files; Vercel settings and browser flows remain unverified. Production build was not retried because a Node process may hold `.next`, after a previous build failed with Windows `EPERM` unlinking a build chunk. Earlier Vercel Prisma build work and LAN/Auth.js development are recorded below; UI refresh UI-1 remains in progress.
 - Last completed implementation stage: Stage 6 follow-up: Admin Area Phase 2; B1, B2, and Admin Phases 1–2 extend Stage 6 without renumbering. UI refresh is a presentation-only follow-up.
 - Product, avatar, and store-logo uploads now use Supabase Storage through server-only credentials; legacy local images can be copied with the non-destructive migration script.
 
@@ -86,7 +86,7 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 - Set `SUPABASE_URL`, `SUPABASE_STORAGE_BUCKET`, and `SUPABASE_SERVICE_ROLE_KEY` in ignored `.env.local` and in Vercel Production/Preview as appropriate. Never expose the service-role key to client code.
 - To copy old `storage/uploads` files without deleting originals, run `npx tsx scripts/migrate-local-images-to-supabase.ts` after setting the environment. The script skips already-present keys and verifies each copied object's public availability.
 - No Prisma schema or migration was needed; existing `ProductImage.storageKey`, `ProductImage.url`, and `UploadedFile.key` columns remain sufficient. `next/image` still receives same-origin `/uploads/<key>` paths, so no remote image host configuration is needed.
-- Checks: `npm run typecheck` PASS; `npm run lint` PASS; `npm test -- --reporter=dot` PASS (182 tests); `npm run format:check` PASS; `npm run db:validate` PASS; production build FAIL (`EPERM` unlink under `.next` while Node processes were running). Supabase upload, dashboard bucket, legacy copy, browser page coverage, and Vercel persistence are NOT RUN.
+- Checks: `npm run typecheck` PASS; `npm run lint` PASS; `npm test -- --reporter=dot` PASS (189 tests); `npm run format:check` PASS; `npm run db:validate` PASS. Build NOT RUN in this follow-up: a Node process is active and may be using `.next`; prior build failed with Windows `EPERM` during `.next` cleanup. The local `.env.local` and `.env` do not define the three Supabase Storage variables. Supabase upload, dashboard bucket, legacy copy, browser page coverage, and Vercel persistence are NOT RUN.
 
 ### Vercel Prisma Client generation — 2026-10-14
 

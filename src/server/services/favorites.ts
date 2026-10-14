@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { favoriteSchema } from "@/schemas";
 import type { ActionResult, ProductListItem } from "@/types";
+import { productImageUrl } from "@/lib/product-images";
 
 const isUuid = (value: string) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
@@ -37,7 +38,7 @@ type FavoriteRecord = {
     seller: ProductListItem["seller"] & {
       sellerProfile?: { slug: string; isOnVacation: boolean } | null;
     };
-    images: { url: string; position: number }[];
+    images: { storageKey: string; url: string; position: number }[];
   };
 };
 
@@ -49,7 +50,9 @@ function mapFavorite({ product }: FavoriteRecord): ProductListItem {
     condition: product.condition,
     city: product.city,
     status: product.status,
-    coverImageUrl: product.images[0]?.url ?? "/products/item-1.svg",
+    coverImageUrl: product.images[0]
+      ? productImageUrl(product.images[0].storageKey, product.images[0].url)
+      : "/products/item-1.svg",
     category: product.category,
     seller: {
       id: product.seller.id,
