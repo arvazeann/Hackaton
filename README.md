@@ -10,7 +10,7 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 
 ## Current Status
 
-- Current task: staging isolation and payment-key rotation safeguards are on local branch `qa-remediation-20261014`. A ref/bucket guard, bounded resumable re-encryption utility, and synthetic tests are implemented. Verification: 39 files / 206 tests, typecheck, lint, format, and schema validation all PASS. No isolated staging values are configured; the guard blocks without connecting. No database, Storage, provider, or deployment operation was run. Google OAuth and 15 dependency advisories remain unresolved. See `docs/QA-REPORT-2026-10-14.md`.
+- Current task: production website and repository audit completed on 2026-10-14 on `qa-remediation-20261014`. Live GETs succeeded for home/catalog/login/register and account page shells; home/catalog returned no product links or image tags. Upload handler accepts 5 MB, which conflicts with Vercel Functions' 4.5 MB request limit. 206 tests, typecheck, lint, format, and Prisma schema validation PASS; npm audit reports 15 advisories (4 High also remain in `--omit=dev`). Staging verification is blocked without isolated project refs; browser/E2E, production build, database, Storage, and current OAuth callback remain unverified. Release is NOT READY. See `docs/WEBSITE-AUDIT-REPORT.md`.
 - Last completed implementation stage: Stage 6 follow-up: Admin Area Phase 2; B1, B2, and Admin Phases 1–2 extend Stage 6 without renumbering. UI refresh is a presentation-only follow-up.
 - Product, avatar, and store-logo uploads now use Supabase Storage through server-only credentials; legacy local images can be copied with the non-destructive migration script.
 
@@ -79,6 +79,12 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 - Admin changes never modify platform roles, password credentials, product images/ownership, or order snapshots. Audit metadata contains allowlisted field names and state transitions only.
 
 ## Verification
+
+### Production website audit — 2026-10-14
+
+- `npm test -- --reporter=dot`: PASS (39 files / 206 tests); `npm run typecheck`, `npm run lint`, `npm run format:check`, `git diff --check`, and `npm run db:validate`: PASS. `npm audit --json`: FAIL (15 advisories); `npm audit --omit=dev --json`: FAIL (4 High findings).
+- Public read-only GETs: home, catalog, login, registration, and account shells returned HTTP 200; home/catalog returned no product links or image tags. Google appears in Auth.js providers response, but current callback completion was NOT TESTED. Browser/mobile, database, Storage and post-redeploy checks were NOT TESTED. `npm run staging:verify` BLOCKED before connection because isolated project refs are absent.
+- Production build BLOCKED/not run because the local Next.js process owns this repository's port 3000 and may be using `.next`. No production write, upload, migration, OAuth flow or deployment was performed. Current release status: **NOT READY**. Detailed evidence/findings: [`docs/WEBSITE-AUDIT-REPORT.md`](docs/WEBSITE-AUDIT-REPORT.md).
 
 ### Full QA pass — 2026-10-14
 
