@@ -10,7 +10,7 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 
 ## Current Status
 
-- Current task: QA follow-up for mobile layout, product image ownership, and forwarded Server Actions origin configuration completed. Typecheck, lint, format check, 175 Vitest tests, and headless Chrome layout checks at 320, 360, 390, 430, 1280, 1440, and 1920 px passed. Production build and full interactive flows remain unverified. UI refresh UI-1 remains in progress.
+- Current task: LAN development access and Auth.js host handling fixed for active private IPv4 interfaces. Next dev assets and auth endpoints were checked over localhost and the current LAN IP; Windows Firewall still needs an Administrator-run Private-only rule because the active Wi-Fi profile is Public. Typecheck, lint, repository format check, and 179 Vitest tests pass. Physical-device browser flows and production build remain unverified. UI refresh UI-1 remains in progress.
 - Last completed implementation stage: Stage 6 follow-up: Admin Area Phase 2; B1, B2, and Admin Phases 1–2 extend Stage 6 without renumbering. UI refresh is a presentation-only follow-up.
 - Interim local-disk product image storage is implemented for the single-machine demo. Stage 7 Cloudflare R2 remains proposed and has not started.
 
@@ -79,6 +79,23 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 - Admin changes never modify platform roles, password credentials, product images/ownership, or order snapshots. Audit metadata contains allowlisted field names and state transitions only.
 
 ## Verification
+
+### LAN development access and Auth.js host handling — 2026-10-14
+
+| Check                   | Status  | Command / notes                                                                                                                                                                                                          |
+| ----------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Typecheck               | PASS    | `npm run typecheck`                                                                                                                                                                                                      |
+| Lint                    | PASS    | `npm run lint`                                                                                                                                                                                                           |
+| Format check            | PASS    | `npm run format:check`                                                                                                                                                                                                   |
+| Tests                   | PASS    | `npm test -- --reporter=dot` — 179 tests in 36 files; existing Vite CJS deprecation warning remains.                                                                                                                     |
+| Build                   | NOT RUN | Existing Next dev server is active on port 3000; a second dev server was refused by the `.next` lock, so a build was not run against the shared output directory.                                                        |
+| LAN HTTP checks         | PASS    | `localhost` and current laptop LAN IP `10.106.7.63` returned `/register` with 200; eight dev JavaScript assets fetched from the LAN origin returned 200; invalid register input returned 400.                            |
+| Auth.js / Prisma checks | PASS    | From LAN host, duplicate registration returned 409 without writing; a wrong-password check returned to `/login` on the LAN host and issued no session cookie. Prisma read-only user/product count transaction succeeded. |
+| Manual browser checks   | NOT RUN | No browser automation or physical second device available. Windows active Wi-Fi profile is `Public`; firewall rule changes were denied because this shell is not elevated. See Known Issues.                             |
+
+Cause/fix: Next 16.4 had an outdated configured LAN origin, so the active private IPv4 address was not permitted for dev assets. Its dev route request also used an internal `localhost` URL even though `Host` and `x-forwarded-host` contained the LAN IP, causing Auth.js error redirects to use localhost. `src/lib/dev-network.ts` now derives only active private IPv4 hosts, filters stale configured private IPs, and normalizes Auth.js request URLs only for validated development hosts. Production behavior is unchanged. `npm run dev:lan` explicitly binds to `0.0.0.0`.
+
+No `.env.local`, database, schema, RLS, or grants were changed. The read-only Prisma check found one user and no products in the selected Supabase database. A cold first homepage request logged one Prisma transaction start timeout; the read-only Prisma transaction passed on retry.
 
 ### QA follow-up — 2026-10-13
 
@@ -444,6 +461,7 @@ Build completed without warnings after adding a Turbopack ignore annotation for 
 - Registration/login rate limiting remains a pre-launch TODO from the Blueprint.
 - `npm install` reported 15 dependency vulnerabilities (3 moderate, 10 high, 2 critical); review with a separate dependency-audit task before release.
 - Vitest reports the existing Vite CJS Node API deprecation warning.
+- **LAN development firewall:** active interface `Wi-Fi 2` is categorized `Public`. This shell is not elevated, so the requested Private-only TCP 3000 allow rule and Public-profile block rule could not be installed. Existing Windows Node.js inbound allow rules include profile `Public` with any port; use an Administrator terminal and a trusted Private network before sharing the dev server with another device.
 - UI refresh browser checks remain NOT RUN. `docs/design-reference/reference-dribbble.png` and `docs/design-reference/current-home.png` were not found; implementation follows the written approved brief.
 - **QA-P2-01 — Mobile horizontal clipping:** resolved in the 2026-10-13 follow-up. Headless Chrome reports no document overflow at all seven tested viewport widths on `/`, `/login`, and `/register`; manual visual and touch checks remain NOT RUN.
 - **QA-P3-01 — Uploaded product image ownership:** resolved in the 2026-10-13 follow-up for product create/update. Uploaded keys require an `UploadedFile` owned by the session seller with purpose `PRODUCT`; legacy static seed SVGs remain allowed. Safe orphan cleanup remains TODO.
@@ -460,6 +478,7 @@ Finish UI-1 by resolving the Windows `.next` EPERM build failure and completing 
 
 - Key files: `src/server/services/` (products, orders, favorites, notifications, profile-hub), `src/server/security/payment-encryption.ts`, `src/components/profile/profile-hub.tsx`, `src/app/store/[slug]/`, `src/app/notifications/`, `src/app/wishlist/`, notification/profile API routes, and the B1/B2 Prisma migrations/schema.
 - Keep Auth.js on JWT sessions, preserve bcrypt password hashes, and never add `passwordHash` to DTO/session responses.
+- LAN development uses `npm run dev:lan`; `src/lib/dev-network.ts` scopes allowed dev hosts to current private IPv4 addresses and normalizes only validated Auth.js dev requests. `.env.local` is local-only and was not changed.
 - Stage 6 domain routes and Prisma services handle all runtime marketplace reads and writes. `/api/mock`, `postMock`, and mock runtime accessors are removed; seed fixtures are intentionally retained separately.
 - Run typecheck, lint, tests, build, and read-only DB validation after relevant changes; browser checks are still pending.
 - Set `UPLOAD_DIR` only in the server environment if changing the default; keep it outside `public/`. Do not commit `storage/uploads`. Local disk is interim; R2 work remains a separate approved stage.
