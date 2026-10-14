@@ -1,4 +1,4 @@
-﻿# RuangLagi â€” Marketplace Preloved
+# RuangLagi â€” Marketplace Preloved
 
 ## Project Overview
 
@@ -10,7 +10,7 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 
 ## Current Status
 
-- Current task: Supabase Storage image adapter and non-destructive local-file copy script are implemented. The server adapter accepts the current `SUPABASE_SECRET_KEY` format and retains compatibility with legacy `SUPABASE_SERVICE_ROLE_KEY`; Vercel settings and browser flows remain unverified. Production build was not retried because a Node process may hold `.next`, after a previous build failed with Windows `EPERM` unlinking a build chunk. Earlier Vercel Prisma build work and LAN/Auth.js development are recorded below; UI refresh UI-1 remains in progress.
+- Current task: staging isolation and payment-key rotation safeguards are on local branch `qa-remediation-20261014`. A ref/bucket guard, bounded resumable re-encryption utility, and synthetic tests are implemented. Verification: 39 files / 206 tests, typecheck, lint, format, and schema validation all PASS. No isolated staging values are configured; the guard blocks without connecting. No database, Storage, provider, or deployment operation was run. Google OAuth and 15 dependency advisories remain unresolved. See `docs/QA-REPORT-2026-10-14.md`.
 - Last completed implementation stage: Stage 6 follow-up: Admin Area Phase 2; B1, B2, and Admin Phases 1–2 extend Stage 6 without renumbering. UI refresh is a presentation-only follow-up.
 - Product, avatar, and store-logo uploads now use Supabase Storage through server-only credentials; legacy local images can be copied with the non-destructive migration script.
 
@@ -72,13 +72,33 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 - At most one `pending` or `confirmed` order may exist per product. The service handles unique conflicts without exposing database details.
 - Auth.js secret is stored in ignored `.env.local`; never commit or expose it.
 - Uploaded media uses the `ruanglagi-images` public Supabase Storage bucket. `SUPABASE_URL`, `SUPABASE_STORAGE_BUCKET`, and either `SUPABASE_SECRET_KEY` (preferred) or legacy `SUPABASE_SERVICE_ROLE_KEY` are server-only; never use a `NEXT_PUBLIC_` prefix. Public access is for image reads; uploads/deletes run only on the authenticated server.
-- Payment encryption uses server-only `PAYMENT_ENCRYPTION_KEY` (base64, 32 bytes) and must be generated locally using the command in `.env.example`; never commit its value.
+- Payment encryption uses server-only `PAYMENT_ENCRYPTION_KEY` for `v1` and optional `PAYMENT_ENCRYPTION_KEY_V2` for `v2` (base64, 32 bytes each); generate locally using the command in `.env.example` and never commit either value. Keep the `v1` key until all stored `v1` ciphertext has been re-encrypted and the rollback window has ended.
 - Seller payment accounts are soft-deactivated, limited to three active entries, and do not modify payment snapshots on existing orders. Address/order shipping snapshots are likewise immutable.
 - Product create/update require image metadata to belong to the current seller and have purpose `PRODUCT`; product uploads also require an existing seller profile. Legacy static seed SVGs and local-disk fallback reads remain supported. Old local files are not deleted by the migration script.
 - Notification preferences default to enabled without creating preference rows; disabled types skip notification creation while order status remains visible on the order page.
 - Admin changes never modify platform roles, password credentials, product images/ownership, or order snapshots. Audit metadata contains allowlisted field names and state transitions only.
 
 ## Verification
+
+### Full QA pass — 2026-10-14
+
+- `npm test -- --reporter=dot`: PASS, 37 files / 189 tests; Vite CJS deprecation warning. `npm run typecheck`, `npm run lint`, `npm run format:check`, and `npm run db:validate`: PASS.
+- `npm audit --json`: FAIL, 15 findings (2 Critical, 10 High, 3 Moderate). `npm audit fix --dry-run` BLOCKED by `EALLOWREMOTE`; no dependency changes made. Google OAuth fails with the reported `redirect_uri_mismatch`; exact callback must be added to the matching Google Web OAuth client.
+- Secret variable names were checked without printing values. Local DB and Storage point to the same known production project, not staging. Production build and live browser/database/Storage checks were not run; a Next.js process owns port 3000 and `.next` may be in use. No rotations, migrations, production writes/uploads, or deploys were performed.
+- Full inventory, matrix, evidence, scenarios, findings, and staging checklist: [`docs/QA-REPORT-2026-10-14.md`](docs/QA-REPORT-2026-10-14.md).
+
+### Security remediation follow-up — 2026-10-14
+
+- Payment encryption reads `v1` with the existing key and reads/writes `v2` with optional `PAYMENT_ENCRYPTION_KEY_V2`. Existing writes remain `v1` until that key is configured. Both keys must be distinct. A resumable database utility exists with synthetic unit tests; it has not been run against isolated staging. Do not configure the new key in production until staging verification, re-encryption, and rollback testing pass.
+- Verification: `npm test -- --reporter=dot` PASS (37 files / 191 tests); `npm run typecheck` PASS; `npm run lint` PASS; `npm run format:check` PASS. Prettier cannot infer a parser for `.env.example`, but the repository format check passes. No DB, provider, or deployment operation was run.
+- Dependency audit still reports 15 advisories. Registry metadata was available, but `npm audit fix --dry-run` failed with `EALLOWREMOTE` while fetching a package tarball; no dependency or lockfile changes were made. Production build remains NOT RUN because the existing Next.js process may use `.next`.
+
+### Staging isolation and payment rotation — 2026-10-14
+
+- `scripts/verify-staging-target.ts` and `scripts/reencrypt-payment-data.ts` load only ignored `.env.staging.local`, never `.env.local` or `.env`. The guard compares Supabase Storage and PostgreSQL project refs with distinct `STAGING_PROJECT_REF` and `PRODUCTION_PROJECT_REF`, and requires distinct expected bucket names. It fails before opening Prisma if values are missing, mismatched, or production. It does not print URLs or credentials.
+- Re-encryption reads both actual encrypted columns: `PaymentAccount.accountNumberCiphertext` and nullable `Order.paymentInstructionCiphertext`. It scans bounded pages, validates decrypted values, verifies each generated v2 ciphertext, and uses an atomic compare-and-swap update per row. Rerunning skips readable v2 values and retries remaining v1 values. `--apply` requires `--confirm-staging`; dry-run is `npm run payments:reencrypt -- --dry-run`.
+- Before using either script, create `.env.staging.local` with only staging database, Supabase Storage, Auth.js, Google OAuth, and payment keys; set both project refs and distinct staging/production bucket names after verifying them in Supabase. Keep all test data synthetic. `npm run staging:verify` checks identity without connecting. The current environment has no staging refs, so verification stops before database access. The re-encryption utility has only in-memory synthetic tests; no staging DB was read or written.
+- Release status: **NOT READY**. Synthetic tests: 39 files / 206 tests PASS. `npm run staging:verify` and `npm run payments:reencrypt -- --dry-run` both stop safely because staging configuration is absent. Browser E2E, staging provider configuration, production build, dependency remediation, and Google OAuth verification remain outstanding. Never configure v2 in Production in this task.
 
 ### Supabase image storage migration — 2026-10-14
 
@@ -488,6 +508,8 @@ Build completed without warnings after adding a Turbopack ignore annotation for 
 - Email verification and password reset are out of MVP scope per the Stage 3 brief.
 - Registration/login rate limiting remains a pre-launch TODO from the Blueprint.
 - `npm install` reported 15 dependency vulnerabilities (3 moderate, 10 high, 2 critical); review with a separate dependency-audit task before release.
+- Google OAuth on the reported Vercel deployment is blocked by an unregistered exact callback URI; configure it on the matching Google Cloud Web OAuth client before release.
+- Project credentials were disclosed in conversation. Rotate exposed provider credentials; plan payment encryption-key rotation with ciphertext re-encryption rather than replacing it directly. See the QA report.
 - Vitest reports the existing Vite CJS Node API deprecation warning.
 - **LAN development firewall:** active interface `Wi-Fi 2` is categorized `Public`. This shell is not elevated, so the requested Private-only TCP 3000 allow rule and Public-profile block rule could not be installed. Existing Windows Node.js inbound allow rules include profile `Public` with any port; use an Administrator terminal and a trusted Private network before sharing the dev server with another device.
 - UI refresh browser checks remain NOT RUN. `docs/design-reference/reference-dribbble.png` and `docs/design-reference/current-home.png` were not found; implementation follows the written approved brief.
@@ -500,7 +522,7 @@ Build completed without warnings after adding a Turbopack ignore annotation for 
 
 ## Next Approved Step
 
-Configure the Supabase Storage bucket and server environment variables, run the non-destructive legacy-image copy, then deploy the reviewed code and verify authenticated upload/display flows. Do not remove old local files until copied objects and all page views are confirmed.
+Manually create an isolated Supabase staging project/database and bucket, configure staging-only values in ignored `.env.staging.local`, and verify the staging and production refs/bucket names in Supabase. Then run `npm run staging:verify`. Keep Production keys and data unchanged; run staging re-encryption/E2E only after this guard passes.
 
 ## Handoff Notes
 

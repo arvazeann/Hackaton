@@ -19,7 +19,9 @@
     "db:status": "prisma migrate status",
     "db:seed": "prisma db seed",
     "db:verify": "tsx prisma/verify-constraints.ts",
-    "admin:bootstrap": "tsx scripts/bootstrap-admin.ts"
+    "admin:bootstrap": "tsx scripts/bootstrap-admin.ts",
+    "staging:verify": "tsx scripts/verify-staging-target.ts",
+    "payments:reencrypt": "tsx scripts/reencrypt-payment-data.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
