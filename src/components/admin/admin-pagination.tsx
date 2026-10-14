@@ -34,7 +34,7 @@ export function AdminPagination({
             Sebelumnya
           </Link>
         ) : (
-          <span className="rounded-lg border px-3 py-2 text-stone-400">
+          <span className="rounded-lg border px-3 py-2 text-muted-foreground">
             Sebelumnya
           </span>
         )}
@@ -43,7 +43,7 @@ export function AdminPagination({
             Berikutnya
           </Link>
         ) : (
-          <span className="rounded-lg border px-3 py-2 text-stone-400">
+          <span className="rounded-lg border px-3 py-2 text-muted-foreground">
             Berikutnya
           </span>
         )}

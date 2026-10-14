@@ -57,7 +57,7 @@ export default async function Products({
             role="search"
             className="flex min-w-full flex-1 items-center gap-2 sm:min-w-[16rem]"
           >
-            <label className="flex min-h-10 min-w-0 flex-1 items-center gap-2 rounded-full border border-border bg-background px-4 focus-within:border-primary focus-within:ring-2 focus-within:ring-focus/20">
+            <label className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-full border border-border bg-background px-4 focus-within:border-primary focus-within:ring-2 focus-within:ring-focus/20">
               <Search
                 aria-hidden="true"
                 className="size-4 shrink-0 text-muted-foreground"
@@ -90,7 +90,7 @@ export default async function Products({
               ))}
             <button
               aria-label="Cari dan urutkan"
-              className="grid size-10 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus"
+              className="grid size-11 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus"
             >
               <Search aria-hidden="true" size={17} />
             </button>

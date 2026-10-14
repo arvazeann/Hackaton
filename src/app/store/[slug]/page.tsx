@@ -32,12 +32,12 @@ export default async function PublicStorePage({
     <Shell>
       <section className="mx-auto max-w-[1536px] px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
         {store.isOnVacation && (
-          <div className="mb-6 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-950">
+          <div className="mb-6 rounded-2xl border border-status-warning-ink bg-status-warning-bg p-4 text-status-warning-ink">
             Toko sedang libur. Produk dapat dilihat, tetapi penjual belum
             menerima pesanan baru.
           </div>
         )}
-        <header className="flex flex-col gap-5 border-l-2 border-[#a65b3f] bg-[#fffefa] p-5 sm:flex-row sm:items-center sm:p-6">
+        <header className="flex flex-col gap-5 border-l-2 border-accent-bright bg-card p-5 sm:flex-row sm:items-center sm:p-6">
           {store.logoUrl ? (
             <Image
               src={store.logoUrl}
@@ -50,19 +50,19 @@ export default async function PublicStorePage({
           ) : (
             <div
               aria-hidden="true"
-              className="grid size-20 shrink-0 place-items-center rounded-xl bg-[#e6eee7] text-3xl font-bold text-[#174c3c] sm:size-24"
+              className="grid size-20 shrink-0 place-items-center rounded-xl bg-sage-surface text-3xl font-bold text-primary sm:size-24"
             >
               {store.storeName.slice(0, 1).toUpperCase()}
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold tracking-[.14em] text-[#568270]">
+            <p className="text-xs font-bold tracking-[.14em] text-primary">
               TOKO
             </p>
-            <h1 className="mt-1 font-serif text-3xl font-bold text-[#342d25] lg:text-4xl">
+            <h1 className="mt-1 font-serif text-3xl text-foreground lg:text-4xl">
               {store.storeName}
             </h1>
-            <p className="mt-2 text-sm text-stone-600">
+            <p className="mt-2 text-sm text-muted-foreground">
               {store.city}
               {store.province ? `, ${store.province}` : ""} · Bergabung{" "}
               {new Date(store.joinedAt).toLocaleDateString("id-ID", {
@@ -71,17 +71,17 @@ export default async function PublicStorePage({
               })}
             </p>
             {store.description && (
-              <p className="mt-3 whitespace-pre-wrap text-stone-700">
+              <p className="mt-3 whitespace-pre-wrap text-foreground">
                 {store.description}
               </p>
             )}
-            <p className="mt-3 text-sm text-stone-500">
+            <p className="mt-3 text-sm text-muted-foreground">
               {store.completedSales} pesanan selesai
             </p>
           </div>
         </header>
         <div className="mt-8">
-          <h2 className="mb-5 font-serif text-2xl font-bold text-[#342d25] lg:text-3xl">
+          <h2 className="mb-5 font-serif text-2xl text-foreground lg:text-3xl">
             Produk aktif
           </h2>
           <ProductGrid
@@ -104,12 +104,12 @@ export default async function PublicStorePage({
                   Sebelumnya
                 </Link>
               )}
-              <span className="self-center text-sm text-stone-600">
+              <span className="self-center text-sm text-muted-foreground">
                 {store.page} / {store.totalPages}
               </span>
               {store.page < store.totalPages && (
                 <Link
-                  className="rounded-full bg-emerald-800 px-4 py-2 text-white"
+                  className="rounded-full bg-primary px-4 py-2 text-primary-foreground"
                   href={`/store/${store.slug}?page=${store.page + 1}&pageSize=${store.pageSize}`}
                 >
                   Berikutnya

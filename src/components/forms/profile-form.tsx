@@ -51,7 +51,7 @@ export function ProfileForm({ user }: { user: User }) {
         }
       })}
     >
-      <h2 className="text-2xl font-bold">Profil saya</h2>
+      <h2 className="text-2xl">Profil saya</h2>
       <label className="grid gap-2 text-sm font-medium">
         Nama lengkap
         <input
@@ -133,12 +133,12 @@ export function ProfileForm({ user }: { user: User }) {
       </label>
       <button
         disabled={isSubmitting || uploading}
-        className="rounded-full bg-emerald-800 px-6 py-3 font-semibold text-white"
+        className="rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground"
       >
         Simpan profil
       </button>
       {saveMessage && (
-        <p role="status" className="text-sm text-emerald-800">
+        <p role="status" className="text-sm text-primary">
           {saveMessage}
         </p>
       )}

@@ -25,19 +25,19 @@ export default async function AdminOrdersPage({
   const query = adminOrderQuerySchema.safeParse(flat);
   if (!query.success)
     return (
-      <p role="alert" className="rounded-xl border bg-white p-5">
+      <p role="alert" className="rounded-xl border bg-card p-5">
         Filter atau halaman tidak valid. Atur ulang filter.
       </p>
     );
   const result = await listAdminOrders(query.data);
   return (
     <section>
-      <h1 className="text-3xl font-black">Pesanan</h1>
-      <p className="mt-2 text-sm text-stone-600">
+      <h1 className="text-3xl">Pesanan</h1>
+      <p className="mt-2 text-sm text-muted-foreground">
         Data kontak, alamat, dan pembayaran order tidak ditampilkan.
       </p>
       <form
-        className="mt-5 grid gap-3 rounded-xl border bg-white p-4 sm:grid-cols-3"
+        className="mt-5 grid gap-3 rounded-xl border bg-card p-4 sm:grid-cols-3"
         method="get"
       >
         <label className="text-sm">
@@ -83,7 +83,7 @@ export default async function AdminOrdersPage({
         </label>
         <div className="flex gap-2 sm:col-span-3">
           <button
-            className="rounded-lg bg-emerald-800 px-4 py-2 text-white"
+            className="rounded-lg bg-primary px-4 py-2 text-primary-foreground"
             type="submit"
           >
             Terapkan
@@ -93,9 +93,9 @@ export default async function AdminOrdersPage({
           </a>
         </div>
       </form>
-      <div className="mt-5 overflow-x-auto rounded-xl border bg-white">
+      <div className="mt-5 overflow-x-auto rounded-xl border bg-card">
         <table className="w-full min-w-[760px] text-left text-sm">
-          <thead className="bg-stone-100">
+          <thead className="bg-muted">
             <tr>
               {[
                 "Kode",
@@ -139,7 +139,7 @@ export default async function AdminOrdersPage({
             {result.items.length === 0 && (
               <tr>
                 <td
-                  className="px-4 py-8 text-center text-stone-500"
+                  className="px-4 py-8 text-center text-muted-foreground"
                   colSpan={8}
                 >
                   Tidak ada pesanan untuk filter ini.

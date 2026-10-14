@@ -57,23 +57,23 @@ export function NotificationList({ data }: { data: Page }) {
   return (
     <div>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-stone-600">{data.total} notifikasi</p>
+        <p className="text-sm text-muted-foreground">{data.total} notifikasi</p>
         <button
           type="button"
           onClick={() => void markAll()}
           disabled={busy || data.unreadCount === 0}
-          className="rounded-full border border-[#d9d4c8] bg-[#fffefa] px-4 py-2 text-sm font-semibold transition hover:bg-[#f0ede5] disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
         >
           Tandai semua sebagai dibaca
         </button>
       </div>
       {error && (
-        <p role="alert" className="mb-4 text-sm text-rose-700">
+        <p role="alert" className="mb-4 text-sm text-status-error-ink">
           {error}
         </p>
       )}
       {message && (
-        <p role="status" className="mb-4 text-sm text-emerald-800">
+        <p role="status" className="mb-4 text-sm text-primary">
           {message}
         </p>
       )}
@@ -82,19 +82,19 @@ export function NotificationList({ data }: { data: Page }) {
           {data.items.map((item) => (
             <li
               key={item.id}
-              className={`rounded-2xl border p-4 shadow-sm ${item.readAt ? "border-[#e3ded2] bg-[#fffefa]" : "border-[#b8cfbf] bg-[#edf4ee]"}`}
+              className={`rounded-2xl border p-4 shadow-sm ${item.readAt ? "border-border bg-card" : "border-sage bg-sage-surface"}`}
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <h2 className="font-semibold">{item.title}</h2>
-                  <p className="mt-1 text-sm text-stone-600">{item.body}</p>
-                  <p className="mt-2 text-xs text-stone-500">
+                  <h2>{item.title}</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">{item.body}</p>
+                  <p className="mt-2 text-xs text-muted-foreground">
                     {new Date(item.createdAt).toLocaleString("id-ID")}
                   </p>
                   {item.orderId && (
                     <Link
                       href={`/orders?orderId=${encodeURIComponent(item.orderId)}`}
-                      className="mt-3 inline-block text-sm font-semibold text-[#174c3c] underline underline-offset-4"
+                      className="mt-3 inline-block text-sm font-semibold text-primary underline underline-offset-4"
                     >
                       Lihat pesanan
                     </Link>
@@ -115,9 +115,9 @@ export function NotificationList({ data }: { data: Page }) {
           ))}
         </ul>
       ) : (
-        <div className="rounded-3xl border border-dashed border-[#d6d0c3] bg-[#fffefa] p-12 text-center">
-          <h2 className="font-semibold text-[#26332d]">Belum ada notifikasi</h2>
-          <p className="mt-2 text-sm text-stone-600">
+        <div className="rounded-3xl border border-dashed border-border bg-card p-12 text-center">
+          <h2 className="text-foreground">Belum ada notifikasi</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
             Pembaruan pesanan akan muncul di sini.
           </p>
         </div>

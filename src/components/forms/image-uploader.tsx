@@ -190,7 +190,7 @@ export function ImageUploader({
     <div className="grid gap-3">
       <label
         htmlFor={inputId}
-        className="grid cursor-pointer place-items-center rounded-2xl border-2 border-dashed p-7 text-center text-sm text-stone-500"
+        className="grid cursor-pointer place-items-center rounded-2xl border-2 border-dashed p-7 text-center text-sm text-muted-foreground"
       >
         Tambah foto (JPEG, PNG, WebP · maks. 5 MB; maksimal 5 foto)
       </label>
@@ -206,12 +206,12 @@ export function ImageUploader({
         }}
       />
       {selectionError && (
-        <p role="alert" className="text-sm text-rose-700">
+        <p role="alert" className="text-sm text-status-error-ink">
           {selectionError}
         </p>
       )}
       {error && (
-        <p role="alert" className="text-sm text-rose-700">
+        <p role="alert" className="text-sm text-status-error-ink">
           {error}
         </p>
       )}
@@ -219,7 +219,7 @@ export function ImageUploader({
         {items.map((image, index) => (
           <div
             key={image.id}
-            className="relative aspect-square overflow-hidden rounded-xl bg-stone-100"
+            className="relative aspect-square overflow-hidden rounded-xl bg-muted"
           >
             {image.url ? (
               <Image
@@ -230,13 +230,13 @@ export function ImageUploader({
                 className="object-cover"
               />
             ) : (
-              <div className="grid size-full place-items-center p-3 text-center text-sm text-stone-600">
+              <div className="grid size-full place-items-center p-3 text-center text-sm text-muted-foreground">
                 Foto tidak dapat dipratinjau
               </div>
             )}
             <span
               role="status"
-              className="absolute bottom-1 left-1 rounded bg-black/65 px-2 py-1 text-xs text-white"
+              className="absolute bottom-1 left-1 rounded bg-foreground/65 px-2 py-1 text-xs text-primary-foreground"
             >
               {image.status === "uploading"
                 ? "Mengunggah…"
@@ -249,7 +249,7 @@ export function ImageUploader({
             {image.error && (
               <p
                 role="alert"
-                className="absolute bottom-8 left-1 right-1 rounded bg-white/95 p-1 text-xs text-rose-700"
+                className="absolute bottom-8 left-1 right-1 rounded bg-card/95 p-1 text-xs text-status-error-ink"
               >
                 {image.error}
               </p>
@@ -260,7 +260,7 @@ export function ImageUploader({
                   type="button"
                   aria-label={`Coba unggah ulang foto ${index + 1}`}
                   onClick={() => void upload(image.id)}
-                  className="rounded bg-white px-2 py-1 text-xs"
+                  className="rounded bg-card px-2 py-1 text-xs"
                 >
                   Coba lagi
                 </button>
@@ -270,7 +270,7 @@ export function ImageUploader({
                 disabled={index === 0}
                 aria-label={`Pindahkan foto ${index + 1} ke atas`}
                 onClick={() => move(index, -1)}
-                className="rounded bg-white px-2 py-1 text-xs disabled:opacity-40"
+                className="rounded bg-card px-2 py-1 text-xs disabled:opacity-40"
               >
                 ↑
               </button>
@@ -279,7 +279,7 @@ export function ImageUploader({
                 disabled={index === items.length - 1}
                 aria-label={`Pindahkan foto ${index + 1} ke bawah`}
                 onClick={() => move(index, 1)}
-                className="rounded bg-white px-2 py-1 text-xs disabled:opacity-40"
+                className="rounded bg-card px-2 py-1 text-xs disabled:opacity-40"
               >
                 ↓
               </button>
@@ -287,7 +287,7 @@ export function ImageUploader({
                 type="button"
                 aria-label={`Hapus foto produk ${index + 1}`}
                 onClick={() => remove(image.id)}
-                className="rounded bg-white px-2 py-1 text-xs"
+                className="rounded bg-card px-2 py-1 text-xs"
               >
                 ×
               </button>

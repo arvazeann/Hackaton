@@ -17,7 +17,7 @@ import { logout } from "@/server/actions/auth";
 import { getUnreadNotificationCount } from "@/server/services/notifications";
 
 const iconLinkClass =
-  "inline-flex size-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-secondary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus";
+  "inline-flex size-11 items-center justify-center rounded-pill text-foreground transition-colors duration-control ease-soft hover:bg-secondary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus";
 
 export async function Navbar({
   userName,
@@ -35,9 +35,9 @@ export async function Navbar({
       <div className="mx-auto flex w-full min-w-0 max-w-[1536px] flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5 md:flex-nowrap md:gap-x-5 lg:px-8">
         <Link
           href="/"
-          className="shrink-0 rounded-lg font-serif text-2xl leading-none text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus"
+          className="shrink-0 rounded-sm font-serif text-2xl leading-none text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus"
         >
-          ruanglagi<span className="text-brand-orange">.</span>
+          ruanglagi<span className="text-accent-bright">.</span>
         </Link>
 
         <form
@@ -45,7 +45,7 @@ export async function Navbar({
           role="search"
           className="hidden min-w-40 flex-1 md:block"
         >
-          <label className="flex items-center gap-2 rounded-full border border-border bg-card px-4 transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-focus/20">
+          <label className="flex min-h-11 items-center gap-2 rounded-pill border border-border bg-card px-4 transition-colors duration-control ease-soft focus-within:border-primary focus-within:ring-2 focus-within:ring-focus/20">
             <Search
               aria-hidden="true"
               className="size-4 shrink-0 text-muted-foreground"
@@ -54,19 +54,19 @@ export async function Navbar({
               aria-label="Cari barang"
               name="q"
               placeholder="Cari kebutuhan kos..."
-              className="min-h-10 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+              className="min-h-11 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             />
           </label>
         </form>
 
         <nav
           aria-label="Navigasi utama"
-          className="ml-auto flex max-w-full shrink-0 items-center gap-0.5 whitespace-nowrap text-sm font-medium sm:gap-1"
+          className="ml-auto flex min-w-0 max-w-full flex-wrap items-center justify-end gap-0.5 text-sm font-medium sm:gap-1"
         >
           <Link
             href="/dashboard/products/new"
             aria-label="Jual barang"
-            className="inline-flex min-h-10 items-center gap-1 rounded-full bg-primary px-3 text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus sm:gap-1.5 sm:px-4"
+          className="inline-flex min-h-11 items-center gap-1 rounded-pill bg-primary px-3 text-primary-foreground transition-colors duration-control ease-soft hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus sm:gap-1.5 sm:px-4"
           >
             <Plus aria-hidden="true" size={16} />
             <span className="hidden sm:inline">Jual</span>
@@ -90,7 +90,7 @@ export async function Navbar({
             >
               <Bell aria-hidden="true" size={19} />
               {unreadCount > 0 && (
-                <span className="absolute right-0 top-0 min-w-4 rounded-full bg-brand-orange px-1 text-center text-[10px] leading-4 text-primary-foreground">
+                <span className="absolute right-0 top-0 min-w-5 rounded-pill bg-sage px-1 text-center text-xs leading-5 text-primary">
                   {unreadCount > 99 ? "99+" : unreadCount}
                 </span>
               )}
@@ -110,7 +110,7 @@ export async function Navbar({
             <details className="group relative">
               <summary
                 aria-label={`Menu akun ${userName}`}
-                className="flex min-h-10 cursor-pointer list-none items-center gap-1.5 rounded-full border border-border bg-card px-3 text-foreground transition-colors hover:border-primary/40 hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus [&::-webkit-details-marker]:hidden"
+                className="flex min-h-11 cursor-pointer list-none items-center gap-1.5 rounded-pill border border-border bg-card px-3 text-foreground transition-colors duration-control ease-soft hover:border-primary/40 hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus [&::-webkit-details-marker]:hidden"
               >
                 <UserRound
                   aria-hidden="true"
@@ -126,13 +126,13 @@ export async function Navbar({
                   className="text-muted-foreground transition group-open:rotate-180"
                 />
               </summary>
-              <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-2xl border border-border bg-card p-2 shadow-menu">
+              <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-card border border-border bg-card p-2 shadow-menu">
                 <p className="truncate px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Akun RuangLagi
                 </p>
                 <Link
                   href="/profile"
-                  className="flex min-h-10 items-center gap-3 rounded-xl px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary focus-visible:bg-secondary"
+                  className="flex min-h-11 items-center gap-3 rounded-image px-3 py-2 text-sm text-foreground transition-colors duration-control ease-soft hover:bg-secondary focus-visible:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                 >
                   <UserRoundPen
                     aria-hidden="true"
@@ -143,7 +143,7 @@ export async function Navbar({
                 </Link>
                 <Link
                   href="/orders"
-                  className="flex min-h-10 items-center gap-3 rounded-xl px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary focus-visible:bg-secondary"
+                  className="flex min-h-11 items-center gap-3 rounded-image px-3 py-2 text-sm text-foreground transition-colors duration-control ease-soft hover:bg-secondary focus-visible:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                 >
                   <ShoppingBag
                     aria-hidden="true"
@@ -154,7 +154,7 @@ export async function Navbar({
                 </Link>
                 <Link
                   href="/wishlist"
-                  className="flex min-h-10 items-center gap-3 rounded-xl px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary focus-visible:bg-secondary sm:hidden"
+                  className="flex min-h-11 items-center gap-3 rounded-image px-3 py-2 text-sm text-foreground transition-colors duration-control ease-soft hover:bg-secondary focus-visible:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"
                 >
                   <Heart
                     aria-hidden="true"
@@ -165,7 +165,7 @@ export async function Navbar({
                 </Link>
                 <Link
                   href="/notifications"
-                  className="flex min-h-10 items-center gap-3 rounded-xl px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary focus-visible:bg-secondary sm:hidden"
+                  className="flex min-h-11 items-center gap-3 rounded-image px-3 py-2 text-sm text-foreground transition-colors duration-control ease-soft hover:bg-secondary focus-visible:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"
                 >
                   <Bell aria-hidden="true" size={17} className="text-primary" />{" "}
                   Notifikasi
@@ -176,7 +176,7 @@ export async function Navbar({
                 {isAdmin && (
                   <Link
                     href="/admin"
-                    className="flex min-h-10 items-center gap-3 rounded-xl px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary focus-visible:bg-secondary sm:hidden"
+                    className="flex min-h-11 items-center gap-3 rounded-image px-3 py-2 text-sm text-foreground transition-colors duration-control ease-soft hover:bg-secondary focus-visible:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus sm:hidden"
                   >
                     <ShieldCheck
                       aria-hidden="true"
@@ -189,7 +189,7 @@ export async function Navbar({
                 <div className="my-1 border-t border-border" />
                 <Link
                   href="/dashboard/products"
-                  className="flex min-h-10 items-center gap-3 rounded-xl px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary focus-visible:bg-secondary"
+                  className="flex min-h-11 items-center gap-3 rounded-image px-3 py-2 text-sm text-foreground transition-colors duration-control ease-soft hover:bg-secondary focus-visible:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                 >
                   <Package
                     aria-hidden="true"
@@ -200,7 +200,7 @@ export async function Navbar({
                 </Link>
                 <Link
                   href="/profile#store"
-                  className="flex min-h-10 items-center gap-3 rounded-xl px-3 py-2 text-sm text-foreground transition-colors hover:bg-secondary focus-visible:bg-secondary"
+                  className="flex min-h-11 items-center gap-3 rounded-image px-3 py-2 text-sm text-foreground transition-colors duration-control ease-soft hover:bg-secondary focus-visible:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                 >
                   <Store
                     aria-hidden="true"
@@ -212,7 +212,7 @@ export async function Navbar({
                 <form action={logout}>
                   <button
                     type="submit"
-                    className="flex min-h-10 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-orange-ink transition-colors hover:bg-accent focus-visible:bg-accent"
+                    className="flex min-h-11 w-full items-center gap-3 rounded-image px-3 py-2 text-left text-sm text-orange-ink transition-colors duration-control ease-soft hover:bg-accent focus-visible:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                   >
                     <LogOut aria-hidden="true" size={17} /> Keluar
                   </button>
@@ -223,13 +223,13 @@ export async function Navbar({
             <>
               <Link
                 href="/login"
-                className="inline-flex min-h-10 items-center rounded-full px-3 text-primary transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus"
+                className="inline-flex min-h-11 items-center rounded-pill px-3 text-primary transition-colors duration-control ease-soft hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus"
               >
                 Masuk
               </Link>
               <Link
                 href="/register"
-                className="inline-flex min-h-10 items-center rounded-full bg-primary px-4 text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus"
+                className="inline-flex min-h-11 items-center rounded-pill bg-primary px-4 text-primary-foreground transition-colors duration-control ease-soft hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus"
               >
                 Daftar
               </Link>
@@ -242,7 +242,7 @@ export async function Navbar({
           role="search"
           className="order-3 w-full md:hidden"
         >
-          <label className="flex items-center gap-2 rounded-full border border-border bg-card px-4 focus-within:ring-2 focus-within:ring-focus/30">
+          <label className="flex min-h-11 items-center gap-2 rounded-pill border border-border bg-card px-4 focus-within:ring-2 focus-within:ring-focus/30">
             <Search
               aria-hidden="true"
               className="size-4 shrink-0 text-muted-foreground"
@@ -251,7 +251,7 @@ export async function Navbar({
               aria-label="Cari barang"
               name="q"
               placeholder="Cari kebutuhan kos..."
-              className="min-h-10 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+              className="min-h-11 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             />
           </label>
         </form>

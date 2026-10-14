@@ -29,14 +29,14 @@ export function PageHeader({
       {navigation?.length ? (
         <nav
           aria-label="Navigasi katalog"
-          className="relative z-10 mx-auto flex w-fit max-w-[calc(100%-2rem)] flex-wrap justify-center gap-1 rounded-full bg-black/20 p-1.5 sm:gap-2"
+          className="relative z-10 mx-auto flex w-fit max-w-[calc(100%-2rem)] flex-wrap justify-center gap-1 rounded-full bg-foreground/20 p-1.5 sm:gap-2"
         >
           {navigation.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               aria-current={item.active ? "page" : undefined}
-              className={`inline-flex min-h-10 items-center gap-2 rounded-full px-4 text-sm text-primary-foreground transition-colors hover:bg-primary-foreground/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus ${item.active ? "bg-primary-foreground/10 font-semibold" : ""}`}
+              className={`inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-sm text-primary-foreground transition-colors hover:bg-primary-foreground/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus ${item.active ? "bg-primary-foreground/10 font-semibold" : ""}`}
             >
               {item.active && (
                 <span

@@ -25,7 +25,7 @@ export default async function Detail({
           {p.images.map((img, i) => (
             <div
               key={img.id}
-              className={`relative overflow-hidden rounded-2xl bg-[#eeeae1] p-3 sm:p-5 ${i === 0 ? "col-span-2 aspect-[4/3]" : "aspect-square"}`}
+              className={`relative overflow-hidden rounded-2xl bg-muted p-3 sm:p-5 ${i === 0 ? "col-span-2 aspect-[4/3]" : "aspect-square"}`}
             >
               <Image
                 src={img.url}
@@ -41,40 +41,40 @@ export default async function Detail({
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge status={p.status} />
             <ConditionBadge condition={p.condition} />
-            <span className="text-sm text-stone-500">
+            <span className="text-sm text-muted-foreground">
               {p.category.name} <span aria-hidden="true">·</span> {p.city}
             </span>
           </div>
-          <h1 className="mt-5 font-serif text-3xl font-bold leading-tight text-[#342d25] lg:text-4xl">
+          <h1 className="mt-5 font-serif text-3xl leading-tight text-foreground lg:text-4xl">
             {p.title}
           </h1>
-          <p className="mt-4 text-3xl font-bold tracking-tight text-[#174c3c] lg:text-4xl">
+          <p className="mt-4 text-3xl font-bold tracking-tight text-primary lg:text-4xl">
             {formatRupiah(p.price)}
           </p>
-          <div className="mt-6 border-t border-[#e3ded2] pt-5">
-            <h2 className="text-xs font-bold uppercase tracking-[.12em] text-stone-500">
+          <div className="mt-6 border-t border-border pt-5">
+            <h2 className="text-xs uppercase tracking-[.12em] text-muted-foreground">
               Deskripsi barang
             </h2>
-            <p className="mt-2 whitespace-pre-wrap leading-7 text-[#554f47]">
+            <p className="mt-2 whitespace-pre-wrap leading-7 text-foreground">
               {p.description}
             </p>
           </div>
-          <div className="mt-6 border-l-2 border-[#a65b3f] bg-[#f0ede5] px-4 py-3">
-            <p className="text-xs font-bold uppercase tracking-[.12em] text-stone-500">
+          <div className="mt-6 border-l-2 border-accent-bright bg-muted px-4 py-3">
+            <p className="text-xs font-bold uppercase tracking-[.12em] text-muted-foreground">
               Penjual
             </p>
             <p className="mt-1 font-semibold">{p.seller.name}</p>
-            <p className="text-sm text-stone-500">{p.seller.city}</p>
+            <p className="text-sm text-muted-foreground">{p.seller.city}</p>
             {p.seller.storeSlug && (
               <Link
                 href={`/store/${p.seller.storeSlug}`}
-                className="mt-2 inline-flex text-sm font-semibold text-[#174c3c] underline underline-offset-4"
+                className="mt-2 inline-flex text-sm font-semibold text-primary underline underline-offset-4"
               >
                 Kunjungi toko
               </Link>
             )}
             {p.seller.isOnVacation && (
-              <p className="mt-3 border-l-2 border-amber-500 bg-amber-50 p-3 text-sm text-amber-900">
+              <p className="mt-3 border-l-2 border-status-warning-ink bg-status-warning-bg p-3 text-sm text-status-warning-ink">
                 Toko sedang libur dan belum menerima pesanan baru.
               </p>
             )}
@@ -83,7 +83,7 @@ export default async function Detail({
             {canOrder ? (
               <Link
                 href={`/products/${p.id}/order`}
-                className="flex min-h-12 flex-1 items-center justify-center rounded-full bg-[#174c3c] py-3 text-center font-bold text-white transition hover:bg-[#103d30]"
+                className="flex min-h-12 flex-1 items-center justify-center rounded-full bg-primary py-3 text-center font-bold text-primary-foreground transition hover:bg-primary/90"
               >
                 Pesan barang
               </Link>
@@ -91,7 +91,7 @@ export default async function Detail({
               <button
                 type="button"
                 disabled
-                className="min-h-12 flex-1 cursor-not-allowed rounded-full bg-[#e7e4dc] py-3 font-bold text-stone-600"
+                className="min-h-12 flex-1 cursor-not-allowed rounded-full bg-muted py-3 font-bold text-muted-foreground"
               >
                 {isOwner
                   ? "Produk milikmu"
@@ -100,7 +100,7 @@ export default async function Detail({
                     : "Tidak tersedia"}
               </button>
             )}
-            <div className="grid min-w-12 place-items-center rounded-full border border-[#e3ded2] bg-[#fffefa] px-4">
+            <div className="grid min-w-12 place-items-center rounded-full border border-border bg-card px-4">
               <FavoriteButton
                 productId={p.id}
                 initial={p.isFavorited}
@@ -108,7 +108,7 @@ export default async function Detail({
               />
             </div>
           </div>
-          <p className="mt-3 text-xs leading-5 text-stone-600">
+          <p className="mt-3 text-xs leading-5 text-muted-foreground">
             {p.status !== "active"
               ? "Produk ini sudah dipesan atau terjual."
               : isOwner

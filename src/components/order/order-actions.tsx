@@ -99,7 +99,7 @@ export function OrderActions({
               >
                 <SelectTrigger
                   aria-label="Instruksi pembayaran untuk pesanan ini"
-                  className="w-full min-w-0 justify-start rounded-lg bg-white px-3 py-2"
+                  className="w-full min-w-0 justify-start rounded-lg bg-card px-3 py-2"
                 >
                   <SelectValue />
                 </SelectTrigger>
@@ -115,7 +115,7 @@ export function OrderActions({
             </label>
           ) : (
             <a
-              className="w-full text-sm font-medium text-emerald-800 underline"
+              className="w-full text-sm font-medium text-primary underline"
               href="/profile#payments"
             >
               Tambahkan akun pembayaran untuk mengonfirmasi pesanan
@@ -125,7 +125,7 @@ export function OrderActions({
             type="button"
             disabled={accounts.length === 0}
             onClick={() => act("confirm")}
-            className="rounded-full bg-emerald-800 px-4 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
           >
             Konfirmasi
           </button>
@@ -139,7 +139,7 @@ export function OrderActions({
         </>
       )}
       {actionError && (
-        <p role="alert" className="w-full text-sm text-rose-700">
+        <p role="alert" className="w-full text-sm text-status-error-ink">
           {actionError}
         </p>
       )}
@@ -147,7 +147,7 @@ export function OrderActions({
         <button
           type="button"
           onClick={() => act("complete")}
-          className="rounded-full bg-emerald-800 px-4 py-2 text-xs font-semibold text-white"
+          className="rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground"
         >
           Tandai selesai
         </button>
@@ -156,14 +156,14 @@ export function OrderActions({
         <button
           type="button"
           onClick={() => setShowCancel((value) => !value)}
-          className="rounded-full border border-rose-200 px-4 py-2 text-xs font-semibold text-rose-700"
+          className="rounded-full border border-status-error-ink px-4 py-2 text-xs font-semibold text-status-error-ink"
         >
           Batalkan
         </button>
       )}
       {showCancel && (
         <form
-          className="w-full rounded-xl border border-rose-200 bg-rose-50 p-4"
+          className="w-full rounded-xl border border-status-error-ink bg-status-error-bg p-4"
           onSubmit={handleSubmit(cancel)}
         >
           <label className="grid gap-1 text-sm font-medium">
@@ -174,14 +174,14 @@ export function OrderActions({
               maxLength={500}
               required
               rows={2}
-              className="rounded-lg border bg-white p-2 font-normal"
+              className="rounded-lg border bg-card p-2 font-normal"
             />
           </label>
           <FieldError message={errors.reason?.message} />
           <div className="mt-2 flex gap-2">
             <button
               disabled={isSubmitting || !isValid}
-              className="rounded-full bg-rose-700 px-4 py-2 text-xs font-semibold text-white"
+              className="rounded-full bg-status-error-ink px-4 py-2 text-xs font-semibold text-primary-foreground"
             >
               Konfirmasi pembatalan
             </button>

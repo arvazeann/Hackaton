@@ -48,7 +48,7 @@ type Hub = {
 };
 
 const inputClass =
-  "w-full rounded-xl border border-[#d9d4c8] bg-[#fffefa] px-3 py-2.5 text-sm outline-none transition focus:border-[#568270] focus:ring-2 focus:ring-[#568270]/20";
+  "w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
 const initialAddress = {
   kind: "SHIPPING",
   label: "",
@@ -151,7 +151,7 @@ export function ProfileHub({ hub }: { hub: Hub }) {
     <div className="mx-auto grid max-w-7xl gap-5 px-4 py-7 sm:px-6 sm:py-10 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-8">
       <nav
         aria-label="Bagian profil"
-        className="flex gap-2 overflow-x-auto rounded-2xl border border-[#e3ded2] bg-[#fffefa] p-2 lg:sticky lg:top-20 lg:h-fit lg:flex-col"
+        className="flex gap-2 overflow-x-auto rounded-2xl border border-border bg-card p-2 lg:sticky lg:top-20 lg:h-fit lg:flex-col"
       >
         {[
           ["overview", "Overview"],
@@ -165,14 +165,14 @@ export function ProfileHub({ hub }: { hub: Hub }) {
           <a
             key={id}
             href={`#${id}`}
-            className="whitespace-nowrap rounded-full border border-transparent px-4 py-2 text-sm text-[#46564c] transition hover:border-[#d9d4c8] hover:bg-[#f6f3ec] hover:text-[#174c3c] focus-visible:ring-2 focus-visible:ring-[#568270]"
+            className="whitespace-nowrap rounded-full border border-transparent px-4 py-2 text-sm text-foreground transition hover:border-border hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-focus"
           >
             {title}
           </a>
         ))}
         <Link
           href="/dashboard/products"
-          className="whitespace-nowrap rounded-full border border-transparent px-4 py-2 text-sm text-[#46564c] transition hover:border-[#d9d4c8] hover:bg-[#f6f3ec] hover:text-[#174c3c] focus-visible:ring-2 focus-visible:ring-[#568270]"
+          className="whitespace-nowrap rounded-full border border-transparent px-4 py-2 text-sm text-foreground transition hover:border-border hover:bg-muted hover:text-primary focus-visible:ring-2 focus-visible:ring-focus"
         >
           Produk saya
         </Link>
@@ -183,8 +183,8 @@ export function ProfileHub({ hub }: { hub: Hub }) {
             role={error ? "alert" : "status"}
             className={
               error
-                ? "rounded-xl bg-rose-50 p-3 text-sm text-rose-800"
-                : "rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800"
+                ? "rounded-xl bg-status-error-bg p-3 text-sm text-status-error-ink"
+                : "rounded-xl bg-sage-surface p-3 text-sm text-primary"
             }
           >
             {error || message}
@@ -192,9 +192,9 @@ export function ProfileHub({ hub }: { hub: Hub }) {
         )}
         <section
           id="overview"
-          className="scroll-mt-24 rounded-2xl border border-[#e3ded2] bg-[#fffefa] p-5 shadow-sm sm:p-6"
+          className="scroll-mt-24 rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6"
         >
-          <h1 className="text-2xl font-bold">Ringkasan akun</h1>
+          <h1 className="text-2xl">Ringkasan akun</h1>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <p>
               Pesanan aktif sebagai pembeli:{" "}
@@ -226,12 +226,12 @@ export function ProfileHub({ hub }: { hub: Hub }) {
             )}
           </div>
           {!hub.store && (
-            <p className="mt-4 text-sm text-stone-600">
+            <p className="mt-4 text-sm text-muted-foreground">
               Aktifkan toko untuk mulai menjual dan membuat produk.
             </p>
           )}
           {hub.store && hub.store.needsCompletion && (
-            <p className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+            <p className="mt-4 rounded-lg bg-status-warning-bg p-3 text-sm text-status-warning-ink">
               Lengkapi provinsi toko untuk membuka fitur penjualan dan membuat
               produk.
             </p>
@@ -239,7 +239,7 @@ export function ProfileHub({ hub }: { hub: Hub }) {
           {hub.seller &&
             hub.seller.pendingOrders > 0 &&
             !hub.paymentAccounts.some((item) => item.isActive) && (
-              <p className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+              <p className="mt-4 rounded-lg bg-status-warning-bg p-3 text-sm text-status-warning-ink">
                 Konfirmasi pesanan tertunda diblokir sampai toko memiliki akun
                 pembayaran aktif.{" "}
                 <a href="#payments" className="font-semibold underline">
@@ -254,28 +254,28 @@ export function ProfileHub({ hub }: { hub: Hub }) {
                 <a
                   key={order.id}
                   href={`/orders#${order.id}`}
-                  className="rounded-lg border p-3 text-sm hover:bg-stone-50"
+                  className="rounded-lg border p-3 text-sm hover:bg-secondary"
                 >
                   <strong>{order.productTitleSnapshot}</strong> ·{" "}
                   {order.orderCode} · {order.status}
                 </a>
               ))
             ) : (
-              <p className="text-sm text-stone-500">Belum ada pesanan.</p>
+              <p className="text-sm text-muted-foreground">Belum ada pesanan.</p>
             )}
           </div>
           <a
             href="/orders"
-            className="mt-4 inline-block text-sm font-semibold text-emerald-800 underline"
+            className="mt-4 inline-block text-sm font-semibold text-primary underline"
           >
             Lihat semua pesanan
           </a>
         </section>
         <section
           id="account"
-          className="scroll-mt-24 rounded-2xl border border-[#e3ded2] bg-[#fffefa] p-5 shadow-sm sm:p-6"
+          className="scroll-mt-24 rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6"
         >
-          <h2 className="mb-5 text-xl font-bold">Akun</h2>
+          <h2 className="mb-5 text-xl">Akun</h2>
           <ProfileForm
             user={{ ...hub.account, city: hub.account.city ?? "" }}
           />
@@ -290,10 +290,10 @@ export function ProfileHub({ hub }: { hub: Hub }) {
         </section>
         <section
           id="addresses"
-          className="scroll-mt-24 rounded-2xl border border-[#e3ded2] bg-[#fffefa] p-5 shadow-sm sm:p-6"
+          className="scroll-mt-24 rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6"
         >
-          <h2 className="text-xl font-bold">Buku alamat</h2>
-          <p className="mt-1 text-sm text-stone-600">
+          <h2 className="text-xl">Buku alamat</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
             Maksimal 10 alamat pengiriman dan 1 alamat pickup.
           </p>
           <div className="mt-4 grid gap-3">
@@ -340,7 +340,7 @@ export function ProfileHub({ hub }: { hub: Hub }) {
                           "Alamat dihapus.",
                         );
                     }}
-                    className="text-rose-700 underline"
+                    className="text-status-error-ink underline"
                   >
                     Hapus
                   </button>
@@ -353,7 +353,7 @@ export function ProfileHub({ hub }: { hub: Hub }) {
             onSubmit={saveAddress}
             className="mt-5 grid gap-3 sm:grid-cols-2"
           >
-            <h3 className="sm:col-span-2 font-semibold">
+            <h3 className="sm:col-span-2">
               {editingAddress ? "Edit alamat" : "Tambah alamat"}
             </h3>
             <Select
@@ -415,7 +415,7 @@ export function ProfileHub({ hub }: { hub: Hub }) {
               Jadikan default
             </label>
             <div className="flex gap-2">
-              <button className="rounded-full bg-emerald-800 px-4 py-2 text-sm font-semibold text-white">
+              <button className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
                 Simpan alamat
               </button>
               {editingAddress && (
@@ -432,9 +432,9 @@ export function ProfileHub({ hub }: { hub: Hub }) {
         </section>
         <section
           id="store"
-          className="scroll-mt-24 rounded-2xl border border-[#e3ded2] bg-[#fffefa] p-5 shadow-sm sm:p-6"
+          className="scroll-mt-24 rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-6"
         >
-          <h2 className="text-xl font-bold">
+          <h2 className="text-xl">
             {hub.store ? "Profil toko" : "Aktifkan toko"}
           </h2>
           <form
@@ -464,7 +464,7 @@ export function ProfileHub({ hub }: { hub: Hub }) {
               }
             />
             {hub.store && (
-              <p className="text-xs text-stone-500">
+              <p className="text-xs text-muted-foreground">
                 URL toko:{" "}
                 <Link className="underline" href={`/store/${hub.store.slug}`}>
                   /store/{hub.store.slug}
@@ -521,11 +521,11 @@ export function ProfileHub({ hub }: { hub: Hub }) {
               />
             </label>
             {logoError && (
-              <p role="alert" className="text-sm text-rose-700">
+              <p role="alert" className="text-sm text-status-error-ink">
                 {logoError}
               </p>
             )}
-            <button className="w-fit rounded-full bg-emerald-800 px-4 py-2 text-sm font-semibold text-white">
+            <button className="w-fit rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
               {hub.store ? "Simpan profil toko" : "Aktifkan toko"}
             </button>
           </form>
@@ -534,10 +534,10 @@ export function ProfileHub({ hub }: { hub: Hub }) {
         {hub.store && (
           <section
             id="vacation"
-            className="scroll-mt-24 rounded-2xl border bg-white p-5"
+            className="scroll-mt-24 rounded-2xl border bg-card p-5"
           >
-            <h2 className="text-xl font-bold">Mode liburan toko</h2>
-            <p className="mt-1 text-sm text-stone-600">
+            <h2 className="text-xl">Mode liburan toko</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
               Saat aktif, produk tidak tampil di beranda atau pencarian dan
               pesanan baru dinonaktifkan. Pesanan yang sudah ada tetap dapat
               diproses.
@@ -556,7 +556,7 @@ export function ProfileHub({ hub }: { hub: Hub }) {
                     : "Mode liburan diaktifkan.",
                 )
               }
-              className={`mt-4 rounded-full px-4 py-2 text-sm font-semibold ${hub.store.isOnVacation ? "bg-amber-100 text-amber-900" : "bg-emerald-800 text-white"}`}
+              className={`mt-4 rounded-full px-4 py-2 text-sm font-semibold ${hub.store.isOnVacation ? "bg-status-warning-bg text-status-warning-ink" : "bg-primary text-primary-foreground"}`}
             >
               {hub.store.isOnVacation
                 ? "Nonaktifkan mode liburan"
@@ -567,10 +567,10 @@ export function ProfileHub({ hub }: { hub: Hub }) {
         {hub.store && (
           <section
             id="payments"
-            className="scroll-mt-24 rounded-2xl border bg-white p-5"
+            className="scroll-mt-24 rounded-2xl border bg-card p-5"
           >
-            <h2 className="text-xl font-bold">Akun pembayaran</h2>
-            <p className="mt-1 text-sm text-stone-600">
+            <h2 className="text-xl">Akun pembayaran</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
               Nomor rekening dienkripsi dan hanya ditampilkan kepada buyer
               setelah order dikonfirmasi.
             </p>
@@ -630,7 +630,7 @@ export function ProfileHub({ hub }: { hub: Hub }) {
                               "Akun pembayaran dinonaktifkan.",
                             );
                         }}
-                        className="text-rose-700 underline"
+                        className="text-status-error-ink underline"
                       >
                         Nonaktifkan
                       </button>
@@ -664,7 +664,7 @@ export function ProfileHub({ hub }: { hub: Hub }) {
                 );
               }}
             >
-              <h3 className="sm:col-span-2 font-semibold">
+              <h3 className="sm:col-span-2">
                 {editingPaymentId
                   ? "Ganti rincian akun (nomor lama tidak dapat dibaca)"
                   : "Tambah akun aktif (maksimal tiga)"}
@@ -719,7 +719,7 @@ export function ProfileHub({ hub }: { hub: Hub }) {
                   setPayment({ ...payment, accountHolderName: e.target.value })
                 }
               />
-              <button className="w-fit rounded-full bg-emerald-800 px-4 py-2 text-sm font-semibold text-white">
+              <button className="w-fit rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
                 {editingPaymentId ? "Simpan rincian baru" : "Simpan akun"}
               </button>
               {editingPaymentId && (
@@ -764,7 +764,7 @@ function PasswordForm({
         setNewPassword("");
       }}
     >
-      <h3 className="font-semibold">Ganti kata sandi</h3>
+      <h3>Ganti kata sandi</h3>
       <input
         aria-label="Kata sandi saat ini"
         required

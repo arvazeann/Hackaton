@@ -17,20 +17,20 @@ export default async function AdminAuditLogsPage({
   const query = adminAuditLogQuerySchema.safeParse(flat);
   if (!query.success)
     return (
-      <p role="alert" className="rounded-xl border bg-white p-5">
+      <p role="alert" className="rounded-xl border bg-card p-5">
         Filter atau halaman tidak valid. Atur ulang filter.
       </p>
     );
   const result = await listAdminAuditLogs(query.data);
   return (
     <section>
-      <h1 className="text-3xl font-black">Audit log</h1>
-      <p className="mt-2 text-sm text-stone-600">
+      <h1 className="text-3xl">Audit log</h1>
+      <p className="mt-2 text-sm text-muted-foreground">
         Metadata dibatasi ke aksi dan perubahan status. Data kontak, pembayaran,
         nilai pribadi, dan alasan pembatalan tidak ditampilkan.
       </p>
       <form
-        className="mt-5 grid gap-3 rounded-xl border bg-white p-4 sm:grid-cols-3"
+        className="mt-5 grid gap-3 rounded-xl border bg-card p-4 sm:grid-cols-3"
         method="get"
       >
         <label className="text-sm">
@@ -51,7 +51,7 @@ export default async function AdminAuditLogsPage({
         </label>
         <div className="flex items-end gap-2">
           <button
-            className="rounded-lg bg-emerald-800 px-4 py-2 text-white"
+            className="rounded-lg bg-primary px-4 py-2 text-primary-foreground"
             type="submit"
           >
             Terapkan
@@ -61,9 +61,9 @@ export default async function AdminAuditLogsPage({
           </a>
         </div>
       </form>
-      <div className="mt-5 overflow-x-auto rounded-xl border bg-white">
+      <div className="mt-5 overflow-x-auto rounded-xl border bg-card">
         <table className="w-full min-w-[850px] text-left text-sm">
-          <thead className="bg-stone-100">
+          <thead className="bg-muted">
             <tr>
               {[
                 "Waktu",
@@ -103,7 +103,7 @@ export default async function AdminAuditLogsPage({
             {result.items.length === 0 && (
               <tr>
                 <td
-                  className="px-4 py-8 text-center text-stone-500"
+                  className="px-4 py-8 text-center text-muted-foreground"
                   colSpan={6}
                 >
                   Belum ada audit untuk filter ini.

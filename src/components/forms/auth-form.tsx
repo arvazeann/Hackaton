@@ -118,7 +118,7 @@ function PasswordInput({
         aria-label={visible ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
         aria-pressed={visible}
         onClick={() => setVisible((current) => !current)}
-        className="absolute inset-y-1 right-1 inline-flex size-10 items-center justify-center rounded-full text-muted-foreground transition hover:bg-secondary hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary"
+        className="absolute inset-y-1 right-1 inline-flex size-11 items-center justify-center rounded-full text-muted-foreground transition hover:bg-secondary hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary"
       >
         {visible ? (
           <EyeOff aria-hidden="true" size={18} />

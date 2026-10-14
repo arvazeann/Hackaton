@@ -17,11 +17,11 @@ export default async function EditProduct({
     return (
       <Shell>
         <section className="mx-auto max-w-2xl px-4 py-8 sm:py-12">
-          <div className="rounded-3xl border border-[#e3ded2] bg-[#fffefa] p-6 shadow-sm sm:p-8">
-            <h1 className="text-3xl font-bold text-[#26332d]">
+          <div className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
+            <h1 className="text-3xl text-foreground">
               Produk tidak dapat diedit
             </h1>
-            <p className="mt-3 text-stone-500">
+            <p className="mt-3 text-muted-foreground">
               Produk dengan status {p.status} tidak bisa diubah.
             </p>
           </div>

@@ -9,10 +9,10 @@ export default async function WishlistPage() {
   return (
     <Shell>
       <section className="mx-auto max-w-7xl px-4 py-12">
-        <p className="text-xs font-bold tracking-[.14em] text-[#568270]">
+        <p className="text-xs font-bold tracking-[.14em] text-primary">
           DISIMPAN UNTUK NANTI
         </p>
-        <h1 className="mb-7 mt-1 text-3xl font-bold text-[#26332d]">
+        <h1 className="mb-7 mt-1 text-3xl text-foreground">
           Wishlist saya
         </h1>
         <ProductGrid

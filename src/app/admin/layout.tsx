@@ -8,10 +8,10 @@ export default async function AdminLayout({
 }) {
   await requireAdminPage("/admin");
   return (
-    <div className="min-h-screen bg-stone-50">
-      <header className="border-b bg-white">
+    <div className="min-h-screen bg-secondary">
+      <header className="border-b bg-card">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-4 py-4">
-          <Link className="mr-auto font-black text-emerald-900" href="/admin">
+          <Link className="mr-auto font-black text-primary" href="/admin">
             RuangLagi · Admin
           </Link>
           <nav

@@ -16,22 +16,22 @@ export default async function Dashboard() {
       <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs font-bold tracking-[.14em] text-[#568270]">
+            <p className="text-xs font-bold tracking-[.14em] text-primary">
               TOKO SAYA
             </p>
-            <h1 className="mt-1 font-serif text-3xl font-bold text-[#342d25] lg:text-4xl">
+            <h1 className="mt-1 font-serif text-3xl text-foreground lg:text-4xl">
               Produk saya
             </h1>
           </div>
           <Link
             href="/dashboard/products/new"
-            className="w-fit rounded-full bg-[#174c3c] px-5 py-3 font-semibold text-white transition hover:bg-[#103d30]"
+            className="w-fit rounded-full bg-primary px-5 py-3 font-semibold text-primary-foreground transition hover:bg-primary/90"
           >
             + Jual barang
           </Link>
         </div>
         {needsPaymentAccount && (
-          <aside className="mt-6 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
+          <aside className="mt-6 rounded-2xl border border-status-warning-ink bg-status-warning-bg p-4 text-sm text-status-warning-ink">
             <p className="font-semibold">
               Pesanan pending belum bisa dikonfirmasi
             </p>
@@ -47,18 +47,18 @@ export default async function Dashboard() {
             </Link>
           </aside>
         )}
-        <div className="mt-8 divide-y divide-[#e3ded2] overflow-hidden rounded-2xl border border-[#e3ded2] bg-[#fffefa]">
+        <div className="mt-8 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
           {products.length === 0 && (
             <div className="p-8 text-center">
-              <p className="font-semibold text-[#26332d]">
+              <p className="font-semibold text-foreground">
                 Belum ada produk di tokomu
               </p>
-              <p className="mt-2 text-sm text-stone-600">
+              <p className="mt-2 text-sm text-muted-foreground">
                 Mulai jual barang kos yang sudah tak terpakai.
               </p>
               <Link
                 href="/dashboard/products/new"
-                className="mt-4 inline-flex rounded-full bg-[#174c3c] px-5 py-2.5 text-sm font-semibold text-white"
+                className="mt-4 inline-flex rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
               >
                 Tambah produk
               </Link>
@@ -73,7 +73,7 @@ export default async function Dashboard() {
                 <Link href={`/products/${p.id}`} className="font-semibold">
                   {p.title}
                 </Link>
-                <p className="mt-1 text-sm text-stone-500">
+                <p className="mt-1 text-sm text-muted-foreground">
                   {formatRupiah(p.price)}
                 </p>
               </div>
@@ -81,7 +81,7 @@ export default async function Dashboard() {
                 <StatusBadge status={p.status} />
                 <Link
                   href={`/dashboard/products/${p.id}/edit`}
-                  className="text-sm font-semibold text-emerald-800"
+                  className="text-sm font-semibold text-primary"
                 >
                   Kelola
                 </Link>

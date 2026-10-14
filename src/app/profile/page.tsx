@@ -11,10 +11,10 @@ export default async function Profile() {
         {hub ? (
           <ProfileHub hub={hub} />
         ) : (
-          <div className="mx-auto max-w-5xl rounded-2xl border border-[#e3ded2] bg-[#fffefa] p-6 shadow-sm">
-            <h1 className="text-2xl font-bold">Akun</h1>
+          <div className="mx-auto max-w-5xl rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <h1 className="text-2xl">Akun</h1>
             <p className="mt-4 font-medium">{user.name}</p>
-            <p className="text-sm text-stone-500">{user.email}</p>
+            <p className="text-sm text-muted-foreground">{user.email}</p>
           </div>
         )}
       </section>

@@ -15,9 +15,9 @@ export default async function AdminDashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-sm font-semibold text-emerald-800">ADMIN AREA</p>
-        <h1 className="mt-1 text-3xl font-black">Ringkasan marketplace</h1>
-        <p className="mt-2 text-sm text-stone-600">
+        <p className="text-sm font-semibold text-primary">ADMIN AREA</p>
+        <h1 className="mt-1 text-3xl">Ringkasan marketplace</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
           Tampilan baca-saja. Angka online memperkirakan aktivitas dalam 15
           menit terakhir.
         </p>
@@ -27,21 +27,21 @@ export default async function AdminDashboard() {
         className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5"
       >
         {metrics.map(([label, value]) => (
-          <article key={label} className="rounded-xl border bg-white p-4">
-            <p className="text-xs text-stone-500">{label}</p>
+          <article key={label} className="rounded-xl border bg-card p-4">
+            <p className="text-xs text-muted-foreground">{label}</p>
             <p className="mt-2 text-2xl font-bold">{number.format(value)}</p>
           </article>
         ))}
       </section>
       <div className="grid gap-6 lg:grid-cols-2">
-        <section className="rounded-xl border bg-white p-5">
-          <h2 className="text-lg font-bold">Produk berdasarkan status</h2>
+        <section className="rounded-xl border bg-card p-5">
+          <h2 className="text-lg">Produk berdasarkan status</h2>
           <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
             {Object.entries(overview.productsByStatus).map(
               ([status, count]) => (
                 <div
                   key={status}
-                  className="flex justify-between rounded-lg bg-stone-50 p-3"
+                  className="flex justify-between rounded-lg bg-secondary p-3"
                 >
                   <dt>{status}</dt>
                   <dd className="font-semibold">{number.format(count)}</dd>
@@ -50,19 +50,19 @@ export default async function AdminDashboard() {
             )}
           </dl>
           <Link
-            className="mt-4 inline-block text-sm font-semibold text-emerald-800"
+            className="mt-4 inline-block text-sm font-semibold text-primary"
             href="/admin/products"
           >
             Lihat produk →
           </Link>
         </section>
-        <section className="rounded-xl border bg-white p-5">
-          <h2 className="text-lg font-bold">Pesanan berdasarkan status</h2>
+        <section className="rounded-xl border bg-card p-5">
+          <h2 className="text-lg">Pesanan berdasarkan status</h2>
           <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
             {Object.entries(overview.ordersByStatus).map(([status, count]) => (
               <div
                 key={status}
-                className="flex justify-between rounded-lg bg-stone-50 p-3"
+                className="flex justify-between rounded-lg bg-secondary p-3"
               >
                 <dt>{status}</dt>
                 <dd className="font-semibold">{number.format(count)}</dd>
@@ -70,14 +70,14 @@ export default async function AdminDashboard() {
             ))}
           </dl>
           <Link
-            className="mt-4 inline-block text-sm font-semibold text-emerald-800"
+            className="mt-4 inline-block text-sm font-semibold text-primary"
             href="/admin/orders"
           >
             Lihat pesanan →
           </Link>
         </section>
-        <section className="rounded-xl border bg-white p-5">
-          <h2 className="text-lg font-bold">Pendaftaran terbaru</h2>
+        <section className="rounded-xl border bg-card p-5">
+          <h2 className="text-lg">Pendaftaran terbaru</h2>
           {overview.latestUsers.length ? (
             <ul className="mt-3 divide-y">
               {overview.latestUsers.map((user) => (
@@ -95,17 +95,17 @@ export default async function AdminDashboard() {
               ))}
             </ul>
           ) : (
-            <p className="mt-3 text-sm text-stone-500">Belum ada pengguna.</p>
+            <p className="mt-3 text-sm text-muted-foreground">Belum ada pengguna.</p>
           )}
           <Link
-            className="mt-3 inline-block text-sm font-semibold text-emerald-800"
+            className="mt-3 inline-block text-sm font-semibold text-primary"
             href="/admin/users"
           >
             Lihat pengguna →
           </Link>
         </section>
-        <section className="rounded-xl border bg-white p-5">
-          <h2 className="text-lg font-bold">Pesanan terbaru</h2>
+        <section className="rounded-xl border bg-card p-5">
+          <h2 className="text-lg">Pesanan terbaru</h2>
           {overview.latestOrders.length ? (
             <ul className="mt-3 divide-y">
               {overview.latestOrders.map((order) => (
@@ -123,10 +123,10 @@ export default async function AdminDashboard() {
               ))}
             </ul>
           ) : (
-            <p className="mt-3 text-sm text-stone-500">Belum ada pesanan.</p>
+            <p className="mt-3 text-sm text-muted-foreground">Belum ada pesanan.</p>
           )}
           <Link
-            className="mt-3 inline-block text-sm font-semibold text-emerald-800"
+            className="mt-3 inline-block text-sm font-semibold text-primary"
             href="/admin/orders"
           >
             Lihat pesanan →

@@ -28,7 +28,7 @@ export default async function AdminProductsPage({
   const query = adminProductQuerySchema.safeParse(flat);
   if (!query.success)
     return (
-      <p role="alert" className="rounded-xl border bg-white p-5">
+      <p role="alert" className="rounded-xl border bg-card p-5">
         Filter atau halaman tidak valid. Atur ulang filter.
       </p>
     );
@@ -38,13 +38,13 @@ export default async function AdminProductsPage({
   ]);
   return (
     <section>
-      <h1 className="text-3xl font-black">Produk</h1>
-      <p className="mt-2 text-sm text-stone-600">
+      <h1 className="text-3xl">Produk</h1>
+      <p className="mt-2 text-sm text-muted-foreground">
         Hanya produk aktif tanpa pesanan terbuka yang dapat diedit atau
         diarsipkan.
       </p>
       <form
-        className="mt-5 grid gap-3 rounded-xl border bg-white p-4 sm:grid-cols-3"
+        className="mt-5 grid gap-3 rounded-xl border bg-card p-4 sm:grid-cols-3"
         method="get"
       >
         <label className="text-sm">
@@ -95,7 +95,7 @@ export default async function AdminProductsPage({
         </label>
         <div className="flex gap-2 sm:col-span-3">
           <button
-            className="rounded-lg bg-emerald-800 px-4 py-2 text-white"
+            className="rounded-lg bg-primary px-4 py-2 text-primary-foreground"
             type="submit"
           >
             Terapkan
@@ -105,9 +105,9 @@ export default async function AdminProductsPage({
           </a>
         </div>
       </form>
-      <div className="mt-5 overflow-x-auto rounded-xl border bg-white">
+      <div className="mt-5 overflow-x-auto rounded-xl border bg-card">
         <table className="w-full min-w-[680px] text-left text-sm">
-          <thead className="bg-stone-100">
+          <thead className="bg-muted">
             <tr>
               {[
                 "Produk",
@@ -145,7 +145,7 @@ export default async function AdminProductsPage({
             {result.items.length === 0 && (
               <tr>
                 <td
-                  className="px-4 py-8 text-center text-stone-500"
+                  className="px-4 py-8 text-center text-muted-foreground"
                   colSpan={7}
                 >
                   Tidak ada produk untuk filter ini.

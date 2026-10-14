@@ -27,7 +27,7 @@ function PriceRangeFields() {
             placeholder="Rp Min"
             value={minPrice}
             onChange={(event) => setMinPrice(event.target.value)}
-            className="min-h-10 min-w-0 rounded-full border border-border bg-card px-3 text-sm text-foreground outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus"
+            className="min-h-11 min-w-0 rounded-pill border border-border bg-card px-3 text-sm text-foreground outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus"
           />
         </label>
         <label className="grid gap-1 text-xs font-medium text-muted-foreground">
@@ -40,7 +40,7 @@ function PriceRangeFields() {
             placeholder="Rp Maks"
             value={maxPrice}
             onChange={(event) => setMaxPrice(event.target.value)}
-            className="min-h-10 min-w-0 rounded-full border border-border bg-card px-3 text-sm text-foreground outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus"
+            className="min-h-11 min-w-0 rounded-pill border border-border bg-card px-3 text-sm text-foreground outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus"
           />
         </label>
       </div>
@@ -58,7 +58,7 @@ function PriceRangeFields() {
               setMinPrice(nextValue === "0" ? "" : nextValue);
               if (maxNumber < Number(nextValue)) setMaxPrice(nextValue);
             }}
-            className="h-6 w-full cursor-pointer accent-accent-bright"
+            className="h-11 w-full cursor-pointer accent-accent-bright focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
           />
         </label>
         <input
@@ -68,7 +68,7 @@ function PriceRangeFields() {
           value={Math.min(maxNumber, SLIDER_MAX_PRICE)}
           aria-label="Geser harga maksimum"
           onChange={(event) => setMaxPrice(event.target.value)}
-          className="h-6 w-full cursor-pointer accent-accent-bright"
+          className="h-11 w-full cursor-pointer accent-accent-bright focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
         />
       </div>
     </fieldset>
@@ -89,7 +89,7 @@ function FilterFields({ categories }: { categories: CategoryOption[] }) {
       <fieldset className="grid gap-2">
         <legend className="font-serif text-xl text-foreground">Kategori</legend>
         <div className="grid gap-1">
-          <label className="flex min-h-10 cursor-pointer items-center gap-2 rounded-full px-3 text-sm text-foreground transition-colors hover:bg-secondary has-[:checked]:bg-brand-orange has-[:checked]:font-semibold has-[:checked]:text-primary-foreground has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-card has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus">
+          <label className="flex min-h-11 cursor-pointer items-center gap-2 rounded-pill px-3 text-sm text-foreground transition-colors duration-control ease-soft hover:bg-secondary has-[:checked]:bg-primary has-[:checked]:font-semibold has-[:checked]:text-primary-foreground has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-card has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus">
             <input
               type="radio"
               name="category"
@@ -103,7 +103,7 @@ function FilterFields({ categories }: { categories: CategoryOption[] }) {
           {categories.map((category) => (
             <label
               key={category.id}
-              className="flex min-h-10 cursor-pointer items-center gap-2 rounded-full px-3 text-sm text-foreground transition-colors hover:bg-secondary has-[:checked]:bg-brand-orange has-[:checked]:font-semibold has-[:checked]:text-primary-foreground has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-card has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus"
+              className="flex min-h-11 cursor-pointer items-center gap-2 rounded-pill px-3 text-sm text-foreground transition-colors duration-control ease-soft hover:bg-secondary has-[:checked]:bg-primary has-[:checked]:font-semibold has-[:checked]:text-primary-foreground has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-card has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus"
             >
               <input
                 type="radio"
@@ -132,7 +132,7 @@ function FilterFields({ categories }: { categories: CategoryOption[] }) {
           ].map(([value, label]) => (
             <label
               key={value}
-              className="flex min-h-10 cursor-pointer items-center rounded-full border border-border px-3 text-xs font-medium text-foreground transition-colors hover:border-accent-bright has-[:checked]:border-brand-orange has-[:checked]:bg-brand-orange has-[:checked]:text-primary-foreground has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-card has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus"
+              className="flex min-h-11 cursor-pointer items-center rounded-pill border border-border px-3 text-xs font-medium text-foreground transition-colors duration-control ease-soft hover:border-accent-bright has-[:checked]:border-primary has-[:checked]:bg-primary has-[:checked]:text-primary-foreground has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-card has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus"
             >
               <input
                 type="radio"
@@ -155,7 +155,7 @@ function FilterFields({ categories }: { categories: CategoryOption[] }) {
           aria-label="Kota"
           placeholder="Masukkan kota"
           defaultValue={search.get("city") ?? ""}
-          className="min-h-10 rounded-full border border-border bg-card px-4 text-sm text-foreground outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus"
+          className="min-h-11 rounded-pill border border-border bg-card px-4 text-sm text-foreground outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus"
         />
       </label>
       <input type="hidden" name="q" value={search.get("q") ?? ""} />
@@ -176,23 +176,23 @@ export function FilterPanel({ categories }: { categories: CategoryOption[] }) {
   const queryKey = search.toString();
   return (
     <>
-      <details className="rounded-2xl border border-border bg-card p-3 lg:hidden">
-        <summary className="flex min-h-10 cursor-pointer list-none items-center justify-center rounded-full border border-border px-5 text-sm font-semibold text-primary marker:hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus [&::-webkit-details-marker]:hidden">
+      <details className="rounded-card border border-border bg-card p-3 lg:hidden">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-center rounded-pill border border-border px-5 text-sm font-semibold text-primary marker:hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus [&::-webkit-details-marker]:hidden">
           Filter
         </summary>
         <form action="/products" className="mt-4 grid gap-5 px-1 pb-1">
           <FilterFields key={queryKey} categories={categories} />
-          <button className="min-h-11 rounded-full bg-primary px-5 font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus">
+          <button className="min-h-11 rounded-pill bg-primary px-5 font-semibold text-primary-foreground transition-colors duration-control ease-soft hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus">
             Terapkan filter
           </button>
         </form>
       </details>
       <form
         action="/products"
-        className="hidden gap-5 rounded-[1.5rem] border border-border bg-background p-5 lg:grid"
+        className="hidden gap-5 rounded-card border border-border bg-background p-5 lg:grid"
       >
         <FilterFields key={queryKey} categories={categories} />
-        <button className="min-h-11 rounded-full bg-primary px-5 font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus">
+        <button className="min-h-11 rounded-pill bg-primary px-5 font-semibold text-primary-foreground transition-colors duration-control ease-soft hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus">
           Terapkan filter
         </button>
       </form>

@@ -24,7 +24,7 @@ function pageHref(page: number, searchParams: Record<string, string>): string {
 }
 
 const pageLinkBase =
-  "grid size-10 place-items-center rounded-full border text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus";
+  "grid size-11 place-items-center rounded-pill border text-sm font-semibold transition-colors duration-control ease-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus";
 
 export function ProductPagination({
   page,
@@ -72,7 +72,7 @@ export function ProductPagination({
             key={item}
             aria-label={`Halaman ${item}`}
             aria-current={item === page ? "page" : undefined}
-            className={`${pageLinkBase} ${item === page ? "border-brand-orange bg-brand-orange text-primary-foreground" : "border-border bg-card text-foreground hover:border-accent-bright hover:text-primary"}`}
+          className={`${pageLinkBase} ${item === page ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:border-accent-bright hover:text-primary"}`}
             href={pageHref(item, searchParams)}
           >
             {String(item).padStart(2, "0")}

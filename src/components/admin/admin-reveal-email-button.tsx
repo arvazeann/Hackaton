@@ -44,7 +44,7 @@ export function AdminRevealEmailButton({
       <span>{email ?? maskedEmail}</span>
       {!email && (
         <button
-          className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-stone-50 disabled:opacity-60"
+          className="rounded-md border px-2 py-1 text-xs font-medium hover:bg-secondary disabled:opacity-60"
           type="button"
           disabled={loading}
           onClick={reveal}
@@ -53,7 +53,7 @@ export function AdminRevealEmailButton({
         </button>
       )}
       {error && (
-        <span role="alert" className="text-xs text-rose-700">
+        <span role="alert" className="text-xs text-status-error-ink">
           {error}
         </span>
       )}

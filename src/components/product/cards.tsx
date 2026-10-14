@@ -3,6 +3,7 @@ import Image from "next/image";
 import { formatRupiah } from "@/lib/format";
 import type { ProductListItem } from "@/types";
 import { FavoriteButton } from "@/components/product/favorite-button";
+import { buttonVariants } from "@/components/ui/button";
 
 export const NEWLY_UPLOADED_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -21,8 +22,15 @@ const conditionLabels: Record<string, string> = {
 };
 
 export function ConditionBadge({ condition }: { condition: string }) {
+  const appearance =
+    condition === "fair"
+      ? "bg-fair-bg text-fair-text"
+      : "bg-sage text-primary";
+
   return (
-    <span className="rounded-full border border-border bg-background px-3 py-1 text-[11px] font-semibold text-foreground shadow-sm">
+    <span
+      className={`inline-flex min-h-7 items-center rounded-pill px-3 text-xs font-semibold ${appearance}`}
+    >
       {conditionLabels[condition] ?? condition.replaceAll("_", " ")}
     </span>
   );
@@ -47,7 +55,7 @@ export function ProductGrid({
 }) {
   if (!products.length)
     return (
-      <div className="rounded-[1.75rem] border border-dashed border-border bg-card px-6 py-14 text-center sm:px-12">
+      <div className="rounded-card border border-dashed border-border bg-card px-6 py-14 text-center sm:px-12">
         <p className="font-serif text-xl text-foreground">{emptyTitle}</p>
         <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
           {emptyDescription}
@@ -55,7 +63,7 @@ export function ProductGrid({
         {emptyAction && (
           <Link
             href={emptyAction.href}
-            className="mt-5 inline-flex min-h-11 items-center rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus"
+            className="mt-5 inline-flex min-h-11 items-center rounded-pill bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors duration-control ease-soft hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus"
           >
             {emptyAction.label}
           </Link>
@@ -68,21 +76,21 @@ export function ProductGrid({
       {products.map((product) => (
         <article
           key={product.id}
-          className="group/card group relative flex h-full flex-col rounded-[1.5rem] border border-transparent bg-surface-warm p-2.5 transition-[transform,border-color,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:border-accent-bright hover:shadow-card focus-within:-translate-y-0.5 focus-within:border-accent-bright focus-within:shadow-card motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:focus-within:translate-y-0 sm:rounded-[1.75rem] sm:p-3"
+          className="group/card group relative flex h-full flex-col rounded-card border border-transparent bg-peach p-2.5 transition-[transform,border-color,box-shadow] duration-control ease-soft hover:-translate-y-0.5 hover:border-accent-bright hover:shadow-card focus-within:-translate-y-0.5 focus-within:border-accent-bright focus-within:shadow-card motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:focus-within:translate-y-0 sm:p-3"
         >
           <Link
             href={`/products/${product.id}`}
             aria-label={`Lihat ${product.title}`}
-            className="absolute inset-0 z-0 rounded-[1.5rem] focus-visible:outline-offset-[-4px] sm:rounded-[1.75rem]"
+            className="absolute inset-0 z-0 rounded-card focus-visible:outline-offset-[-4px]"
           />
-          <div className="pointer-events-none relative aspect-[4/3] overflow-hidden rounded-[1.1rem] bg-card sm:rounded-[1.25rem]">
+          <div className="pointer-events-none relative aspect-[4/3] overflow-hidden rounded-image bg-cream">
             {product.coverImageUrl.trim() ? (
               <Image
                 src={product.coverImageUrl}
                 alt={product.title}
                 fill
                 sizes="(max-width: 1023px) 50vw, 33vw"
-                className="object-contain p-3 transition-transform duration-300 ease-out group-hover/card:scale-[1.025] group-focus-within/card:scale-[1.025] motion-reduce:transition-none sm:p-4"
+                className="object-contain p-3 transition-transform duration-image ease-soft group-hover/card:scale-[1.03] group-focus-within/card:scale-[1.03] motion-reduce:transition-none sm:p-4"
               />
             ) : (
               <div className="grid size-full place-items-center bg-background">
@@ -99,7 +107,7 @@ export function ProductGrid({
                   />
                   <path
                     d="M32 56h56v8a7 7 0 0 1-7 7H39a7 7 0 0 1-7-7v-8Z"
-                    fill="var(--brand-orange)"
+                  fill="var(--peach)"
                   />
                   <circle cx="60" cy="43" r="9" fill="var(--card)" />
                 </svg>
@@ -127,7 +135,7 @@ export function ProductGrid({
           <div className="pointer-events-none relative z-10 flex flex-1 flex-col px-1.5 pb-1 pt-3 sm:px-2 sm:pt-4">
             <Link
               href={`/products/${product.id}`}
-              className="pointer-events-auto line-clamp-2 block min-h-10 rounded text-sm font-semibold leading-5 text-foreground transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus"
+              className="pointer-events-auto line-clamp-2 block min-h-11 rounded text-sm font-semibold leading-5 text-foreground transition-colors duration-control ease-soft hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus"
             >
               {product.title}
             </Link>
@@ -142,7 +150,7 @@ export function ProductGrid({
               {product.seller.storeSlug ? (
                 <Link
                   href={`/store/${product.seller.storeSlug}`}
-                  className="pointer-events-auto block truncate rounded text-xs font-semibold text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus"
+                  className="pointer-events-auto inline-flex min-h-11 max-w-full items-center truncate rounded text-xs font-semibold text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus"
                 >
                   Toko {product.seller.name}
                 </Link>
@@ -158,7 +166,7 @@ export function ProductGrid({
               !product.seller.isOnVacation ? (
                 <Link
                   href={`/products/${product.id}/order`}
-                  className="pointer-events-auto mt-3 inline-flex min-h-10 items-center justify-center rounded-full bg-primary px-3 text-center text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card focus-visible:ring-2 focus-visible:ring-focus"
+                  className={`${buttonVariants({ variant: "accent", size: "lg" })} pointer-events-auto mt-3 w-full text-center`}
                 >
                   Pesan produk
                 </Link>
@@ -166,7 +174,7 @@ export function ProductGrid({
                 <button
                   type="button"
                   disabled
-                  className="pointer-events-auto mt-3 min-h-10 w-full cursor-not-allowed rounded-full bg-muted px-3 text-xs font-semibold text-muted-foreground"
+                  className="pointer-events-auto mt-3 min-h-11 w-full cursor-not-allowed rounded-pill bg-muted px-3 text-xs font-semibold text-muted-foreground"
                 >
                   {product.seller.id === viewerId
                     ? "Produk milikmu"
@@ -184,7 +192,7 @@ export function ProductGrid({
 
 export function NewlyUploadedBadge() {
   return (
-    <span className="inline-flex min-h-7 items-center rounded-full bg-background px-3 text-[11px] font-bold text-primary shadow-sm">
+    <span className="inline-flex min-h-7 items-center rounded-pill bg-sage px-3 text-xs font-semibold text-primary">
       Baru diunggah
     </span>
   );
@@ -203,13 +211,13 @@ const statusLabels: Record<string, string> = {
 };
 
 const statusStyles: Record<string, string> = {
-  active: "bg-secondary text-primary",
+  active: "bg-sage text-primary",
   reserved: "bg-status-warning-bg text-status-warning-ink",
   sold: "bg-muted text-foreground",
   archived: "bg-muted text-muted-foreground",
   pending: "bg-status-warning-bg text-status-warning-ink",
-  confirmed: "bg-status-info-bg text-status-info-ink",
-  completed: "bg-secondary text-primary",
+  confirmed: "bg-sage text-primary",
+  completed: "bg-sage text-primary",
   rejected: "bg-status-error-bg text-status-error-ink",
   cancelled: "bg-muted text-foreground",
 };
@@ -217,7 +225,7 @@ const statusStyles: Record<string, string> = {
 export function StatusBadge({ status }: { status: string }) {
   return (
     <span
-      className={`inline-flex min-h-7 items-center rounded-full px-3 text-xs font-semibold ${statusStyles[status] ?? "bg-muted text-foreground"}`}
+      className={`inline-flex min-h-7 items-center rounded-pill px-3 text-xs font-semibold ${statusStyles[status] ?? "bg-muted text-foreground"}`}
     >
       {statusLabels[status] ?? status.replaceAll("_", " ")}
     </span>

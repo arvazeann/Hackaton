@@ -8,12 +8,12 @@ export default function AdminError({
 }) {
   return (
     <main className="mx-auto max-w-2xl px-4 py-16">
-      <h1 className="text-2xl font-bold">Admin Area tidak dapat dimuat</h1>
-      <p className="mt-3 text-stone-600">
+      <h1 className="text-2xl">Admin Area tidak dapat dimuat</h1>
+      <p className="mt-3 text-muted-foreground">
         Data belum tersedia. Coba muat ulang halaman.
       </p>
       <button
-        className="mt-6 rounded-lg bg-emerald-800 px-4 py-2 text-white"
+        className="mt-6 rounded-lg bg-primary px-4 py-2 text-primary-foreground"
         onClick={() => reset()}
         type="button"
       >

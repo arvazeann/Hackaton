@@ -26,7 +26,7 @@ export default async function AdminUsersPage({
   const query = adminUserQuerySchema.safeParse(flat);
   if (!query.success)
     return (
-      <p role="alert" className="rounded-xl border bg-white p-5">
+      <p role="alert" className="rounded-xl border bg-card p-5">
         Filter atau halaman tidak valid. Atur ulang filter.
       </p>
     );
@@ -39,12 +39,12 @@ export default async function AdminUsersPage({
   );
   return (
     <section>
-      <h1 className="text-3xl font-black">Pengguna</h1>
-      <p className="mt-2 text-sm text-stone-600">
+      <h1 className="text-3xl">Pengguna</h1>
+      <p className="mt-2 text-sm text-muted-foreground">
         Email disamarkan. Pembukaan email dicatat di AuditLog.
       </p>
       <form
-        className="mt-5 grid gap-3 rounded-xl border bg-white p-4 sm:grid-cols-5"
+        className="mt-5 grid gap-3 rounded-xl border bg-card p-4 sm:grid-cols-5"
         method="get"
       >
         <label className="text-sm">
@@ -107,7 +107,7 @@ export default async function AdminUsersPage({
         </label>
         <div className="flex gap-2 sm:col-span-5">
           <button
-            className="rounded-lg bg-emerald-800 px-4 py-2 text-white"
+            className="rounded-lg bg-primary px-4 py-2 text-primary-foreground"
             type="submit"
           >
             Terapkan
@@ -117,9 +117,9 @@ export default async function AdminUsersPage({
           </a>
         </div>
       </form>
-      <div className="mt-5 overflow-x-auto rounded-xl border bg-white">
+      <div className="mt-5 overflow-x-auto rounded-xl border bg-card">
         <table className="w-full min-w-[760px] text-left text-sm">
-          <thead className="bg-stone-100">
+          <thead className="bg-muted">
             <tr>
               {[
                 "Nama",
@@ -183,7 +183,7 @@ export default async function AdminUsersPage({
             {result.items.length === 0 && (
               <tr>
                 <td
-                  className="px-4 py-8 text-center text-stone-500"
+                  className="px-4 py-8 text-center text-muted-foreground"
                   colSpan={8}
                 >
                   Tidak ada pengguna untuk filter ini.

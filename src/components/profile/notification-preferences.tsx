@@ -71,15 +71,15 @@ export function NotificationPreferences() {
   return (
     <section
       id="notification-preferences"
-      className="scroll-mt-24 rounded-2xl border bg-white p-5"
+      className="scroll-mt-24 rounded-2xl border bg-card p-5"
     >
-      <h2 className="text-xl font-bold">Preferensi notifikasi</h2>
-      <p className="mt-1 text-sm text-stone-600">
+      <h2 className="text-xl">Preferensi notifikasi</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
         Status pesanan tetap tersedia di halaman pesanan meski notifikasi
         dimatikan.
       </p>
       {loading ? (
-        <p className="mt-4 text-sm text-stone-500" role="status">
+        <p className="mt-4 text-sm text-muted-foreground" role="status">
           Memuat preferensi…
         </p>
       ) : (
@@ -112,19 +112,19 @@ export function NotificationPreferences() {
             type="button"
             disabled={saving || items.length !== 5}
             onClick={() => void save()}
-            className="mt-4 rounded-full bg-emerald-800 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            className="mt-4 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
           >
             {saving ? "Menyimpan…" : "Simpan preferensi"}
           </button>
         </>
       )}
       {error && (
-        <p role="alert" className="mt-3 text-sm text-rose-700">
+        <p role="alert" className="mt-3 text-sm text-status-error-ink">
           {error}
         </p>
       )}
       {message && (
-        <p role="status" className="mt-3 text-sm text-emerald-800">
+        <p role="status" className="mt-3 text-sm text-primary">
           {message}
         </p>
       )}

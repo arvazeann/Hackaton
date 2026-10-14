@@ -101,17 +101,17 @@ export function ProductForm({
   }
   return (
     <form
-      className="grid gap-5 rounded-3xl border border-[#e3ded2] bg-[#fffefa] p-5 shadow-[0_12px_34px_rgba(39,52,44,0.06)] sm:gap-6 sm:p-8"
+      className="grid gap-5 rounded-3xl border border-border bg-card p-5 shadow-card sm:gap-6 sm:p-8"
       onSubmit={handleSubmit(save)}
     >
-      <h1 className="text-3xl font-bold text-[#26332d]">
+      <h1 className="text-3xl text-foreground">
         {product ? "Edit produk" : "Jual barang kos preloved"}
       </h1>
       <label className="grid gap-2 text-sm font-medium">
         Nama barang
         <input
           {...register("title")}
-          className="rounded-xl border border-[#d9d4c8] bg-[#fffefa] px-4 py-3 font-normal outline-none focus:border-[#568270] focus:ring-2 focus:ring-[#568270]/20"
+          className="rounded-xl border border-border bg-card px-4 py-3 font-normal outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
         />
         <FieldError message={errors.title?.message} />
       </label>
@@ -120,7 +120,7 @@ export function ProductForm({
         <textarea
           rows={5}
           {...register("description")}
-          className="rounded-xl border border-[#d9d4c8] bg-[#fffefa] px-4 py-3 font-normal outline-none focus:border-[#568270] focus:ring-2 focus:ring-[#568270]/20"
+          className="rounded-xl border border-border bg-card px-4 py-3 font-normal outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
         />
         <FieldError message={errors.description?.message} />
       </label>
@@ -129,7 +129,7 @@ export function ProductForm({
         <input
           type="number"
           {...register("price", { valueAsNumber: true })}
-          className="rounded-xl border border-[#d9d4c8] bg-[#fffefa] px-4 py-3 font-normal outline-none focus:border-[#568270] focus:ring-2 focus:ring-[#568270]/20"
+          className="rounded-xl border border-border bg-card px-4 py-3 font-normal outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
         />
         <FieldError message={errors.price?.message} />
       </label>
@@ -196,7 +196,7 @@ export function ProductForm({
         Kota
         <input
           {...register("city")}
-          className="rounded-xl border border-[#d9d4c8] bg-[#fffefa] px-4 py-3 font-normal outline-none focus:border-[#568270] focus:ring-2 focus:ring-[#568270]/20"
+          className="rounded-xl border border-border bg-card px-4 py-3 font-normal outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
         />
         <FieldError message={errors.city?.message} />
       </label>
@@ -217,7 +217,7 @@ export function ProductForm({
       </div>
       <button
         disabled={isSubmitting || uploadingImages}
-        className="min-h-12 rounded-full bg-[#174c3c] px-6 py-3 font-semibold text-white transition hover:bg-[#103d30] disabled:cursor-wait disabled:opacity-60"
+        className="min-h-12 rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-wait disabled:opacity-60"
       >
         {isSubmitting
           ? "Menyimpan…"
@@ -229,7 +229,7 @@ export function ProductForm({
         <button
           type="button"
           onClick={archive}
-          className="min-h-12 rounded-full border border-rose-300 px-6 py-3 font-semibold text-rose-700 transition hover:bg-rose-50"
+          className="min-h-12 rounded-full border border-status-error-ink px-6 py-3 font-semibold text-status-error-ink transition hover:bg-status-error-bg"
         >
           Arsipkan produk
         </button>

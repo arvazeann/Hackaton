@@ -77,7 +77,7 @@ export function OrderForm({ productId }: { productId: string }) {
             setError(name as keyof Values, { message: messages?.[0] });
       })}
     >
-      <h1 className="text-3xl font-bold">Detail pengiriman</h1>
+      <h1 className="text-3xl">Detail pengiriman</h1>
       {addresses.length > 0 && (
         <label className="grid gap-2 text-sm font-medium">
           Gunakan alamat tersimpan
@@ -162,7 +162,7 @@ export function OrderForm({ productId }: { productId: string }) {
       </label>
       <button
         disabled={isSubmitting}
-        className="rounded-full bg-emerald-800 px-6 py-3 font-semibold text-white"
+        className="rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground"
       >
         {isSubmitting ? "Mengirim…" : "Buat pesanan"}
       </button>

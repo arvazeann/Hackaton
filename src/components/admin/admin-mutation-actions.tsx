@@ -107,7 +107,7 @@ export function AdminUserActions({
       >
         {isDisabled ? "Aktifkan akun" : "Nonaktifkan akun"}
       </button>
-      <p aria-live="polite" className="text-xs text-stone-600">
+      <p aria-live="polite" className="text-xs text-muted-foreground">
         {message}
       </p>
     </div>
@@ -166,7 +166,7 @@ export function AdminProductActions({
 
   if (!editable)
     return (
-      <span className="text-xs text-stone-500">
+      <span className="text-xs text-muted-foreground">
         {product.hasOpenOrder ? "Ada pesanan terbuka" : "Tidak dapat diubah"}
       </span>
     );
@@ -254,7 +254,7 @@ export function AdminProductActions({
             />
           </label>
           <button
-            className="rounded bg-emerald-800 px-3 py-2 text-white disabled:opacity-50"
+            className="rounded bg-primary px-3 py-2 text-primary-foreground disabled:opacity-50"
             disabled={busy}
             type="submit"
           >
@@ -270,7 +270,7 @@ export function AdminProductActions({
       >
         Arsipkan
       </button>
-      <p aria-live="polite" className="text-xs text-stone-600">
+      <p aria-live="polite" className="text-xs text-muted-foreground">
         {message}
       </p>
     </div>
@@ -327,13 +327,13 @@ export function AdminOrderCancelAction({ orderId }: { orderId: string }) {
           />
         </label>
         <button
-          className="rounded bg-rose-800 px-3 py-2 text-white disabled:opacity-50"
+          className="rounded bg-status-error-ink px-3 py-2 text-primary-foreground disabled:opacity-50"
           disabled={busy}
           type="submit"
         >
           Batalkan order
         </button>
-        <p aria-live="polite" className="text-xs text-stone-600">
+        <p aria-live="polite" className="text-xs text-muted-foreground">
           {message}
         </p>
       </form>
