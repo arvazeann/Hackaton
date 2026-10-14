@@ -10,7 +10,7 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 
 ## Current Status
 
-- Current task: LAN development access and Auth.js host handling fixed for active private IPv4 interfaces. Next dev assets and auth endpoints were checked over localhost and the current LAN IP; Windows Firewall still needs an Administrator-run Private-only rule because the active Wi-Fi profile is Public. Typecheck, lint, repository format check, and 179 Vitest tests pass. Physical-device browser flows and production build remain unverified. UI refresh UI-1 remains in progress.
+- Current task: Vercel Prisma build fix added: Prisma Client now generates on install, and npm's install-script allowlist explicitly permits the reviewed Prisma/build packages. Local generation, typecheck, lint, format check, and 179 tests pass. The Vercel deployment has not been rebuilt from these changes; the supplied URL currently shows Vercel Login (deployment protection), so the app UI is not yet verified there. Production build remains unverified. LAN/Auth.js development work is recorded below; UI refresh UI-1 remains in progress.
 - Last completed implementation stage: Stage 6 follow-up: Admin Area Phase 2; B1, B2, and Admin Phases 1–2 extend Stage 6 without renumbering. UI refresh is a presentation-only follow-up.
 - Interim local-disk product image storage is implemented for the single-machine demo. Stage 7 Cloudflare R2 remains proposed and has not started.
 
@@ -79,6 +79,21 @@ Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Pri
 - Admin changes never modify platform roles, password credentials, product images/ownership, or order snapshots. Audit metadata contains allowlisted field names and state transitions only.
 
 ## Verification
+
+### Vercel Prisma Client generation — 2026-10-14
+
+| Check                  | Status  | Command / notes                                                                                        |
+| ---------------------- | ------- | ------------------------------------------------------------------------------------------------------ |
+| Prisma Client generate | PASS    | `npm run db:generate` generated Prisma Client 7.10.0 under ignored `src/generated/prisma/`.            |
+| Typecheck              | PASS    | `npm run typecheck`                                                                                    |
+| Lint                   | PASS    | `npm run lint`                                                                                         |
+| Format check           | PASS    | `npm run format:check`                                                                                 |
+| Tests                  | PASS    | `npm test` — 36 files, 179 tests; existing Vite CJS deprecation warning.                               |
+| Install-script policy  | PASS    | `npm install-scripts ls` — no unreviewed scripts; explicit version-pinned npm allowlist in package.    |
+| Production build       | NOT RUN | A build can execute server-side code that reads Supabase and writes `.next`; deployment build pending. |
+| Live Vercel UI         | NOT RUN | HTTP 200 returned Vercel Login page; deployment protection prevented application inspection.           |
+
+The latest provided Vercel log still runs `npm run build` without Prisma generation. Commit/push and a new Vercel deployment are required to exercise these changes. No migrations or database writes were run.
 
 ### LAN development access and Auth.js host handling — 2026-10-14
 
@@ -472,7 +487,7 @@ Build completed without warnings after adding a Turbopack ignore annotation for 
 
 ## Next Approved Step
 
-Finish UI-1 by resolving the Windows `.next` EPERM build failure and completing the remaining manual visual review. Do not start UI-2 or Stage 7 without user approval.
+Review the Vercel build fix, then commit/push it and redeploy manually. Confirm the build log runs Prisma generation before Next.js build; review Vercel Deployment Protection before testing the public URL. Do not apply migrations or start Stage 7 without approval.
 
 ## Handoff Notes
 
