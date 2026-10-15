@@ -85,26 +85,26 @@ export function ProductGrid({
 
         return (
           <ProductCardReveal key={product.id} delay={Math.min(index, 7) * 60}>
-            <article className="group/card group relative flex h-full flex-col rounded-3xl bg-peach p-2 shadow-product-card transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-safe:hover:-translate-y-0.5 motion-safe:hover:shadow-product-card-hover motion-reduce:transition-none motion-reduce:transform-none motion-reduce:animation-none">
+            <article className="product-card group/card group relative flex h-full flex-col rounded-3xl bg-peach p-2 shadow-product-card focus-within:z-10">
               <Link
                 href={`/products/${product.id}`}
                 aria-label={`Lihat ${product.title}`}
-                className="absolute inset-0 z-0 rounded-3xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+                className="product-card-link absolute inset-0 z-0 rounded-3xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
               />
-              <div className="pointer-events-none relative isolate aspect-[4/5] w-full overflow-hidden rounded-2xl bg-sage/30 transform-gpu">
+              <div className="pointer-events-none relative isolate aspect-[4/5] w-full overflow-hidden rounded-[1.25rem] bg-peach transform-gpu">
                 <ProductCardImage
                   src={product.coverImageUrl}
                   alt={product.title}
                   sizes="(max-width: 1023px) 50vw, 33vw"
                 />
-                <div className="pointer-events-none absolute left-2.5 top-2.5 z-10">
+                <div className="pointer-events-none absolute left-3 top-3 z-10">
                   {product.status === "active" ? (
                     isNewlyUploaded(product.createdAt) && <NewlyUploadedBadge />
                   ) : (
                     <StatusBadge status={product.status} />
                   )}
                 </div>
-                <div className="absolute right-1.5 top-1.5 z-20 grid size-11 place-items-center">
+                <div className="absolute right-2 top-2 z-20 grid size-11 place-items-center">
                   <FavoriteButton
                     productId={product.id}
                     initial={product.isFavorited}
@@ -114,7 +114,7 @@ export function ProductGrid({
                 </div>
                 <span
                   aria-hidden="true"
-                  className="pointer-events-none invisible absolute bottom-2.5 right-2.5 z-10 flex size-9 translate-y-2 scale-90 items-center justify-center rounded-full bg-primary text-cream opacity-0 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/card:visible group-hover/card:translate-y-0 group-hover/card:scale-100 group-hover/card:opacity-100 group-focus-within/card:visible group-focus-within/card:translate-y-0 group-focus-within/card:scale-100 group-focus-within/card:opacity-100 motion-reduce:transition-none motion-reduce:transform-none motion-reduce:animation-none"
+                  className="pointer-events-none invisible absolute bottom-3 right-3 z-10 flex size-9 translate-y-2 scale-90 items-center justify-center rounded-full bg-primary text-cream opacity-0 transition-[opacity,translate,scale] duration-control ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/card:visible group-hover/card:translate-y-0 group-hover/card:scale-100 group-hover/card:opacity-100 group-focus-within/card:visible group-focus-within/card:translate-y-0 group-focus-within/card:scale-100 group-focus-within/card:opacity-100 motion-reduce:translate-y-0 motion-reduce:scale-100 motion-reduce:transition-none motion-reduce:transform-none motion-reduce:animation-none"
                 >
                   <ArrowUpRight aria-hidden="true" size={16} />
                 </span>

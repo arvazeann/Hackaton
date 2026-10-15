@@ -13,6 +13,7 @@ Permintaan halaman dirender melalui App Router. Data utama dibaca dan diubah ole
 - Implementasi terakhir yang tercatat: tindak lanjut Tahap 6, Area Admin Fase 2; audit dan perbaikan UI setelahnya tidak menambah tahap.
 - Tahap 6 dan tindak lanjut yang tercatat telah diimplementasikan, tetapi verifikasi langsung pada Preview dan uji browser menyeluruh masih tertunda.
 - README ini disusun berdasarkan keadaan repo dan catatan verifikasi 2026-10-15.
+- Perapian UI terakhir: kartu `ProductGrid` memiliki foto `object-cover` berinset sekitar 10 px, rounded clipping, hover scale 1,015x/naik 2 px, zoom gambar 1,02x, dan feedback tekan. Gerakan hormat pada `prefers-reduced-motion`; badge, favorit, serta tombol Jual mempertahankan fungsi.
 
 ## Fitur yang Sudah Diimplementasikan
 
@@ -225,18 +226,18 @@ Skrip `start` memerlukan build yang berhasil terlebih dahulu. Konfigurasi penyed
 
 ## Verifikasi
 
-Pemeriksaan lokal terakhir yang tercatat berasal dari 2026-10-15 (audit pembersihan). Hasil tersebut adalah catatan sebelumnya, bukan perintah yang dijalankan saat memperbarui README ini.
+Pemeriksaan lokal terakhir dijalankan pada 2026-10-15 setelah perbaikan interaksi product card. Build tidak dijalankan karena dev server memakai `.next` yang sama dan percobaan build sebelumnya gagal saat menghapus manifest dengan EPERM.
 
-| Pemeriksaan                | Status      | Hasil tercatat                                                                                                                                                                                                     |
-| -------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Pemeriksaan tipe           | PASS        | `npm run typecheck` lulus setelah `npx next typegen` membuat ulang tipe rute.                                                                                                                                      |
-| Lint                       | PASS        | `npm run lint` lulus.                                                                                                                                                                                              |
-| Pemeriksaan format         | PASS        | `npm run format:check` lulus.                                                                                                                                                                                      |
-| Test                       | PASS        | `npm test -- --reporter=dot`: 42 berkas, 226 test lulus.                                                                                                                                                           |
-| Build                      | NOT RUN     | Percobaan sebelumnya gagal sebelum kompilasi karena EPERM pada `.next` di Windows; audit pembersihan tidak mengulangnya.                                                                                           |
-| Pemeriksaan browser manual | NOT RUN     | Persistensi staging, akses/OAuth Preview, unggahan sungguhan, dan E2E browser masih tertunda. Lihat `docs/STAGING-E2E-CHECKLIST.md`.                                                                               |
-| Validasi database          | PASS        | `npm run db:validate` lulus dalam audit pembersihan. Pemeriksaan target staging dan `SELECT 1` hanya-baca lulus pada 2026-10-15; ini tidak membuktikan perilaku aplikasi ter-deploy.                               |
-| Audit dependensi           | FAIL / TODO | Audit terakhir menemukan 15 advisory (2 kritis, 10 tinggi, 3 sedang), termasuk 4 temuan tinggi pada dependensi production. Tidak ada dependensi yang diubah karena perbaikan usulan perlu diuji kompatibilitasnya. |
+| Pemeriksaan                | Status      | Hasil tercatat                                                                                                                                                                                                                                                                                                        |
+| -------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pemeriksaan tipe           | PASS        | 2026-10-15: `npm run typecheck` lulus setelah perubahan motion product card.                                                                                                                                                                                                                                          |
+| Lint                       | PASS        | 2026-10-15: `npm run lint` lulus setelah perubahan motion product card.                                                                                                                                                                                                                                               |
+| Pemeriksaan format         | PASS        | 2026-10-15: `npx prettier --check` pada README, CSS, kartu, gambar, favorit, dan navbar lulus.                                                                                                                                                                                                                        |
+| Test                       | PASS        | 2026-10-15: `npm test -- --reporter=dot`: 42 berkas, 226 test lulus. Peringatan CJS Vite tetap muncul.                                                                                                                                                                                                                |
+| Build                      | NOT RUN     | Percobaan sebelumnya gagal sebelum kompilasi karena EPERM pada `.next` di Windows; audit pembersihan tidak mengulangnya.                                                                                                                                                                                              |
+| Pemeriksaan browser manual | FAIL        | Chrome headless: hover 1,015x, image 1,02x, shadow/arrow, mouse-leave, reduced-motion, mobile 390 px tanpa overflow, dan aksi favorit guest ke login terverifikasi. Pointer press terdeteksi, tetapi navigasi dari klik mouse tidak terkonfirmasi. Staging/E2E masih tertunda; lihat `docs/STAGING-E2E-CHECKLIST.md`. |
+| Validasi database          | PASS        | `npm run db:validate` lulus dalam audit pembersihan. Pemeriksaan target staging dan `SELECT 1` hanya-baca lulus pada 2026-10-15; ini tidak membuktikan perilaku aplikasi ter-deploy.                                                                                                                                  |
+| Audit dependensi           | FAIL / TODO | Audit terakhir menemukan 15 advisory (2 kritis, 10 tinggi, 3 sedang), termasuk 4 temuan tinggi pada dependensi production. Tidak ada dependensi yang diubah karena perbaikan usulan perlu diuji kompatibilitasnya.                                                                                                    |
 
 ## Masalah yang Diketahui dan Catatan Pengembangan
 
