@@ -1,593 +1,272 @@
-# RuangLagi â€” Marketplace Preloved
-
-## Project Overview
-
-MVP marketplace barang preloved untuk kebutuhan anak kos, dibangun dengan Next.js App Router.
-
-## Tech Stack
-
-Next.js 16.4 + TypeScript, Tailwind CSS, Zod + React Hook Form, PostgreSQL + Prisma, Auth.js Credentials + JWT, bcryptjs, Vitest.
-
-## Current Status
-
-- Current task: cleanup audit on 2026-10-15. Supabase staging has all 13 migrations applied; local Prisma category and product reads pass (7 categories, no products). Vercel Preview database selection, browser E2E, and Preview Google OAuth remain unverified. The previous Vercel `P2039` connection-limit issue has not been load-tested or confirmed resolved; see the latest Verification entry and `docs/STAGING-E2E-CHECKLIST.md`.
-- Last completed implementation stage: Stage 6 follow-up: Admin Area Phase 2; B1, B2, and Admin Phases 1–2 extend Stage 6 without renumbering. UI refresh is a presentation-only follow-up.
-- Product, avatar, and store-logo uploads now use Supabase Storage through server-only credentials; legacy local images can be copied with the non-destructive migration script.
-
-## Architecture
-
-- UI and route handlers: `src/app/`, `src/components/`
-- Schemas and DTOs: `src/schemas/`, `src/types/`
-- Seed fixtures: `src/lib/seed-data.ts` (used by `prisma/seed.ts`, not runtime UI)
-- Prisma services: `src/server/services/`
-- Domain API routes: `src/app/api/products/`, `src/app/api/orders/`, `src/app/api/favorites/`, `src/app/api/profile/`
-- B2 routes: `src/app/store/`, `src/app/notifications/`, `src/app/wishlist/`, `src/app/api/notifications/`
-- Authentication: `auth.ts`, `src/lib/auth/`, `src/app/api/auth/`
-- Prisma: `prisma/schema.prisma`, `prisma/migrations/`, `prisma/seed.ts`
-
-## Implemented Features
-
-- Registration validates on the server, normalizes email, handles duplicate-email races, and stores bcrypt hashes.
-- Auth.js Credentials verifies credentials against PostgreSQL and uses JWT sessions.
-- `/login` and `/register` share a responsive animated auth experience while retaining both URLs; optional Google OAuth is enabled only when both server credentials are configured.
-- Google sign-in requires Google's verified email and maps it to the existing User row; new Google users receive a random, unusable bcrypt password. No OAuth `Account` table or adapter exists, so provider linking is by verified email and no Google subject is persisted.
-- Session JWT contains the user ID, session version, and standard JWT timing identifiers; session resolution checks the current enabled account and role from PostgreSQL.
-- Authenticated pages use server-side session checks and redirect visitors to login with a return path.
-- Navigation displays signed-in state and provides Auth.js logout.
-- Product listing, detail, seller dashboard, create, update, and archive use Prisma through `src/server/services/products.ts`.
-- Product UI maps Prisma category/image relations to the existing DTO shape. Public product DTOs omit seller phone and internal password data.
-- Product and order mutations use domain API routes with session-derived identity and Prisma services.
-- Uploaded product/profile images use authenticated server-side Supabase Storage uploads; PostgreSQL stores UUID keys and ownership metadata, while a validated same-origin route redirects image reads to the public bucket. Seed products continue using existing local SVG assets.
-- Order creation, listing, and status actions use Prisma services. Product reservation/sale changes are coupled to order transitions in transactions.
-- Favorite listing and mutations use the Prisma `Favorite` relation. Authenticated product DTOs contain database-derived `isFavorited`; visitor favorite buttons are disabled.
-- Profile reads and updates use the session user's Prisma record, with explicit editable fields and no `passwordHash` in responses.
-- Stage 6 follow-up B1 adds profile bio/avatar, password change, scoped address book and checkout prefill, private seller activation/profile, masked payment account management, buyer/seller aggregate dashboard, and payment snapshot visibility.
-- New avatar/logo uploads record the session owner and purpose. Seller payment numbers and complete order payment snapshots are AES-256-GCM encrypted; only masked last-four digits appear in account lists.
-- Order confirmation now requires a selected active seller payment account. Existing confirmed/completed orders are not backfilled and show the buyer a neutral contact-seller message.
-- Sellers with pending orders and no active payment account see a dashboard banner linking to payment account management. Avatar/logo assignment rejects uploaded keys that do not match the signed-in owner and expected purpose.
-- Seeded seller profiles use collision-safe URL slugs and keep province nullable until store profile completion.
-- Public stores use a strict allowlist DTO; phone, email, pickup addresses, and payment data are excluded. Store vacation hides listings and blocks new orders while preserving existing order processing.
-- In-app order notifications use transactional status updates and owner-scoped access; disabled types are not created. Wishlist reuses the private unique `Favorite` relation and rejects own products.
-- Admin Phase 2 adds audited account name and enable/disable actions, active-product edit/archive, pending-order cancellation, and a paginated audit-log view. Disabling revokes sessions with `sessionVersion`; account, product, and order changes share transactions with their audit rows. Cancellation notifications run after commit with bounded retries and respect recipient preferences.
-- Warm visual refresh: cream-and-forest color tokens, responsive search/navigation and catalog filters, consistent product cards, and clearer empty/auth/form states across client marketplace pages. Existing service contracts and business rules remain unchanged.
-- Desktop-first marketplace refinement: one-row desktop navbar with account disclosure, compact guest actions, seller/account shortcuts, expanded desktop content widths, editorial serif headings, and visible product-condition labels. The seller CTA keeps its existing route and server-side activation requirements.
-- Product presentation refinement: shared product cards preserve full product imagery and clarify price, condition, category, location, and seller hierarchy; the catalog uses three or four desktop columns according to viewport width. The homepage highlights the actual newest product from the existing listing query, and detail/store layouts use a tighter editorial composition.
-- Product interaction and homepage refinement: product cards and wishlist controls use subtle lift, image and icon transitions, and reduced-motion support. The desktop hero is capped at 1440 px wide, its feature image at 280–340 px high, and category spacing is tighter so product listings appear sooner.
-- RuangLagi is positioned as a contemporary flea market for boarding-house residents. Homepage, catalog, navigation search, footer, metadata, seller form, and login/register marketing copy focus on affordable dorm essentials without changing authentication or transaction flows.
-- Product categories are database-managed and shared by seller create/edit, catalog filters, and admin filters: Furnitur & penyimpanan, Perlengkapan tidur, Elektronik, Dapur, Kebersihan & laundry, Belajar & kerja, and Lainnya. The migration preserves product rows and order snapshots; seed examples use explicit category slugs and boarding-house items.
-- UI refresh UI-1 implementation in progress: approved warm-cream/green/orange tokens and DM Sans/DM Serif Display fonts; shared navbar/footer/page-header; peach product cards and status labels; responsive category, condition, price/location filters; sort toolbar and numbered pagination. No service, schema, API, action, or business-rule changes. UI-2 page layout work has not started.
-
-## Important Decisions
-
-- PostgreSQL is the database; Prisma is used for ORM and migrations.
-- Auth.js Credentials uses JWT sessions; bcryptjs with cost 12 hashes passwords.
-- Optional Google OAuth requires both `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET`; email linking accepts only a Google profile with `email_verified: true`. The current schema does not persist provider account IDs.
-- `passwordHash` is never sent to the client or included in session data.
-- Buyers can always view their own shipping data; sellers see phone/address only for `confirmed` or `completed` orders.
-- Order cancellation requires a 5-500 character reason; cancelled orders require `cancel_reason`.
-- Current explicit upload decision: app accepts JPEG/PNG/WebP up to 3,000,000 bytes (3 MB decimal); this overrides Blueprint §10's historical 5 MB limit for implementation. The Supabase `ruanglagi-images` bucket is public and configured for 3,145,728 bytes (3 MiB); it was inspected read-only and not changed.
-- Approved category taxonomy: `furnitur-penyimpanan`, `perlengkapan-tidur`, `elektronik`, `dapur`, `kebersihan-laundry`, `belajar-kerja`, and `lainnya`; category records remain database-backed rather than being duplicated as form/filter options.
-- `/api/mock` and its client helper were removed after all product, order, favorite, and profile mutations moved to domain routes.
-- Product, order, favorite, and profile operations use authenticated database UUIDs directly; no UUID-to-mock-ID mapping is used.
-- A new order remains `pending` while its product stays `active`; confirming reserves the product, completing marks it sold, and cancelling a confirmed order restores it to active.
-- At most one `pending` or `confirmed` order may exist per product. The service handles unique conflicts without exposing database details.
-- Auth.js secret is stored in ignored `.env.local`; never commit or expose it.
-- Uploaded media uses the `ruanglagi-images` public Supabase Storage bucket. `SUPABASE_URL`, `SUPABASE_STORAGE_BUCKET`, and either `SUPABASE_SECRET_KEY` (preferred) or legacy `SUPABASE_SERVICE_ROLE_KEY` are server-only; never use a `NEXT_PUBLIC_` prefix. Public access is for image reads; uploads/deletes run only on the authenticated server.
-- Payment encryption uses server-only `PAYMENT_ENCRYPTION_KEY` for `v1` and optional `PAYMENT_ENCRYPTION_KEY_V2` for `v2` (base64, 32 bytes each); generate locally using the command in `.env.example` and never commit either value. Keep the `v1` key until all stored `v1` ciphertext has been re-encrypted and the rollback window has ended.
-- Seller payment accounts are soft-deactivated, limited to three active entries, and do not modify payment snapshots on existing orders. Address/order shipping snapshots are likewise immutable.
-- Product create/update require image metadata to belong to the current seller and have purpose `PRODUCT`; product uploads also require an existing seller profile. Legacy static seed SVGs and local-disk fallback reads remain supported. Old local files are not deleted by the migration script.
-- Notification preferences default to enabled without creating preference rows; disabled types skip notification creation while order status remains visible on the order page.
-- Admin changes never modify platform roles, password credentials, product images/ownership, or order snapshots. Audit metadata contains allowlisted field names and state transitions only.
-
-## Verification
-
-### Cleanup audit — 2026-10-15
-
-- Removed unused stock Next.js starter assets `public/file.svg`, `public/globe.svg`, `public/next.svg`, `public/vercel.svg`, and `public/window.svg`; product fallback SVGs and local uploaded images were retained. No dependency or application code was removed or refactored.
-- `npm test -- --reporter=dot`: PASS (42 files / 226 tests); `npm run lint`, `npm run format:check`, `npm run db:validate`, and `git diff --check`: PASS.
-- `npm run typecheck` initially failed because the user removed `.next`, which contained generated `LayoutProps` and `RouteContext` declarations. `npx next typegen` regenerated framework route types without a build; typecheck then passed.
-- Build NOT RUN: the prior Windows `.next` EPERM has not been diagnosed. No database or deployment operation was run for this cleanup.
-
-### Staging and E2E preparation — 2026-10-14
-
-- `scripts/verify-staging-target.ts` validates the staging database and Storage project refs/bucket names before dynamically importing Prisma, then runs read-only `SELECT 1`; it never prints URLs/secrets or writes data. Connection failures are categorized without echoing raw driver messages. `npm run staging:verify` exited 1 at the guard with `Distinct staging and production project refs are required.` `.env.staging.local` is absent, so no database connection was attempted; `P1001` and `P2039` remain unverified.
-- `docs/STAGING-E2E-CHECKLIST.md` contains staging setup, user journeys, database persistence queries, OAuth/Deployment Protection steps, and cleanup boundaries. No Playwright/Cypress/browser E2E dependency is installed; recommend Playwright after staging and accounts are ready, but no dependency was added. Browser E2E and Google Preview login are BLOCKED/NOT TESTED.
-- `npm test -- --reporter=dot`: PASS (41 files / 217 tests); typecheck, lint, format check, Prisma schema validation, and `git diff --check`: PASS. `npm audit --omit=dev`: FAIL (4 High package findings across Prisma dependency paths; npm proposes a breaking Prisma 6 downgrade). Candidate transitive overrides exist, but they were not applied because Prisma 7.10.0 compatibility has not been tested in this repository.
-- Build NOT RUN: `.next/dev/lock` exists and Node processes are active; no process was stopped and no `.next` files were removed. No staging DB/Storage writes, OAuth login, or deployed tests were performed.
-
-### 3 MB cap and external integration follow-up — 2026-10-14
-
-- `IMAGE_MAX_BYTES` is 3,000,000 bytes (decimal MB); the browser uploader and server share this constant. Tests accept exactly the limit and reject one byte above. The explicit user decision overrides the older 5 MB Blueprint text; the Supabase `ruanglagi-images` bucket was inspected read-only: 3,145,728 bytes (3 MiB), public, no MIME allowlist; settings were not changed. The app cap is lower at 3,000,000 bytes. Each selected file is sent in its own multipart request, so a 3 MB file plus small multipart overhead is below the documented 4.5 MB Vercel Functions body limit; this is a source/configuration assessment, not a live Vercel upload test.
-- Local Vercel/Supabase CLI commands, Vercel project link, staging env, and connected provider apps are unavailable. Vercel and Supabase connectors were found in the plugin directory but are not installed/connected. `npm run staging:verify` stops before connecting because project refs are missing. `P1001` root cause and whether deployed Preview still sees `P2039` remain **BLOCKED/NOT TESTED**.
-- Auth.js source uses the default `/api/auth` route; Production provider metadata reports `/api/auth/callback/google`. Preview metadata is behind Vercel deployment protection. Google Cloud allowlist and a real Preview OAuth login remain **NOT TESTED**.
-- Tests (40 files / 210 tests), typecheck, lint, format check, Prisma validation, and diff check: PASS. `npm audit --omit=dev`: FAIL (4 High findings: `deepmerge-ts@7.1.5` and `mysql2@3.15.3` under Prisma 7.10.0). Patched transitive versions exist, but no override was applied because this repo has not regression-tested them against Prisma 7.10.0. Build NOT RUN: Node PID 17028 remains active and `.next/dev/lock` exists. No database write, upload, migration, OAuth login, deploy, or dependency change was performed.
-- Preview DB, provider configuration, and end-to-end browser tests remain **BLOCKED**. Release remains **NOT READY FOR DEMO**.
+# RuangLagi — Pasar Barang Preloved
+
+MVP pasar barang preloved untuk kebutuhan anak kos, dibangun dengan Next.js App Router, PostgreSQL, dan Prisma. README ini menjelaskan implementasi aktual; fitur yang masih menunggu pemeriksaan langsung ditandai.
 
-### Preview database and OAuth audit — 2026-10-14
+## Gambaran umum
 
-- Google Auth.js follow-up (2026-10-15): `/api/auth/callback/google` remains the provider callback. `/login` now receives Auth.js error redirects and maps known provider errors to safe Indonesian messages; callback paths are validated against same-origin URL parsing. Targeted auth tests (13), typecheck, lint, and `git diff --check` pass. Staging Google credentials/provider settings and Google Cloud redirect URI are not locally verifiable; live Preview OAuth remains NOT TESTED. No Production configuration was changed.
+Pengunjung dapat melihat katalog dan toko publik. Pengguna terdaftar dapat menjadi pembeli dan penjual, mengelola produk/profil, menyimpan favorit, membuat pesanan, dan mengikuti notifikasi. Administrator dapat mengelola akun, produk, pesanan, alamat, dan log audit melalui area admin.
 
-- `npm test -- --reporter=dot`: PASS (40 files / 209 tests); typecheck, lint, format check, Prisma schema validation, and diff check: PASS. Production-only dependency audit: FAIL (4 High findings in Prisma dependency paths; npm's suggested fix is a breaking Prisma 6 downgrade, not applied). `npm run staging:verify`: BLOCKED before connection because distinct project refs are not configured.
-- `DATABASE_URL` is used by both `src/lib/db.ts` and `prisma.config.ts`; `DIRECT_URL` is not read. The existing one-connection `pg.Pool` is compatible with the configured `PrismaPg` adapter and limits connections per warm instance, but no new Preview logs were available to establish whether `P2039` persists. `P1001` root cause remains BLOCKED because `.vercel/project.json`, Vercel CLI, and isolated staging env are absent; no DB URL or secret was printed or tested.
-- Auth.js uses its default `/api/auth` handler; source and Production `/api/auth/providers` report `https://ruanglagi.vercel.app/api/auth/callback/google`. Preview auth provider endpoint redirects to Vercel deployment protection, so Preview callback and Google login were NOT TESTED. Public GETs for home/catalog/login/register returned 200; this is not E2E evidence. A sample Production upload URL returned HTTP 200 `image/jpeg`; Preview image route redirected to deployment protection.
-- Upload cap: frontend, API response, and shared storage validation use 3,000,000 bytes (3 MB decimal). This explicit user decision overrides Blueprint §10's older 5 MB setting; Blueprint remains unchanged. Supabase bucket cap is 3,145,728 bytes (3 MiB), checked read-only and not altered. Unit tests cover exact app-limit acceptance and one-byte-over rejection; real upload remains BLOCKED pending staging.
-- Build NOT RUN: local Next.js process PID 17028 still owns port 3000 and may use `.next`. Browser E2E is BLOCKED: Preview requires deployment access and no staging/test account is configured. Release remains **NOT READY FOR DEMO**.
+Permintaan halaman dirender melalui App Router. Data utama dibaca dan diubah oleh Server Component, penangan rute API, serta layanan server yang memakai Prisma. Perubahan melalui API mendapatkan identitas dari sesi Auth.js; masukan divalidasi dengan Zod. Data tersimpan di PostgreSQL, sedangkan gambar unggahan disimpan di Supabase Storage. SVG data awal tetap berada di `public/products/`.
 
-### Final prototype audit — 2026-10-15
+## Status Saat Ini
 
-- `npm test -- --reporter=dot`: PASS (42 files / 226 tests); typecheck, lint, full format check, `git diff --check`, and Prisma schema validation: PASS. `npm run staging:verify`: PASS for project/bucket guard and read-only `SELECT 1`; no database rows were changed. This does not prove application queries or the prior Vercel `P2039` under serverless concurrency are resolved.
-- `npm audit --omit=dev`: FAIL with four High findings in the Prisma dependency tree (`deepmerge-ts` and `mysql2`); npm's offered fix downgrades Prisma to 6 and was not run. `npm run build`: FAIL before compilation with `EPERM` unlinking `.next/app-path-routes-manifest.json`; no cleanup or retry was done. Next reported `.env.local` loaded, so this was not a fully isolated build. Browser E2E, Google OAuth Preview, and real Storage upload/render remain unverified.
+- Implementasi terakhir yang tercatat: tindak lanjut Tahap 6, Area Admin Fase 2; audit dan perbaikan UI setelahnya tidak menambah tahap.
+- Tahap 6 dan tindak lanjut yang tercatat telah diimplementasikan, tetapi verifikasi langsung pada Preview dan uji browser menyeluruh masih tertunda.
+- README ini disusun berdasarkan keadaan repo dan catatan verifikasi 2026-10-15.
+
+## Fitur yang Sudah Diimplementasikan
+
+- Pendaftaran dan masuk menggunakan email/kata sandi dengan bcrypt; Google OAuth tersedia secara opsional jika kedua kredensial server diatur.
+- Katalog, detail produk, pencarian/filter/pengurutan/paginasi, toko publik, dasbor penjual, serta pembuatan, penyuntingan, dan pengarsipan produk.
+- Favorit privat, pesanan, perubahan status pesanan, dan notifikasi dalam aplikasi.
+- Profil pengguna, avatar, bio, daftar alamat, pengaturan notifikasi, profil toko, mode liburan, dan akun pembayaran penjual.
+- Area admin untuk mengelola akun/produk/pesanan dengan pencatatan audit.
+- Unggah gambar produk/avatar/logo melalui endpoint server ke Supabase Storage; gambar dibaca melalui rute dari origin yang sama. Batas aplikasi 3.000.000 byte per berkas, dengan tipe JPEG/PNG/WebP.
+- Enkripsi AES-256-GCM untuk nomor rekening pembayaran dan snapshot instruksi pembayaran.
+
+## Teknologi yang Digunakan
+
+- Next.js 16.4.0 App Router, React 19.3.0, TypeScript strict.
+- Tailwind CSS 4, Radix UI, Lucide, Sonner.
+- Zod 4, React Hook Form, `@hookform/resolvers`.
+- PostgreSQL, Prisma 7.10.0 dengan adapter `pg`.
+- Auth.js 5 beta dengan Credentials dan JWT, bcryptjs.
+- Vitest 2 untuk pengujian unit/komponen; ESLint 9 dan Prettier 3.
 
-### Website repair follow-up — 2026-10-14
+Versi di atas berasal dari `package.json`/lockfile saat README ini diperiksa. `package-lock.json` menunjukkan npm sebagai pengelola paket.
 
-- `npm test -- --reporter=dot`: PASS (40 files / 209 tests); `npm run typecheck`, `npm run lint`, `npm run db:validate`, `npm run format:check`, and `git diff --check`: PASS. `npm audit --omit=dev`: FAIL (4 High findings in Prisma dependency paths; proposed npm remediation is a breaking Prisma 6 downgrade). Build and real staging DB/Storage/browser E2E were NOT RUN.
-- Source changes limit each Node `pg.Pool` to one connection per warm function instance and reduce product-card motion while displaying the full image. This mitigates per-instance session usage but does not correct an unreachable or incorrectly configured Preview `DATABASE_URL`; external deployment variables must be checked.
-- Staging is not configured and local DB/Storage are known Production targets; no remote database query, upload, migration, login, deployment, or data mutation was run. Release remains **NOT READY** pending isolated staging and provider/browser verification. Pooler URL must be copied from the intended Supabase project's Connect dialog into Vercel Preview `DATABASE_URL`; do not reuse Production values.
+## Arsitektur dan Alur Data
 
-### Production website audit — 2026-10-14
+```mermaid
+flowchart LR
+  Browser --> Pages[Next.js App Router]
+  Pages --> Auth[Sesi Auth.js]
+  Pages --> Routes[Penangan rute API]
+  Routes --> Validate[Validasi Zod]
+  Routes --> Services[Layanan server]
+  Pages --> Services
+  Services --> Prisma[Prisma Client + pg adapter]
+  Prisma --> DB[(PostgreSQL)]
+  Routes --> Uploads[Authenticated upload route]
+  Uploads --> Storage[(Supabase Storage)]
+  Browser --> ImageRoute[Same-origin image route]
+  ImageRoute --> Storage
+```
+
+Pada perubahan melalui API, rute memeriksa sesi aktif, mengambil ID pengguna dari sesi, memvalidasi masukan, memanggil layanan, lalu mengembalikan hasil bertipe. Layanan menegakkan kepemilikan dan aturan status, serta memakai transaksi database untuk perubahan pesanan/produk yang saling terkait dan catatan audit admin. Halaman atau formulir menampilkan hasilnya. DTO produk/toko publik tidak menyertakan data akun privat; informasi kontak pada pesanan disesuaikan dengan peran pengguna dan status pesanan.
+
+## Peta Direktori
+
+```text
+src/
+  app/                  Halaman, layout, status loading/error, dan rute API
+    api/                Auth, produk, pesanan, favorit, profil, unggahan, admin, notifikasi
+  components/           Formulir, layout, produk, profil, pesanan, admin, UI
+  generated/prisma/     Prisma Client hasil generate (dibuat oleh prisma generate)
+  lib/                  Klien DB, helper auth, pemformatan, dukungan skema, utilitas bersama
+  schemas/              Skema masukan Zod
+  server/
+    actions/            Server actions (termasuk auth)
+    admin/              Otorisasi admin dan helper HTTP
+    security/           Enkripsi pembayaran dan pemeriksaan/diagnostik staging
+    services/           Operasi domain/database
+    storage/            Adapter penyimpanan gambar lokal dan Supabase
+  types/                DTO dan tipe sesi Auth.js
+prisma/
+  schema.prisma         Model PostgreSQL, enum, relasi, dan indeks
+  migrations/           Migrasi SQL berurutan
+  seed.ts               Titik awal pengisian data awal database
+  verify-constraints.ts Helper untuk memeriksa batasan database
+scripts/                Utilitas inisialisasi admin, migrasi penyimpanan, staging, dan pembayaran
+docs/                   Blueprint, keputusan desain, audit, QA, dan daftar periksa staging
+public/products/        Berkas SVG produk bawaan untuk data awal
+```
 
-- `npm test -- --reporter=dot`: PASS (39 files / 206 tests); `npm run typecheck`, `npm run lint`, `npm run format:check`, `git diff --check`, and `npm run db:validate`: PASS. `npm audit --json`: FAIL (15 advisories); `npm audit --omit=dev --json`: FAIL (4 High findings).
-- Public read-only GETs: home, catalog, login, registration, and account shells returned HTTP 200; home/catalog returned no product links or image tags. Google appears in Auth.js providers response, but current callback completion was NOT TESTED. Browser/mobile, database, Storage and post-redeploy checks were NOT TESTED. `npm run staging:verify` BLOCKED before connection because isolated project refs are absent.
-- Production build BLOCKED/not run because the local Next.js process owns this repository's port 3000 and may be using `.next`. No production write, upload, migration, OAuth flow or deployment was performed. Current release status: **NOT READY**. Detailed evidence/findings: [`docs/WEBSITE-AUDIT-REPORT.md`](docs/WEBSITE-AUDIT-REPORT.md).
-
-### Full QA pass — 2026-10-14
-
-- `npm test -- --reporter=dot`: PASS, 37 files / 189 tests; Vite CJS deprecation warning. `npm run typecheck`, `npm run lint`, `npm run format:check`, and `npm run db:validate`: PASS.
-- `npm audit --json`: FAIL, 15 findings (2 Critical, 10 High, 3 Moderate). `npm audit fix --dry-run` BLOCKED by `EALLOWREMOTE`; no dependency changes made. Google OAuth fails with the reported `redirect_uri_mismatch`; exact callback must be added to the matching Google Web OAuth client.
-- Secret variable names were checked without printing values. Local DB and Storage point to the same known production project, not staging. Production build and live browser/database/Storage checks were not run; a Next.js process owns port 3000 and `.next` may be in use. No rotations, migrations, production writes/uploads, or deploys were performed.
-- Full inventory, matrix, evidence, scenarios, findings, and staging checklist: [`docs/QA-REPORT-2026-10-14.md`](docs/QA-REPORT-2026-10-14.md).
+Titik masuk penting: `src/app/layout.tsx` (layout utama), `src/app/page.tsx` (beranda), `auth.ts` (konfigurasi Auth.js), `src/lib/db.ts` (pool Prisma/pg), `src/schemas/index.ts` (skema masukan), dan `src/server/services/` (akses data domain). `src/instrumentation.ts` memvalidasi kunci enkripsi pembayaran saat runtime Node.js dimulai, kecuali saat build produksi.
 
-### Security remediation follow-up — 2026-10-14
+### Alur fitur: autentikasi
 
-- Payment encryption reads `v1` with the existing key and reads/writes `v2` with optional `PAYMENT_ENCRYPTION_KEY_V2`. Existing writes remain `v1` until that key is configured. Both keys must be distinct. A resumable database utility exists with synthetic unit tests; it has not been run against isolated staging. Do not configure the new key in production until staging verification, re-encryption, and rollback testing pass.
-- Verification: `npm test -- --reporter=dot` PASS (37 files / 191 tests); `npm run typecheck` PASS; `npm run lint` PASS; `npm run format:check` PASS. Prettier cannot infer a parser for `.env.example`, but the repository format check passes. No DB, provider, or deployment operation was run.
-- Dependency audit still reports 15 advisories. Registry metadata was available, but `npm audit fix --dry-run` failed with `EALLOWREMOTE` while fetching a package tarball; no dependency or lockfile changes were made. Production build remains NOT RUN because the existing Next.js process may use `.next`.
-
-### Staging isolation and payment rotation — 2026-10-14
-
-- `scripts/verify-staging-target.ts` and `scripts/reencrypt-payment-data.ts` load only ignored `.env.staging.local`, never `.env.local` or `.env`. The guard compares Supabase Storage and PostgreSQL project refs with distinct `STAGING_PROJECT_REF` and `PRODUCTION_PROJECT_REF`, and requires distinct expected bucket names. It fails before opening Prisma if values are missing, mismatched, or production. It does not print URLs or credentials.
-- Re-encryption reads both actual encrypted columns: `PaymentAccount.accountNumberCiphertext` and nullable `Order.paymentInstructionCiphertext`. It scans bounded pages, validates decrypted values, verifies each generated v2 ciphertext, and uses an atomic compare-and-swap update per row. Rerunning skips readable v2 values and retries remaining v1 values. `--apply` requires `--confirm-staging`; dry-run is `npm run payments:reencrypt -- --dry-run`.
-- Before using either script, create `.env.staging.local` with only staging database, Supabase Storage, Auth.js, Google OAuth, and payment keys; set both project refs and distinct staging/production bucket names after verifying them in Supabase. Keep all test data synthetic. `npm run staging:verify` checks DB/Storage identity first and then issues a read-only `SELECT 1`; it never writes data. The current environment has no staging refs, so it stops before importing Prisma or connecting. The re-encryption utility has only in-memory synthetic tests; no staging DB was read or written.
-- Release status: **NOT READY**. Synthetic tests: 39 files / 206 tests PASS. `npm run staging:verify` and `npm run payments:reencrypt -- --dry-run` both stop safely because staging configuration is absent. Browser E2E, staging provider configuration, production build, dependency remediation, and Google OAuth verification remain outstanding. Never configure v2 in Production in this task.
+Halaman `/login` dan `/register` menggunakan formulir di `src/components/forms/`. Pendaftaran dikirim ke `/api/auth/register`; `src/server/actions/auth.ts` dan `src/lib/auth/credentials.ts` menangani pembuatan akun dan pemeriksaan kredensial. `auth.ts` mengatur Credentials, Google opsional, sesi JWT, dan handler `/api/auth/[...nextauth]`. Halaman terlindungi memeriksa sesi di server; status akun dan versi sesi dicocokkan dengan PostgreSQL. Login Google menerima email terverifikasi dan mencari pengguna berdasarkan email yang dinormalisasi. Tidak ada tabel atau adapter OAuth Account, sehingga ID subjek Google tidak disimpan.
 
-### Supabase image storage migration — 2026-10-14
-
-- The current app accepts up to 3,000,000 bytes (3 MB decimal), JPEG, PNG, and WebP. Verify the `ruanglagi-images` Supabase bucket permits files at least this large before staging upload tests; do not change the remote limit without authorization. Public access is needed for catalog delivery; write/delete calls still use server credentials.
-- Set `SUPABASE_URL`, `SUPABASE_STORAGE_BUCKET`, and preferred `SUPABASE_SECRET_KEY` (Supabase `sb_secret_...`) in ignored `.env.local` and Vercel Production/Preview. Legacy `SUPABASE_SERVICE_ROLE_KEY` JWT remains supported. The new secret key is sent as `apikey` only; legacy service-role JWT is sent as both `apikey` and Bearer authorization. Never expose either key to client code.
-- To copy old `storage/uploads` files without deleting originals, run `npx tsx scripts/migrate-local-images-to-supabase.ts` after setting the environment. The script skips already-present keys and verifies each copied object's public availability.
-- No Prisma schema or migration was needed; existing `ProductImage.storageKey`, `ProductImage.url`, and `UploadedFile.key` columns remain sufficient. `next/image` still receives same-origin `/uploads/<key>` paths, so no remote image host configuration is needed.
-- Checks at the time: `npm run typecheck` PASS; `npm run lint` PASS; `npm test -- --reporter=dot` PASS (189 tests); `npm run format:check` PASS; `npm run db:validate` PASS. Build NOT RUN in that follow-up after a previous Windows `EPERM` during `.next` cleanup. Supabase upload, dashboard bucket, legacy copy, browser page coverage, and Vercel persistence were NOT RUN.
-
-### Supabase secret-key compatibility — 2026-10-14
-
-- Storage uses `SUPABASE_SECRET_KEY` as the `apikey` header for current `sb_secret_...` keys and omits the Bearer header. Legacy `SUPABASE_SERVICE_ROLE_KEY` JWT remains supported using both `apikey` and Bearer authorization. Blank unused key variables are treated as unset.
-- Checks: `npm run typecheck` PASS; `npm run lint` PASS; `npm run format:check` PASS; tests NOT RUN; production build NOT RUN. Supabase credentials, bucket configuration, uploads, and Vercel deployment were not inspected or exercised.
+### Alur fitur: produk, favorit, dan pesanan
 
-### Vercel Prisma Client generation — 2026-10-14
-
-| Check                  | Status  | Command / notes                                                                                        |
-| ---------------------- | ------- | ------------------------------------------------------------------------------------------------------ |
-| Prisma Client generate | PASS    | `npm run db:generate` generated Prisma Client 7.10.0 under ignored `src/generated/prisma/`.            |
-| Typecheck              | PASS    | `npm run typecheck`                                                                                    |
-| Lint                   | PASS    | `npm run lint`                                                                                         |
-| Format check           | PASS    | `npm run format:check`                                                                                 |
-| Tests                  | PASS    | `npm test` — 36 files, 179 tests; existing Vite CJS deprecation warning.                               |
-| Install-script policy  | PASS    | `npm install-scripts ls` — no unreviewed scripts; explicit version-pinned npm allowlist in package.    |
-| Production build       | NOT RUN | A build can execute server-side code that reads Supabase and writes `.next`; deployment build pending. |
-| Live Vercel UI         | NOT RUN | HTTP 200 returned Vercel Login page; deployment protection prevented application inspection.           |
-
-The latest provided Vercel log still runs `npm run build` without Prisma generation. Commit/push and a new Vercel deployment are required to exercise these changes. No migrations or database writes were run.
-
-### LAN development access and Auth.js host handling — 2026-10-14
-
-| Check                   | Status  | Command / notes                                                                                                                                                                                                          |
-| ----------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Typecheck               | PASS    | `npm run typecheck`                                                                                                                                                                                                      |
-| Lint                    | PASS    | `npm run lint`                                                                                                                                                                                                           |
-| Format check            | PASS    | `npm run format:check`                                                                                                                                                                                                   |
-| Tests                   | PASS    | `npm test -- --reporter=dot` — 179 tests in 36 files; existing Vite CJS deprecation warning remains.                                                                                                                     |
-| Build                   | NOT RUN | Existing Next dev server is active on port 3000; a second dev server was refused by the `.next` lock, so a build was not run against the shared output directory.                                                        |
-| LAN HTTP checks         | PASS    | `localhost` and current laptop LAN IP `10.106.7.63` returned `/register` with 200; eight dev JavaScript assets fetched from the LAN origin returned 200; invalid register input returned 400.                            |
-| Auth.js / Prisma checks | PASS    | From LAN host, duplicate registration returned 409 without writing; a wrong-password check returned to `/login` on the LAN host and issued no session cookie. Prisma read-only user/product count transaction succeeded. |
-| Manual browser checks   | NOT RUN | No browser automation or physical second device available. Windows active Wi-Fi profile is `Public`; firewall rule changes were denied because this shell is not elevated. See Known Issues.                             |
-
-Cause/fix: Next 16.4 had an outdated configured LAN origin, so the active private IPv4 address was not permitted for dev assets. Its dev route request also used an internal `localhost` URL even though `Host` and `x-forwarded-host` contained the LAN IP, causing Auth.js error redirects to use localhost. `src/lib/dev-network.ts` now derives only active private IPv4 hosts, filters stale configured private IPs, and normalizes Auth.js request URLs only for validated development hosts. Production behavior is unchanged. `npm run dev:lan` explicitly binds to `0.0.0.0`.
-
-No `.env.local`, database, schema, RLS, or grants were changed. The read-only Prisma check found one user and no products in the selected Supabase database. A cold first homepage request logged one Prisma transaction start timeout; the read-only Prisma transaction passed on retry.
-
-### QA follow-up — 2026-10-13
-
-| Check                    | Status  | Command / notes                                                                                                                                                                                                                                                                                                            |
-| ------------------------ | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Typecheck                | PASS    | `npm run typecheck`                                                                                                                                                                                                                                                                                                        |
-| Lint                     | PASS    | `npm run lint`                                                                                                                                                                                                                                                                                                             |
-| Format check             | PASS    | `npm run format:check` after formatting the changed test file and removing the temporary browser script.                                                                                                                                                                                                                   |
-| Tests                    | PASS    | `npm test` — 175 tests in 35 files; existing Vite CJS deprecation warning remains.                                                                                                                                                                                                                                         |
-| Browser layout checks    | PASS    | Headless Chrome measured `/`, `/login`, and `/register` at 320, 360, 390, 430, 1280, 1440, and 1920 px. `document.documentElement.scrollWidth` matched `clientWidth` at every width; desktop navbar children stayed on one row. Auth transition headings must be interpreted from the active panel; no form was submitted. |
-| Image ownership tests    | PASS    | Product service tests cover current seller, another seller, missing stored file, and that create/edit stop before database writes for invalid ownership.                                                                                                                                                                   |
-| Production build         | NOT RUN | Next dev server remains active on port 3000; build was not run concurrently.                                                                                                                                                                                                                                               |
-| Login/register switch    | PASS    | At 390 px, clicking `Register` on `/login` changed the URL to `/register` and exposed the “Buat akun.” active heading; no form was submitted.                                                                                                                                                                              |
-| Forwarded Server Actions | PASS    | `next.config.ts` now allows the exact configured `NEXT_ALLOWED_DEV_ORIGIN` for Server Actions as well as dev assets. Typecheck validates the config; logout itself was not submitted during this follow-up.                                                                                                                |
-| Manual browser checks    | NOT RUN | Touch keyboard/focus/hover behavior, redirects for protected routes, and visual inspection at each viewport were not performed.                                                                                                                                                                                            |
-
-Cause/fix: homepage grid children and auth panels could retain intrinsic minimum widths; the auth transition also intentionally renders two half-width panels side-by-side. Constraining the page/grid/card/panel wrappers with `min-w-0`, keeping the animated track within its clipped card, and sizing the navbar wrapper to available width removed document-level horizontal overflow without changing desktop breakpoints. Product uploads now pass the shared owner-and-purpose check in the service layer before create/update.
-
-No form was submitted and no application data or database schema was changed. The dev server on port 3000 was left running.
-
-### Comprehensive QA — 2026-10-13
-
-| Check                                | Status  | Command / notes                                                                                                                                                                                             |
-| ------------------------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Typecheck                            | PASS    | `npm run typecheck`                                                                                                                                                                                         |
-| Lint                                 | PASS    | `npm run lint`                                                                                                                                                                                              |
-| Format check                         | PASS    | `npm run format:check`                                                                                                                                                                                      |
-| Tests                                | PASS    | `npm test` — 172 tests in 35 files; Vite CJS deprecation warning remains.                                                                                                                                   |
-| Prisma validation/status             | PASS    | `npm run db:validate`; `npm run db:status` — 13 migrations current on `preloved_dev`.                                                                                                                       |
-| Read-only database integrity         | PASS    | 10 users, 21 products, 7 categories, 8 orders, 5 favorites, 5 notifications; all queried product/category/user/order/favorite/notification references valid; cancelled orders have valid reasons.           |
-| HTTP smoke checks                    | PASS    | 13 anonymous GET checks: public pages return 200; protected pages carry the expected login redirect marker; protected APIs return 401; GET-only unsupported `/api/orders` returns 405. No data was changed. |
-| Desktop browser screenshots          | PASS    | Headless Chrome homepage at 1280, 1440, and 1920 px; navbar remained one row.                                                                                                                               |
-| Mobile browser screenshots           | FAIL    | At 390 px, homepage navbar/hero and login card content extend beyond the right viewport edge. See Known Issues.                                                                                             |
-| Production build                     | NOT RUN | Next dev server is listening on port 3000; build was not run concurrently on Windows.                                                                                                                       |
-| Authenticated/mutating browser flows | NOT RUN | No browser test account or isolated E2E database was prepared; no registration, upload, product/order/favorite/profile/admin mutation was attempted. Google provider callback was not exercised.            |
-
-QA was read-only and did not change application code or database data. Desktop/mobile screenshots were captured with local headless Chrome; browser interactions such as dropdown keyboard/outside-click and reduced-motion behavior remain unverified.
-
-### Anak kos positioning and category taxonomy — 2026-10-13
-
-| Check                 | Status  | Command / notes                                                                                                                                                                                             |
-| --------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Typecheck             | PASS    | `npm run typecheck`                                                                                                                                                                                         |
-| Lint                  | PASS    | `npm run lint`; no errors (two unused auth imports removed).                                                                                                                                                |
-| Format check          | PASS    | `npm run format:check`                                                                                                                                                                                      |
-| Tests                 | PASS    | `npm test` — 172 passed across 35 files; seed taxonomy, create/edit category persistence, admin category source, and category-plus-search filtering covered. Existing Vite CJS deprecation warning remains. |
-| Prisma validation     | PASS    | `npm run db:validate`; schema unchanged and valid.                                                                                                                                                          |
-| Migration status      | PASS    | `npm run db:migrate` applied migration 13 to `preloved_dev`; `npm run db:status` reports up to date.                                                                                                        |
-| Build                 | NOT RUN | Next dev server is listening on port 3000; build was not run concurrently on Windows.                                                                                                                       |
-| Manual browser checks | NOT RUN | Product create/edit UI, catalog filter/search, and admin category dropdown need a browser smoke check. Service/query tests passed.                                                                          |
-
-Read-only post-migration checks: `preloved_dev` has 10 users, 21 products, and 8 orders; all 3 products priced Rp715 remain with the same titles/statuses and order counts (`asd` sold/1 order, `asd` active/0, `Manggalodon` active/1); no product is missing a category. The final order snapshot digest is `3c0f4f687f7e7dccf95d312a031d530b`. Eleven seed demo products with no orders or favorites were refreshed in development. Production was not accessed.
-
-### Login/register redesign — 2026-10-13
-
-| Check                 | Status  | Command / notes                                                                                                                                                                                                                                                                                                                                                                            |
-| --------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Typecheck             | PASS    | `npm run typecheck`                                                                                                                                                                                                                                                                                                                                                                        |
-| Lint                  | PASS    | `npm run lint`                                                                                                                                                                                                                                                                                                                                                                             |
-| Format check          | PASS    | `npm run format:check`                                                                                                                                                                                                                                                                                                                                                                     |
-| Tests                 | PASS    | `npm test` — 168 passed across 34 files; Vite CJS Node API deprecation warning remains.                                                                                                                                                                                                                                                                                                    |
-| Build                 | NOT RUN | A Next.js dev server was already active on port 3000. Build was not run alongside it to avoid `.next` conflicts on Windows.                                                                                                                                                                                                                                                                |
-| Manual browser checks | PASS    | Headless Chrome desktop on localhost and laptop LAN IP, plus 390 px mobile viewport: Login/Register switch both ways, URL compatibility, validation, registration/duplicate, pending/double-submit guard, Credentials wrong/correct, callback redirect, session reload, and no horizontal overflow. Physical phone: NOT RUN. Google OAuth: NOT RUN because credentials are not configured. |
-
-Google setup: create a Google OAuth Web client, set `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` in ignored `.env.local`, and authorize `http://localhost:3000/api/auth/callback/google` for local testing. For remote/phone access, use an HTTPS domain or tunnel and authorize its exact `/api/auth/callback/google` URI; Google Web OAuth rejects raw non-loopback IP redirect hosts. The Google button remains hidden until both server variables are set. No schema or migration was changed.
-
-### Local-network authentication follow-up — 2026-10-13
-
-| Check                 | Status | Command / notes                                                                                                                                                                                                                                         |
-| --------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Typecheck             | PASS   | `npm run typecheck`                                                                                                                                                                                                                                     |
-| Lint                  | PASS   | `npm run lint`                                                                                                                                                                                                                                          |
-| Format check          | PASS   | `npm run format:check`                                                                                                                                                                                                                                  |
-| Tests                 | PASS   | `npm test` — 164 passed across 33 files; existing Vite CJS Node API deprecation warning                                                                                                                                                                 |
-| Build                 | FAIL   | `npm run build` and `npm run build -- --webpack` returned Windows `EPERM` unlinking an existing `.next` chunk after dev stopped. Isolated worktree retries failed resolving generated Prisma/Next client modules. No existing `.next` file was deleted. |
-| Prisma validation     | PASS   | `npm run db:validate`                                                                                                                                                                                                                                   |
-| Migration status      | PASS   | `npm run db:status` — 12 migrations, database up to date                                                                                                                                                                                                |
-| Manual browser checks | PASS   | Headless Chrome desktop on laptop LAN IP and `localhost`: registration, validation/duplicate, auto-login, wrong/correct login, session reload, protected redirect/callback, logout, and host-scoped cookies. Physical phone: NOT RUN.                   |
-
-Cause verified from the Next.js dev-server warning: the ignored local `.env.local` allowed the stale LAN IP `192.168.10.12`, while this laptop currently uses `10.28.71.37`. Updated only `NEXT_ALLOWED_DEV_ORIGIN` in `.env.local` to the active IP and documented the expected hostname/IP format in `.env.example`. After restart, browser requests from the LAN IP loaded the app resources without the previous blocked-origin warning. Auth.js needs no static `AUTH_URL` for this setup; callbacks followed the request host and cookies remained scoped to the host used for login. No schema, migration, or authentication code changed. Synthetic registration accounts remain in the local development database; no database reset or cleanup was performed.
-
-### UI refresh — UI-1 shared components — 2026-10-13
-
-| Check                 | Status  | Command / notes                                                                                                                                        |
-| --------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Typecheck             | PASS    | `npm run typecheck`                                                                                                                                    |
-| Lint                  | PASS    | `npm run lint`                                                                                                                                         |
-| Format check          | PASS    | `npm run format:check`                                                                                                                                 |
-| Tests                 | PASS    | `npm test` — 164 passed across 33 files; existing Vite CJS Node API deprecation warning                                                                |
-| Build                 | NOT RUN | The project's `next dev` processes are active; do not run build and dev together on Windows because of `.next` EPERM conflicts. Stop dev before build. |
-| Manual browser checks | NOT RUN | No browser runner is available; the two named reference screenshots are not in the repository. Use the manual checklist below.                         |
-
-The four automated checks passed after the latest UI-1 code changes. Production build remains required before UI-1 can be marked complete. No database or migration was touched.
-
-### Catalog sort dropdown follow-up — 2026-10-13
-
-All native choice `<select>` controls under `src/app` and `src/components` now use the shared Radix Select presentation. This covers catalog sorting, admin filters and product editing, product category/condition, saved addresses, payment selection, and profile address/payment forms. The catalog category and condition filters remain their existing radio controls. The shared component maps empty options back to empty form values and preserves names used by GET forms and `FormData`; React Hook Form fields remain connected through `Controller`. No business rules or backend behavior changed.
-
-| Check                 | Status  | Command / notes                                                                                                                                                                                                                                                                                                                                 |
-| --------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Typecheck             | PASS    | `npm run typecheck`                                                                                                                                                                                                                                                                                                                             |
-| Lint                  | PASS    | `npm run lint`                                                                                                                                                                                                                                                                                                                                  |
-| Format check          | PASS    | `npm run format:check`                                                                                                                                                                                                                                                                                                                          |
-| Tests                 | PASS    | `npm test` — 164 passed across 33 files; existing Vite CJS Node API deprecation warning                                                                                                                                                                                                                                                         |
-| Build                 | NOT RUN | Existing `next dev` process is active; build was not run alongside it due the project's Windows `.next` EPERM risk.                                                                                                                                                                                                                             |
-| Manual browser checks | NOT RUN | Desktop Chrome verified `/products` in closed/open states, pointer opening, outside-click closing, selected styling, and pointer/keyboard selection with the expected `sort` form value. Admin/profile/order/product-edit dropdown routes were not exercised because they require authenticated sessions not available in this browser session. |
-
-No database or migration was touched.
-
-### Homepage hero sizing follow-up — 2026-10-13
-
-| Check          | Status  | Command / notes                                                                                                      |
-| -------------- | ------- | -------------------------------------------------------------------------------------------------------------------- |
-| Typecheck      | PASS    | `npm run typecheck`                                                                                                  |
-| Lint           | PASS    | `npm run lint`                                                                                                       |
-| Format check   | PASS    | `npm run format:check`                                                                                               |
-| Tests          | PASS    | `npm test` — 161 passed across 32 files; existing Vite CJS deprecation warning                                       |
-| Build          | PASS    | `npm run build -- --webpack` in an isolated temporary worktree to avoid sharing `.next` with the active dev process. |
-| Browser checks | NOT RUN | No browser runner is available; actual desktop heights and first-product visibility remain pending manual review.    |
-
-No API, service, authentication, schema, migration, or database changes were made. Prisma Client generation and build ran only in the isolated temporary worktree; no database operation was performed.
-
-### Product motion and homepage hero refinement — 2026-10-13
-
-| Check          | Status  | Command / notes                                                                                                      |
-| -------------- | ------- | -------------------------------------------------------------------------------------------------------------------- |
-| Typecheck      | PASS    | `npm run typecheck`                                                                                                  |
-| Lint           | PASS    | `npm run lint`                                                                                                       |
-| Format check   | PASS    | `npm run format:check`                                                                                               |
-| Tests          | PASS    | `npm test` — 161 passed across 32 files; existing Vite CJS deprecation warning                                       |
-| Build          | PASS    | `npm run build -- --webpack` in an isolated temporary worktree to avoid sharing `.next` with the active dev process. |
-| Browser checks | NOT RUN | No browser runner is available; actual desktop render and reduced-motion behavior remain pending manual review.      |
-
-No service, API, database, or business logic changes were made. Prisma Client generation and build ran only in the isolated temporary worktree; no database operation was performed.
-
-### Product presentation refinement — 2026-10-13
-
-| Check          | Status  | Command / notes                                                                                                                 |
-| -------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| Typecheck      | PASS    | `npm run typecheck`                                                                                                             |
-| Lint           | PASS    | `npm run lint`                                                                                                                  |
-| Format check   | PASS    | `npm run format:check`                                                                                                          |
-| Tests          | PASS    | `npm test` — 161 passed across 32 files; existing Vite CJS deprecation warning                                                  |
-| Build          | PASS    | `npm run build -- --webpack` in an isolated temporary worktree; the active dev process and project `.next` were left untouched. |
-| Browser checks | NOT RUN | No browser runner is available; responsive classes were reviewed in source, but 1280/1440/1920 px render checks remain pending. |
-
-No service, API, authentication, schema, migration, or database changes were made. Prisma Client generation and build ran only in the isolated temporary worktree; no database operation was performed.
-
-### Desktop-first marketplace refinement — 2026-10-13
-
-| Check          | Status  | Command / notes                                                                                                                                            |
-| -------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Typecheck      | PASS    | `npm run typecheck`                                                                                                                                        |
-| Lint           | PASS    | `npm run lint`                                                                                                                                             |
-| Format check   | PASS    | `npm run format:check`                                                                                                                                     |
-| Tests          | PASS    | `npm test` — 161 passed across 32 files; existing Vite CJS deprecation warning                                                                             |
-| Build          | FAIL    | `npm run build` fails with `EPERM unlink` for `.next/build/chunks/node_modules_20v-8wlfss9m1._.js` while the existing Next.js dev process is left running. |
-| Browser checks | NOT RUN | Browser automation is unavailable; source breakpoints were reviewed, but desktop widths were not rendered.                                                 |
-
-No API, service, authentication, schema, migration, or database changes were made.
-
-### UI/UX refresh — 2026-10-13
-
-| Check                 | Status  | Command / notes                                                                                                                                                                                       |
-| --------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Typecheck             | PASS    | `npm run typecheck`                                                                                                                                                                                   |
-| Lint                  | PASS    | `npm run lint`                                                                                                                                                                                        |
-| Format check          | PASS    | `npm run format:check`                                                                                                                                                                                |
-| Tests                 | PASS    | `npm test` — 161 passed across 32 files; existing Vite CJS deprecation warning                                                                                                                        |
-| Build                 | FAIL    | `npm run build` three times; all attempts stopped with `EPERM unlink` under `.next/build/chunks`. A Next.js dev process is running and shares the generated `.next` directory. It was left untouched. |
-| Prisma validation     | PASS    | `npm run db:validate`                                                                                                                                                                                 |
-| Migration status      | PASS    | `npm run db:status` — all 12 migrations current on `preloved_dev`; no migration was created or run.                                                                                                   |
-| Manual browser checks | NOT RUN | No browser runner is available in this session. Desktop and mobile visual review remains pending.                                                                                                     |
-
-No database writes, resets, or seeds were performed for this UI refresh.
-
-Date: 2026-10-13 (Asia/Jakarta). Stage 6 follow-up B1 verification is recorded below; earlier stage audit records are retained.
-
-### Stage 6 follow-up: B1 — Profile Hub Core (2026-10-13)
-
-| Check                 | Status  | Command / notes                                                                                                                    |
-| --------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Typecheck             | PASS    | `npm run typecheck`                                                                                                                |
-| Lint                  | PASS    | `npm run lint`                                                                                                                     |
-| Format check          | PASS    | `npx prettier --check` on the four requested files and changed TS/TSX files; whole-repository check not rerun                      |
-| Tests                 | PASS    | `npm test` — 107 passed across 24 files, including password-change, address-snapshot, uploader ownership, and empty-state coverage |
-| Build                 | PASS    | `npm run build` — passed on 2026-10-13 after the user cleared the generated `.next` directory; build ran without a dev server.     |
-| Manual browser checks | NOT RUN | Browser runner unavailable; checklist is in Handoff Notes                                                                          |
-
-Migration verification: PASS. `preloved_migration_test` applied all 9 migrations from empty and Prisma 7.10 `migrate diff --from-migrations ... --to-schema ... --exit-code` reported “No difference detected” using an isolated shadow database. `preloved_migration_backfill_test` was built at the 8-migration pre-B1 state with synthetic sellers (including duplicate/reserved names and a seller without products) and pending/confirmed orders; after B1, profile backfill, nullable province, slug suffixes, no-product exclusion, and null legacy payment snapshots matched expectations. Direct SQL confirmed one default address per kind and the three-active-account trigger, including replacing a soft-deactivated account. All three temporary databases were dropped. B1 was then deployed with `prisma migrate deploy` to `preloved_dev`; `npm run db:status` reports all 9 migrations current and `npm run db:validate` passes. No reset, db push, or seed was run on `preloved_dev`.
-
-`npx prettier --write` was limited to `AGENTS.md`, `docs/BLUEPRINT.md`, `README.md`, `src/instrumentation.ts`, and the changed B1 TS/TSX files. `src/instrumentation.ts` formatting diff: 1 file, 2 insertions and 3 deletions (line-wrap only). Vitest emits the existing Vite CJS Node API deprecation warning.
-
-### Stage 6 follow-up: B2 — Public Stores, Notifications, Wishlist, and Vacation Mode (2026-10-13)
-
-| Check                 | Status  | Command / notes                                                                                                                                                                  |
-| --------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Typecheck             | PASS    | `npm run typecheck`                                                                                                                                                              |
-| Lint                  | PASS    | `npm run lint`                                                                                                                                                                   |
-| Format check          | PASS    | `npm run format:check`                                                                                                                                                           |
-| Tests                 | PASS    | `npm test` — 122 passed across 26 files                                                                                                                                          |
-| Build                 | NOT RUN | Automatic filesystem review rejected clearing the generated `.next` directory; per the existing Windows EPERM condition, build was not run. No Next.js dev process was detected. |
-| Manual browser checks | NOT RUN | No browser session used; two-account checklist is in Handoff Notes                                                                                                               |
-
-Migration verification: PASS. `preloved_b2_full_verify_20261013` applied all 10 migrations from an empty database. Prisma 7.10 `migrate diff --from-migrations prisma/migrations --to-schema prisma/schema.prisma --exit-code` reported “No difference detected” using `preloved_b2_shadow_verify_20261013`. A separate database at the pre-B2 migration state received a synthetic existing seller; applying B2 left `isOnVacation=false` and created no per-user notification preference rows. All three temporary databases were dropped. The B2 migration was then applied with `npm run db:migrate` to `preloved_dev`; `npm run db:status` reports all 10 migrations current and `npm run db:validate` passes. No reset, db push, or seed was run on `preloved_dev`.
-
-`SHADOW_DATABASE_URL` is an optional Prisma config value used for the Prisma 7.10 migration drift check; it is not required for normal migration commands. Vitest reports the existing Vite CJS Node API deprecation warning.
-
-### Stage 6 follow-up: Admin Area Phase 1 (2026-10-13)
-
-| Check                 | Status  | Command / notes                                                                                                             |
-| --------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Typecheck             | PASS    | `npm run typecheck`                                                                                                         |
-| Lint                  | PASS    | `npm run lint`                                                                                                              |
-| Format check          | PASS    | `npm run format:check`                                                                                                      |
-| Tests                 | PASS    | `npm test` — 144 passed across 30 files, including admin auth, bootstrap, audit, DTO privacy, pagination, and order privacy |
-| Build                 | PASS    | `npm run build` — completed alone with no dev server running                                                                |
-| Manual browser checks | NOT RUN | Browser runner unavailable; checklist is in Handoff Notes                                                                   |
-
-Migration verification: PASS. The full 11-migration chain applied to `preloved_admin_verify_20261013`; Prisma 7.10 drift check reported “No difference detected” using `preloved_admin_shadow_verify_20261013`. A pre-Admin database with a synthetic existing user applied the Admin migration and retained the expected USER role, null activity timestamps, and no audit rows. The Admin migration was deployed to `preloved_dev` with `prisma migrate deploy`; the latest `npm run db:status` reports 11 migrations and “Database schema is up to date.” No reset, db push, or seed was run against `preloved_dev`.
-
-Cleanup note: automatic command review rejected the requested temporary-database drop operation. `preloved_admin_verify_20261013`, `preloved_admin_shadow_verify_20261013`, and `preloved_admin_preverify_20261013` remain; the first two contain only verification schema state and the last contains one synthetic user. Remove them manually when convenient. Vitest reports the existing Vite CJS Node API deprecation warning.
-
-### Stage 6 follow-up: Admin Area Phase 2 (2026-10-13)
-
-| Check                 | Status  | Command / notes                                                           |
-| --------------------- | ------- | ------------------------------------------------------------------------- |
-| Typecheck             | PASS    | `npm run typecheck`                                                       |
-| Lint                  | PASS    | `npm run lint`                                                            |
-| Format check          | PASS    | `npm run format:check`                                                    |
-| Tests                 | PASS    | `npm test` — 161 passed across 32 files                                   |
-| Build                 | PASS    | `npm run build`                                                           |
-| Prisma validation     | PASS    | `npm run db:validate`                                                     |
-| Migration status      | PASS    | `npm run db:status` — Phase 2 migration applied; full chain current       |
-| Manual browser checks | NOT RUN | No browser runner/session available; see Admin checklist in Handoff Notes |
-
-Migration `20261013150000_admin_area_phase2` was applied to `preloved_dev` using `npm run db:migrate`. No reset, seed, or destructive database operation was run. Vitest reports the existing Vite CJS Node API deprecation warning. Automated tests use Prisma mocks; no isolated PostgreSQL concurrency/rollback integration run was available in this task.
-
-Date: 2026-10-13 (Asia/Jakarta). Stage 6 verification.
-
-| Check                 | Status  | Command / notes                                 |
-| --------------------- | ------- | ----------------------------------------------- |
-| Typecheck             | PASS    | `npm run typecheck`                             |
-| Lint                  | PASS    | `npm run lint`                                  |
-| Format check          | PASS    | `npx prettier --check` on Stage 6 changed files |
-| Tests                 | PASS    | `npm test` — 57 tests passed                    |
-| Build                 | PASS    | `npm run build`                                 |
-| Manual browser checks | NOT RUN | Browser flow not exercised                      |
-
-Prisma validation PASS (`npm run db:validate`); read-only migration status PASS (`npm run db:status`, 8 migrations applied). Database integration tests and seed execution are NOT RUN: no isolated test database is configured, and seeding would write to the development database. No database data was changed. Vitest reports the existing Vite CJS Node API deprecation warning.
-
-### Local-disk product image storage — 2026-10-13
-
-| Check                 | Status  | Command / notes                                                                                          |
-| --------------------- | ------- | -------------------------------------------------------------------------------------------------------- |
-| Typecheck             | PASS    | `npm run typecheck`                                                                                      |
-| Lint                  | PASS    | `npm run lint`                                                                                           |
-| Format check          | FAIL    | `npm run format:check` flags `AGENTS.md`, `docs/BLUEPRINT.md`, and `README.md`; scoped source check PASS |
-| Tests                 | PASS    | `npm test` — 80 tests passed                                                                             |
-| Build                 | PASS    | `npm run build`                                                                                          |
-| Manual browser checks | NOT RUN | Browser flow and restart persistence not exercised                                                       |
-
-Build completed without warnings after adding a Turbopack ignore annotation for the runtime-configured upload directory. Test coverage includes image magic bytes, MIME-independent validation, 5 MB boundary, filename/path validation, upload authentication, public serving headers, strict image-key schema, missing-file rejection, DTO URL mapping, and edit cleanup. No schema, migration, dependency, or database data changes were made.
-
-### Stage 6 - Full Migration from Mock to Prisma (2026-10-13)
-
-- Favorite and profile read/write operations now use Prisma services and the authenticated session UUID. Profile updates use an explicit field allowlist; public product DTOs still omit seller phone and all profile DTOs omit `passwordHash`.
-- Product list/detail DTO favorite state comes from the database for signed-in viewers. Favorite buttons are disabled for visitors.
-- Product, order, favorite, and profile mutations use separate domain routes. `/api/mock`, `postMock`, the old mock data accessor, and in-memory mock store were removed.
-- Seed fixtures remain in `src/lib/seed-data.ts` and are still imported by `prisma/seed.ts`; seed was not executed.
-- Tests cover favorite/profile services and routes, UUID/session scoping, DTO privacy, input validation, product/order route delegation, existing order state machine, and product favorite status.
-- Checks run: `npm run typecheck`, `npm run lint`, `npm test` (57 passed), `npm run build`, scoped Prettier check, `npm run db:validate`, and read-only `npm run db:status` (8 migrations applied). Browser checks and isolated database integration tests were not run.
-
-### Local-disk product image storage (2026-10-13)
-
-- Added an authenticated multipart upload endpoint, local storage adapter, and public file-serving route. The server validates JPEG/PNG/WebP signatures and size, uses UUID filenames, and keeps the configured directory outside `public/`.
-- Product create/update schemas accept generated filenames (and the existing fixed seed SVG paths); services verify files exist, store filename keys, map them to `/uploads/<filename>` DTO paths, and remove no-longer-referenced local files after a successful edit.
-- The uploader previews immediately, tracks upload/error/retry state, blocks submission during active uploads, supports remove/re-add, and revokes object URLs on removal/unmount.
-- `UPLOAD_DIR` defaults to `./storage/uploads`; `storage/` is ignored by Git. No Prisma schema/migration change was necessary. R2 remains Stage 7 and is not implemented.
-- Checks: typecheck PASS, lint PASS, tests PASS (80), build PASS, browser checks NOT RUN. `npx prettier --check` passes for changed source files. The full repository format check fails on existing broad Markdown formatting in `AGENTS.md`, `docs/BLUEPRINT.md`, and `README.md`; those files were not globally reformatted.
-
-### Stage 5 - Order Services, State Machine, and Privacy Enforcement (2026-10-13)
-
-- Orders are created from database product facts and the authenticated session UUID. Shipping inputs are normalized; new orders start `pending` and do not reserve the product.
-- Seller confirmation reserves an active product; seller completion marks it sold; cancellation of a confirmed order restores it to active. Order and product updates use a Prisma transaction with guarded status writes.
-- Order reads return only participant data. Buyers retain their shipping information; sellers receive phone/address only for `confirmed` and `completed` statuses.
-- Tests cover creation validation and ownership, all allowed and forbidden transitions, cancel reason bounds and trimming, participant access, all five privacy states, list DTOs, rollback on a lost status race, and unique-conflict handling.
-- At the end of Stage 5, `/api/mock` delegated product and order actions to Prisma; favorite and profile still used mock data. Stage 6 below records their migration and removal of the route.
-- Checks run: `npm run typecheck`, `npm run lint`, `npm test` (43 passed), `npm run build`, scoped Prettier check, `npm run db:validate`, and read-only `npm run db:status` (8 migrations applied). Build passed with a `pg` concurrent query deprecation warning; Vitest reports the existing Vite CJS deprecation warning. Browser checks and isolated database integration/concurrency checks were not run.
-
-### Stage 4 — Product Backend with Prisma (2026-10-13)
-
-- Product listing/search/filter/sort/pagination, detail, seller dashboard, create, update, and archive now use Prisma.
-- The registered session UUID is the product seller identity; ownership is checked in the service for updates and archive.
-- Product screens use seeded Prisma categories and map category/image relations to existing UI DTOs. Public DTOs exclude seller phone and `passwordHash`.
-- At the end of Stage 4, product writes passed through `/api/mock`; the Stage 5 and Stage 6 sections record subsequent migrations.
-- Product image rows currently reference the existing local SVG assets. Selected local file previews are not uploaded or persisted; real image storage is Stage 7.
-- Service/API tests cover create validation, listing filters/pagination/active-only query, DTO privacy and mapping, owner checks, unauthenticated mutation rejection, and archive behavior.
-- Checks run for this stage: typecheck, lint, full test suite (29 passed), build, scoped Prettier check, `npm run db:validate`, and read-only `npm run db:status` (8 migrations applied). Vitest emits the existing Vite CJS deprecation warning; build emits a `pg` warning about concurrent `client.query()` calls. Browser checks were not run.
-
-## Audit — Stage 3 (2026-10-13)
-
-**Status: PASS WITH ISSUES.** Registration, credential verification, session projection, logout delegation, and protected-route redirects pass unit tests. Auth was not exercised in a browser. Unit-tested auth paths are wired for demonstration, but the marketplace seller flow is not end-to-end usable with registered accounts.
-
-### Findings
-
-- **P2 — RESOLVED in Stage 6:** Authenticated UUIDs previously did not match mock marketplace IDs for product, order, favorite, and profile flows. All four domains now use Prisma and session UUIDs; no temporary mapping was added.
-- **P3 — RESOLVED in limited follow-up (2026-10-13): whitespace-only names passed registration validation.** Files: `src/schemas/index.ts`, `src/app/api/auth/register/route.ts`, `src/app/api/auth/register/route.test.ts`. The schema now trims the name before checking the minimum length, and the route stores the parsed trimmed name. Tests cover a valid name, surrounding spaces, whitespace-only input, and endpoint rejection.
-
-### Audit Checks
-
-| Check             | Status  | Result                                                                            |
-| ----------------- | ------- | --------------------------------------------------------------------------------- |
-| Typecheck         | PASS    | `npm run typecheck`                                                               |
-| Lint              | PASS    | `npm run lint`                                                                    |
-| Tests             | PASS    | `npm test` — 20 tests passed; Vitest emits a Vite CJS deprecation warning         |
-| Build             | PASS    | `npm run build`                                                                   |
-| Prisma validation | PASS    | `npm run db:validate`                                                             |
-| Migration status  | PASS    | `npm run db:status` — 8 migrations applied to `preloved_dev`                      |
-| Format check      | FAIL    | `npm run format:check` — existing findings in `AGENTS.md` and `docs/BLUEPRINT.md` |
-| Browser testing   | NOT RUN | No browser runner was available in this audit                                     |
-
-### Limited Follow-up
-
-- Fixed the P3 name-validation finding without changing Auth.js, session, database schema, migrations, or dependencies.
-- Stage 4 resolved the UUID/mock mismatch for product operations; Stage 5 resolved it for order operations; Stage 6 resolved it for favorite/profile. No temporary mapping was added.
-- Follow-up checks: `npm run typecheck` PASS; `npm run lint` PASS; `npm test` PASS (22 tests). Build and browser checks were not run for this limited change.
-
-### Manual Scenarios
-
-- Register a valid account, log out, sign in, and confirm the navbar updates after each transition.
-- Open a protected route while signed out; confirm redirect to login and return to that route after sign-in.
-- Try duplicate email, invalid email/password, and a whitespace-only name.
-- As a registered account, verify product creation and dashboard ownership; then try an order and seller order processing. Product operations now use Prisma, but order operations still use incompatible mock IDs and are expected to fail until their integration stage.
-- After logout, revisit a protected route and confirm it redirects again.
-
-### Recommendations
-
-- **Resolved in Stage 6 (P2):** favorite and profile flows now use Prisma UUIDs. Do not reintroduce fixture-ID mappings.
-- **Prototype:** email verification, password reset, and login rate limiting remain deferred per current scope.
-- **Optional:** add an Auth.js handler integration test for real cookie creation/clearing and JWT callback serialization; current tests cover the credentials helper, projection, redirect helper, registration route, and logout action wrapper, but not a browser session.
-
-### Authentication Bug Fix — 2026-10-13
-
-- The login form now catches Auth.js request failures and distinguishes a generic service failure from invalid credentials. Registration reports separately when account creation succeeded but automatic sign-in did not.
-- Credential lookup failures are no longer converted to `null` by `authorize`; Auth.js handles the service error while the UI avoids exposing internal details.
-- Follow-up from browser logs: login and registration were submitted as native `GET` requests when client-side handling was unavailable, placing form fields in the URL. Both forms use `method="post"` as a credential-safe fallback. `NEXT_ALLOWED_DEV_ORIGIN` is an optional per-developer setting for LAN development; local `localhost` use needs no extra setting. Restart `npm run dev` after changing it.
-- Read-only database diagnosis on `preloved_dev`: `users` exists with 3 accounts; emails are normalized and unique, required identity fields are non-empty, and all 3 password values match bcrypt hash format. The email from the reported form submission is absent. The logged `GET /register?...` never reached the registration `POST` handler, which explains the missing account and subsequent login failure. The LAN origin setting is now present only in this workstation's ignored `.env.local`; no IP is hard-coded in shared source.
-- Verification: `npm run typecheck` PASS; `npm run lint` PASS; `npm test` PASS (61 tests); `npm run build` PASS; scoped `npx prettier --check` PASS; `npm run db:validate` PASS; read-only `npm run db:status` PASS (8 migrations current). Browser register → logout → login was NOT RUN, and no account was written to the development database.
-
-## Known Issues and TODO
-
-- B1 migration `20261013090000_profile_hub_b1` is applied to `preloved_dev`. Backfilled sellers with existing products have private seller profiles; province remains null until profile completion.
-- App startup now requires a valid `PAYMENT_ENCRYPTION_KEY`. Generate one locally using the `.env.example` command and add it to ignored `.env.local` before `npm run dev` or production startup.
-- Files uploaded and then replaced as an avatar/logo remain on disk; orphan cleanup is TODO. Product upload records are written, but validating PRODUCT-purpose ownership when attaching keys is TODO.
-- Existing confirmed/completed orders intentionally have no payment snapshot. Buyers see “Contact the seller for payment details”; sellers must provide payment details outside this feature for those in-flight orders.
-- B2 implementation is complete; its own browser checks remain pending as recorded above.
-- Physical-phone browser scenarios remain NOT RUN; desktop browser auth flows from the laptop LAN IP and localhost are recorded above. Other feature/browser scenarios remain NOT RUN; the manual checklists below still apply. Migration and SQL constraint checks ran only on isolated temporary databases, which were dropped after verification.
-- Historical Stage 3 audit scenarios below describe the behavior at that audit date; the P2 UUID mismatch was resolved by the Stage 4–6 Prisma migrations.
-- **Image storage rollout:** Supabase Storage code is implemented, but the dashboard bucket, Vercel environment variables, legacy-file copy, browser flows, and deployed Vercel persistence still require manual setup/verification. Abandoned uploads can remain unreferenced if compensating deletion also fails.
-- Manual image browser checks (single/multiple selection, remove/re-add, detail/list/home display, server restart persistence, traversal and invalid-upload cases) remain NOT RUN.
-- Email verification and password reset are out of MVP scope per the Stage 3 brief.
-- Registration/login rate limiting remains a pre-launch TODO from the Blueprint.
-- `npm install` reported 15 dependency vulnerabilities (3 moderate, 10 high, 2 critical); review with a separate dependency-audit task before release.
-- Google OAuth on the reported Vercel deployment is blocked by an unregistered exact callback URI; configure it on the matching Google Cloud Web OAuth client before release.
-- Project credentials were disclosed in conversation. Rotate exposed provider credentials; plan payment encryption-key rotation with ciphertext re-encryption rather than replacing it directly. See the QA report.
-- Vitest reports the existing Vite CJS Node API deprecation warning.
-- **LAN development firewall:** active interface `Wi-Fi 2` is categorized `Public`. This shell is not elevated, so the requested Private-only TCP 3000 allow rule and Public-profile block rule could not be installed. Existing Windows Node.js inbound allow rules include profile `Public` with any port; use an Administrator terminal and a trusted Private network before sharing the dev server with another device.
-- UI refresh browser checks remain NOT RUN. `docs/design-reference/reference-dribbble.png` and `docs/design-reference/current-home.png` were not found; implementation follows the written approved brief.
-- **QA-P2-01 — Mobile horizontal clipping:** resolved in the 2026-10-13 follow-up. Headless Chrome reports no document overflow at all seven tested viewport widths on `/`, `/login`, and `/register`; manual visual and touch checks remain NOT RUN.
-- **QA-P3-01 — Uploaded product image ownership:** resolved in the 2026-10-13 follow-up for product create/update. Uploaded keys require an `UploadedFile` owned by the session seller with purpose `PRODUCT`; legacy static seed SVGs remain allowed. Safe orphan cleanup remains TODO.
-- Legacy category-filter URLs using removed slugs (such as `fashion-pria` or `perabot`) are not aliases after migration; use the current database category slugs. Product records remain present and were reassigned to the new taxonomy.
-- “Paling disukai” homepage sorting/count is a future idea only; favorite behavior and ordering were not changed in this task.
-- The product DTO does not distinguish an uploaded/seed image from the legacy `/products/item-1.svg` no-image fallback. The card renders a neutral inline placeholder only for an empty image URL; replacing the legacy fallback reliably would require a service/DTO change, outside the approved presentation-only scope.
-- `/favorites` and `/wishlist` both exist and remain unchanged; review whether to consolidate them in a later approved task.
-
-## Next Approved Step
-
-Manually create an isolated Supabase staging project/database and bucket, configure staging-only values in ignored `.env.staging.local`, and verify the staging and production refs/bucket names in Supabase. Then run `npm run staging:verify`. Keep Production keys and data unchanged; run staging re-encryption/E2E only after this guard passes.
-
-## Handoff Notes
-
-- Key files: `src/server/services/` (products, orders, favorites, notifications, profile-hub), `src/server/security/payment-encryption.ts`, `src/components/profile/profile-hub.tsx`, `src/app/store/[slug]/`, `src/app/notifications/`, `src/app/wishlist/`, notification/profile API routes, and the B1/B2 Prisma migrations/schema.
-- Keep Auth.js on JWT sessions, preserve bcrypt password hashes, and never add `passwordHash` to DTO/session responses.
-- LAN development uses `npm run dev:lan`; `src/lib/dev-network.ts` scopes allowed dev hosts to current private IPv4 addresses and normalizes only validated Auth.js dev requests. `.env.local` is local-only and was not changed.
-- Stage 6 domain routes and Prisma services handle all runtime marketplace reads and writes. `/api/mock`, `postMock`, and mock runtime accessors are removed; seed fixtures are intentionally retained separately.
-- Run typecheck, lint, tests, build, and read-only DB validation after relevant changes; browser checks are still pending.
-- `scripts/migrate-local-images-to-supabase.ts` copies and verifies old local images while retaining source files. `src/app/uploads/[filename]/route.ts` preserves same-origin image paths and local fallback; keep bucket and service credentials configured in each hosting environment.
-- Set `PAYMENT_ENCRYPTION_KEY` to a generated base64-encoded 32-byte value before starting the server. Keep the key backed up and private; losing it makes encrypted payment data unreadable. Ciphertext carries the `v1` prefix for key-versioning.
-- Manual browser checklist (NOT RUN): verify `/profile` loads for a seller and a plain buyer; activate a store; add and soft-delete payment accounts and verify the three-active limit; add addresses and verify the default rule; change a password; upload an avatar; verify the seller dashboard banner without an account; confirm an order with and without an account; verify the buyer sees payment instructions only after confirmation; verify old confirmed orders show “Contact the seller for payment details”; sign in as a second user and verify they cannot open the first user's addresses or payment accounts. Also try assigning another user's uploaded key and a wrong-purpose key to avatar/logo; upload matching AVATAR/LOGO keys; replace avatar/logo and confirm prior files remain available.
-- B1 and B2 are Stage 6 follow-ups; no stage numbers changed. Keep public store DTOs allowlisted and notification messages free of contact/payment data.
-- B1, B2, and Admin migrations are applied to `preloved_dev`; do not reset, db push, or seed that database without separate approval.
-- Admin migrations `20261013140000_admin_area` and `20261013150000_admin_area_phase2` are applied to `preloved_dev`; latest status is up to date. Three isolated Admin verification databases remain because automated command review rejected their deletion: `preloved_admin_verify_20261013`, `preloved_admin_shadow_verify_20261013`, and `preloved_admin_preverify_20261013` (the latter has one synthetic user).
-- Admin browser checklist (NOT RUN; use an admin and a regular account): verify anonymous and USER access are denied on every admin page/API; ADMIN dashboard, filters and 12/48 pagination; emails masked until explicit audited reveal; address summaries remain masked; order lists disclose no contact/payment data; each service and route rejects non-admin calls; bootstrap promotes only a pre-existing account and reruns safely. Confirm no admin UI mutation controls are present.
-- Admin Phase 2 browser checklist (NOT RUN; use an enabled ADMIN, a second ADMIN, and a regular account): verify name edits and role/password fields are rejected; disable blocks a user's next request and login, and the old session remains invalid after re-enable; self-disable and disabling the last enabled ADMIN are rejected; active products edit/archive only without pending/confirmed orders and keep images/ownership/order snapshots; only pending orders cancel with a 5–500 character reason, without changing product/payment/shipping snapshots; both recipients honor notification preferences; retries do not duplicate notifications; audit rows omit personal values and cancellation reason.
-- UI-1 manual visual checklist (NOT RUN): inspect desktop, tablet, and mobile navbar/footer; page-header typography and breadcrumb when wired in UI-2; active/reserved/sold/new product card states and missing-image placeholder; favorite behavior; category/condition/price/location controls and mobile filter disclosure; sort and numbered pagination with filters preserved; keyboard order and focus rings on cream and green surfaces; check text contrast at rendered sizes.
-- B2 manual browser checklist (NOT RUN; use two accounts): open a public store without login and verify its safe fields/products and unknown-slug 404; turn vacation mode on and confirm the seller disappears from home/listing while its store/direct product remain visible, new orders are blocked, and existing orders can still be processed; exercise notification bell/count, every order notification, disabled/enabled preferences, mark-one/read-all, and verify disabled types create no notification while order status remains visible; save products to the private wishlist and confirm reserved/sold labels and disabled order actions; attempt to favorite one's own product; as the second account, try direct access to the first user's wishlist and notifications.
+Halaman katalog/detail/dasbor di `src/app/` memanggil layanan produk di `src/server/services/products.ts`. Rute API produk ada di `/api/products`; favorit memakai `/api/favorites` dan relasi `Favorite`. Halaman/formulir pesanan memanggil `/api/orders` yang ditangani `src/server/services/orders.ts`. Layanan pesanan memvalidasi perubahan status, memeriksa peran pembeli/penjual, menyimpan snapshot checkout/pembayaran, mengubah status produk dalam transaksi, dan membuat notifikasi. Selama pesanan berstatus pending, produk tetap active; konfirmasi mengubahnya menjadi reserved, penyelesaian menjadi sold, dan pembatalan pesanan yang sudah dikonfirmasi mengembalikannya ke active. Indeks unik parsial database membatasi satu produk memiliki maksimal satu pesanan pending/confirmed.
+
+### Alur fitur: profil, toko, notifikasi, administrasi
+
+Rute profil dan pusat profil berada di `/api/profile`; layanan terkait mengelola profil, kata sandi, alamat, toko penjual, preferensi notifikasi, dan akun pembayaran. Nomor akun pembayaran dan instruksi pembayaran pesanan dienkripsi saat disimpan oleh `src/server/security/payment-encryption.ts`; daftar akun hanya menampilkan digit yang disamarkan. Toko publik menggunakan `/store/[slug]` dan DTO dengan daftar izin. API notifikasi berada di `/api/notifications`. Halaman admin di `/admin` memanggil `/api/admin/*`; `src/server/admin/authorization.ts` membatasi akses admin, dan perubahan admin yang transaksional mencatat metadata audit yang diizinkan.
+
+### Alur fitur: unggah gambar
+
+`src/components/forms/image-uploader.tsx` mengirim gambar yang dipilih ke `/api/uploads`. Rute ini mewajibkan pengguna terautentikasi, memvalidasi MIME/ukuran/tujuan, lalu memakai `src/server/storage/supabase-image-storage.ts` (atau adapter lokal yang dikonfigurasi) dan menyimpan metadata pemilik/tujuan melalui `src/server/services/uploaded-files.ts`. Gambar disajikan melalui `/uploads/[filename]`; kunci divalidasi sebelum rute mengalihkan ke bucket publik. Kredensial Supabase hanya digunakan di server. Skrip migrasi gambar lokal menyalin berkas tanpa menghapus sumbernya.
+
+## Database dan Pengelolaan Data
+
+Satu-satunya provider sumber data Prisma yang dikonfigurasi adalah PostgreSQL. `prisma/schema.prisma` mendefinisikan:
+
+| Model                                    | Fungsi dan relasi                                                                                                                |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `User`                                   | Identitas login, profil, peran, versi sesi; memiliki produk, favorit, pesanan, alamat, profil penjual, unggahan, dan notifikasi. |
+| `Category`                               | Taksonomi produk yang dikelola di database.                                                                                      |
+| `Product`, `ProductImage`                | Produk milik penjual, kategori, status, dan referensi gambar berurutan.                                                          |
+| `Favorite`                               | Relasi pengguna/produk dengan kunci utama gabungan.                                                                              |
+| `Order`                                  | Referensi pembeli, penjual, produk, snapshot checkout yang tetap, dan status.                                                    |
+| `Address`                                | Alamat kirim/ambil milik pengguna, maksimal satu alamat utama per jenis.                                                         |
+| `SellerProfile`, `PaymentAccount`        | Detail toko publik dan nomor akun pembayaran terenkripsi.                                                                        |
+| `UploadedFile`                           | Metadata pemilik dan tujuan unggahan.                                                                                            |
+| `Notification`, `NotificationPreference` | Notifikasi pesanan dan preferensi yang dibatasi per pemilik.                                                                     |
+| `AuditLog`                               | Metadata tindakan admin dan referensi pelaku.                                                                                    |
+
+Migrasi berada di `prisma/migrations/`; `prisma/seed.ts` menggunakan data contoh dari `src/lib/seed-data.ts`. Aplikasi memakai pool `pg` dengan maksimal satu koneksi per instance Prisma Client. Konfigurasi ini belum membuktikan bahwa batas koneksi pada deployment serverless telah teratasi. Gunakan database development/staging terisolasi untuk migrasi dan pengisian data awal; jangan arahkan perintah tersebut ke production tanpa pemeriksaan.
+
+## Prasyarat
+
+- Node.js 20.9.0 atau lebih baru (persyaratan runtime paket Next.js).
+- npm (berkas lockfile: `package-lock.json`).
+- Database PostgreSQL untuk halaman aplikasi dan operasi Prisma.
+- Proyek Supabase dan bucket Storage untuk unggah gambar jarak jauh; aplikasi juga memerlukan kunci enkripsi pembayaran saat dimulai.
+
+## Instalasi dan Konfigurasi
+
+Gunakan PowerShell:
+
+```powershell
+Set-Location 'F:\Documents\Program\Next JS\preloved'
+npm ci
+Copy-Item .env.example .env.local
+```
+
+Edit `.env.local` di komputer Anda. Jangan commit atau membagikan nilai rahasia. `prisma.config.ts` memuat `.env.local` dan `.env` saat Prisma CLI dijalankan.
+
+| Variabel                                                                                               | Fungsi                                                                                       |
+| ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                                                                                         | Koneksi PostgreSQL untuk aplikasi dan Prisma CLI.                                            |
+| `AUTH_SECRET`                                                                                          | Rahasia sesi/JWT Auth.js.                                                                    |
+| `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`                                                                 | Google OAuth opsional; isi keduanya dan daftarkan `/api/auth/callback/google` pada penyedia. |
+| `NEXT_ALLOWED_DEV_ORIGIN`                                                                              | Hostname/IP LAN opsional untuk development lokal; tanpa skema atau port.                     |
+| `UPLOAD_DIR`                                                                                           | Direktori unggahan lokal untuk adapter penyimpanan lokal.                                    |
+| `SUPABASE_URL`, `SUPABASE_STORAGE_BUCKET`                                                              | Proyek dan bucket Supabase Storage untuk media unggahan.                                     |
+| `SUPABASE_SECRET_KEY` atau `SUPABASE_SERVICE_ROLE_KEY`                                                 | Kredensial Storage khusus server; utamakan secret key. Jangan gunakan awalan `NEXT_PUBLIC_`. |
+| `PAYMENT_ENCRYPTION_KEY`                                                                               | Kunci AES 32 byte berformat base64 khusus server; wajib untuk data pembayaran.               |
+| `PAYMENT_ENCRYPTION_KEY_V2`                                                                            | Kunci versi berikutnya yang opsional selama proses rotasi kunci.                             |
+| `SHADOW_DATABASE_URL`                                                                                  | Koneksi shadow database Prisma opsional.                                                     |
+| `ADMIN_BOOTSTRAP_EMAIL`, `ADMIN_BOOTSTRAP_PASSWORD`                                                    | Masukan sementara untuk perintah bootstrap admin; hapus setelah digunakan.                   |
+| `STAGING_PROJECT_REF`, `PRODUCTION_PROJECT_REF`, `STAGING_STORAGE_BUCKET`, `PRODUCTION_STORAGE_BUCKET` | Nilai pemeriksaan target untuk validasi staging dan skrip enkripsi ulang pembayaran.         |
+| `DEPLOYMENT_ENV`                                                                                       | Penanda lingkungan eksplisit opsional yang digunakan pemeriksaan keamanan seed.              |
+
+`PAYMENT_ENCRYPTION_KEY` dapat dibuat secara lokal dengan perintah di `.env.example`; jaga agar hasilnya tetap rahasia. Jangan mengonfigurasi variabel R2 untuk aplikasi ini: implementasi unggah saat ini menggunakan Supabase Storage. `.env.example` masih memuat placeholder R2 lama, tetapi kode aplikasi tidak membacanya.
+
+Siapkan database non-production yang memang ditujukan untuk development, lalu jalankan:
+
+```powershell
+npm run db:validate
+npm run db:migrate
+npm run db:seed
+```
+
+`db:migrate` menerapkan migrasi yang tertunda dan `db:seed` menulis data contoh. Jalankan hanya jika `DATABASE_URL` mengarah ke database yang memang ingin diubah. `npm run staging:verify` adalah pemeriksaan target/koneksi staging yang terpisah dan hanya-baca; konfigurasi staging dijelaskan di `docs/STAGING-E2E-CHECKLIST.md`.
+
+## Menjalankan Aplikasi
+
+```powershell
+npm run dev
+```
+
+Buka <http://localhost:3000>. Untuk jaringan lokal tepercaya saja, `npm run dev:lan` mengikat server ke `0.0.0.0`; atur `NEXT_ALLOWED_DEV_ORIGIN` jika diperlukan dan ikuti kebijakan firewall perangkat/jaringan. Jangan paparkan server development ke jaringan yang tidak tepercaya.
+
+Build produksi dan server lokal:
+
+```powershell
+npm run build
+npm run start
+```
+
+Skrip `start` memerlukan build yang berhasil terlebih dahulu. Konfigurasi penyedia deployment tidak didefinisikan dalam manifest deployment di repo; atur variabel lingkungan dan callback penyedia pada platform hosting yang digunakan.
+
+## Skrip dan Perintah Penting
+
+| Perintah                                                                            | Fungsi                                                                                           |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `npm run dev`, `npm run dev:lan`                                                    | Server development lokal, biasa atau terikat ke jaringan LAN.                                    |
+| `npm run build`, `npm run start`                                                    | Build dan server production.                                                                     |
+| `npm run typecheck`                                                                 | Pemeriksaan TypeScript (`tsc --noEmit`).                                                         |
+| `npm run lint`                                                                      | Menjalankan ESLint.                                                                              |
+| `npm test`                                                                          | Menjalankan rangkaian test Vitest.                                                               |
+| `npm run format:check`, `npm run format`                                            | Memeriksa format atau menulis ulang format berkas yang didukung.                                 |
+| `npm run db:generate`                                                               | Membuat Prisma Client; juga dipanggil oleh `postinstall`.                                        |
+| `npm run db:validate`, `npm run db:status`, `npm run db:migrate`, `npm run db:seed` | Memvalidasi skema, memeriksa status migrasi, menerapkan migrasi, dan mengisi data awal database. |
+| `npm run db:verify`                                                                 | Menjalankan helper pemeriksaan constraint pada database yang dikonfigurasi.                      |
+| `npm run staging:verify`                                                            | Memeriksa pemisahan target staging/production dan melakukan probe koneksi staging hanya-baca.    |
+| `npm run admin:bootstrap`                                                           | Membuat akun admin secara eksplisit menggunakan kredensial environment sementara.                |
+| `npm run payments:reencrypt`                                                        | Utilitas enkripsi ulang ciphertext pembayaran dengan pemeriksaan target staging/production.      |
+
+## Keputusan Penting
+
+- `passwordHash` tidak pernah dikirim dalam DTO klien atau data sesi. Data produk/toko publik tidak menyertakan informasi kontak dan pembayaran privat.
+- Pembeli dapat melihat data pengiriman miliknya. Penjual melihat nama penerima sejak status pending; nomor telepon/alamat hanya ditampilkan pada pesanan confirmed atau completed. Aturan ini diterapkan pada proyeksi layanan.
+- Pembatalan memerlukan alasan 5–500 karakter; pesanan cancelled wajib memiliki `cancel_reason`.
+- Transisi produk dan pembayaran ditegakkan oleh layanan/batasan database, bukan hanya status UI. Perubahan admin memerlukan otorisasi admin dan menulis catatan audit.
+- Rahasia unggahan dan pembayaran hanya digunakan di server. Rotasi kunci enkripsi pembayaran harus mempertahankan kunci lama sampai ciphertext yang ada selesai dienkripsi ulang dan masa rollback berakhir.
+- Pembatasan laju registrasi, verifikasi email, dan pengaturan ulang kata sandi belum diimplementasikan pada MVP ini. Tinjauan statis dan test otomatis bukan pemeriksaan keamanan menyeluruh.
+
+## Pemecahan Masalah
+
+| Masalah                                                  | Kemungkinan penyebab                                                                       | Cara memeriksa                                                                                                                | Solusi                                                                                                                                                                                         |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm`/skrip tidak ditemukan                              | Node/npm belum terpasang atau dependensi belum diinstal                                    | `node --version`, `npm --version`, `Test-Path node_modules`                                                                   | Pasang Node.js 20.9+ lalu jalankan `npm ci` dari direktori utama repo.                                                                                                                         |
+| Koneksi database atau error Prisma                       | `DATABASE_URL` kosong, tidak dapat dijangkau, salah, atau menunjuk target keliru           | Pastikan variabel tersedia tanpa mencetak nilainya; jalankan `npm run db:status` atau `npm run staging:verify` khusus staging | Periksa host/jaringan/kredensial secara privat dan gunakan database yang benar. Jangan tempel connection string ke log atau chat.                                                              |
+| Prisma Client belum dibuat                               | Proses generate saat instalasi/postinstall belum selesai                                   | Periksa `src/generated/prisma/` dan jalankan `npm run db:generate`                                                            | Atasi error generate sebelum menjalankan aplikasi.                                                                                                                                             |
+| Startup menyatakan kunci enkripsi pembayaran tidak valid | `PAYMENT_ENCRYPTION_KEY` kosong atau bukan kunci base64 32 byte                            | Pastikan variabel tersedia dan dibuat secara lokal sesuai instruksi                                                           | Isi kunci valid di konfigurasi lokal yang diabaikan git; jangan ganti kunci production tanpa rencana enkripsi ulang.                                                                           |
+| Google sign-in tidak tersedia atau callback gagal        | Salah satu variabel OAuth kosong atau callback/origin belum diatur                         | Pastikan kedua nama variabel tersedia dan URI callback cocok dengan host                                                      | Atur kedua kredensial dan URI `/api/auth/callback/google` yang tepat pada klien OAuth. OAuth Preview langsung belum diverifikasi.                                                              |
+| Unggahan gagal atau gambar tidak tampil                  | URL/kunci/bucket Supabase salah, tipe/ukuran file tidak valid, atau metadata DB bermasalah | Periksa error server yang sudah disanitasi dan konfigurasi proyek/bucket                                                      | Isi variabel Supabase khusus server, gunakan JPEG/PNG/WebP <= 3.000.000 byte, lalu verifikasi bucket. Unggahan/browser staging belum diverifikasi.                                             |
+| Port 3000 sedang digunakan                               | Proses lokal lain memakai port tersebut                                                    | Baca keluaran startup Next.js dan periksa proses lokal                                                                        | Hentikan proses yang memang terkait atau gunakan opsi port `next dev`; jangan hentikan proses lain.                                                                                            |
+| Build gagal dengan `.next` EPERM                         | File terkunci di Windows atau proses Next lain sedang memakai output                       | Periksa proses Node aktif dan penggunaan `.next`                                                                              | Hentikan hanya proses project yang memegang lock, lalu coba lagi. Percobaan build 2026-10-15 terhenti saat EPERM menghapus `.next/app-path-routes-manifest.json`; penyebabnya belum diketahui. |
+| Batas koneksi database Preview (`P2039`)                 | Kapasitas pooler mungkin tidak cukup untuk konkurensi serverless                           | Periksa log deployment terkini dan daftar periksa staging; jalankan probe staging terisolasi                                  | Pool satu koneksi diatur per instance klien, tetapi perilaku konkurensi deployment belum diverifikasi. Jangan menyatakan masalah selesai tanpa bukti uji beban/E2E.                            |
+
+## Verifikasi
+
+Pemeriksaan lokal terakhir yang tercatat berasal dari 2026-10-15 (audit pembersihan). Hasil tersebut adalah catatan sebelumnya, bukan perintah yang dijalankan saat memperbarui README ini.
+
+| Pemeriksaan                | Status      | Hasil tercatat                                                                                                                                                                                                     |
+| -------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Pemeriksaan tipe           | PASS        | `npm run typecheck` lulus setelah `npx next typegen` membuat ulang tipe rute.                                                                                                                                      |
+| Lint                       | PASS        | `npm run lint` lulus.                                                                                                                                                                                              |
+| Pemeriksaan format         | PASS        | `npm run format:check` lulus.                                                                                                                                                                                      |
+| Test                       | PASS        | `npm test -- --reporter=dot`: 42 berkas, 226 test lulus.                                                                                                                                                           |
+| Build                      | NOT RUN     | Percobaan sebelumnya gagal sebelum kompilasi karena EPERM pada `.next` di Windows; audit pembersihan tidak mengulangnya.                                                                                           |
+| Pemeriksaan browser manual | NOT RUN     | Persistensi staging, akses/OAuth Preview, unggahan sungguhan, dan E2E browser masih tertunda. Lihat `docs/STAGING-E2E-CHECKLIST.md`.                                                                               |
+| Validasi database          | PASS        | `npm run db:validate` lulus dalam audit pembersihan. Pemeriksaan target staging dan `SELECT 1` hanya-baca lulus pada 2026-10-15; ini tidak membuktikan perilaku aplikasi ter-deploy.                               |
+| Audit dependensi           | FAIL / TODO | Audit terakhir menemukan 15 advisory (2 kritis, 10 tinggi, 3 sedang), termasuk 4 temuan tinggi pada dependensi production. Tidak ada dependensi yang diubah karena perbaikan usulan perlu diuji kompatibilitasnya. |
+
+## Masalah yang Diketahui dan Catatan Pengembangan
+
+- Penyebab build gagal, pemilihan database Preview, perilaku `P2039` saat konkurensi, unggahan Supabase sungguhan, OAuth Google Preview, dan E2E browser belum diverifikasi. Test lokal saja belum cukup untuk menyatakan aplikasi siap rilis.
+- Temuan `npm audit` memerlukan perbaikan dependensi dan pemeriksaan kompatibilitas tersendiri.
+- Penggantian avatar/logo dapat meninggalkan objek penyimpanan yatim; pembersihannya masih TODO. Skrip penyalinan lama sengaja mempertahankan berkas sumber.
+- Pesanan confirmed/completed lama yang tidak memiliki snapshot pembayaran tidak diisi ulang; UI pembeli meminta mereka menghubungi penjual.
+- Pembatasan laju login/registrasi, verifikasi email, dan pengaturan ulang kata sandi masih ditunda.
+- Vitest mengeluarkan peringatan penghentian API Node CJS Vite pada test yang tercatat.
+- `/api/mock` sudah dihapus; operasi tersebut menggunakan API domain dan Prisma.
+- Blueprint v1.1 menjelaskan Cloudflare R2 dan batas gambar 5 MB sebagai ketentuan lama. Implementasi saat ini memakai Supabase Storage dan batas 3.000.000 byte yang telah disetujui. Jangan mengembalikan R2 atau batas lama tanpa keputusan baru.
+
+## Panduan Pengembangan
+
+Mulailah dari `src/app/page.tsx`, lalu ikuti halaman terkait ke formulir/komponen, rute API, layanan, skema/DTO, dan model Prisma. Untuk auth, baca `auth.ts` dan `src/lib/auth/`; untuk penyimpanan, baca `src/app/api/uploads/route.ts` dan `src/server/storage/`; untuk perubahan database, periksa skema dan pola migrasi yang sudah ada.
+
+## Langkah Berikutnya yang Disetujui
+
+Belum ada tahap implementasi berikutnya yang disetujui. Tugas dokumentasi ini tidak menyetujui tahap baru. Tentukan cakupan secara eksplisit sebelum implementasi; jangan mengubah aturan privasi, transisi pesanan, batas gambar, atau perilaku enkripsi pembayaran tanpa keputusan eksplisit.
+
+## Catatan Serah Terima
+
+- Titik baca utama: `src/app/page.tsx`, `auth.ts`, `src/lib/db.ts`, `src/schemas/index.ts`, `src/server/services/`, `prisma/schema.prisma`, dan `docs/STAGING-E2E-CHECKLIST.md`.
+- Implementasi berjalan dengan PostgreSQL/Prisma dan Supabase Storage. `.env.local` tidak boleh dibaca atau dibagikan untuk menyalin rahasia; gunakan `.env.example` sebagai daftar nama konfigurasi.
+- Jangan mengubah aturan paparan data order, hash password, batas gambar 3.000.000 byte, atau enkripsi pembayaran tanpa persetujuan yang sesuai.
+- Sebelum rilis, selesaikan audit dependensi serta pemeriksaan build, staging, dan E2E browser yang saat ini belum tuntas.
+
+## Referensi
+
+- [Blueprint](docs/BLUEPRINT.md) - spesifikasi awal produk/domain; perhatikan keputusan implementasi terbaru yang dicatat di atas.
+- [Daftar periksa staging dan E2E](docs/STAGING-E2E-CHECKLIST.md) - verifikasi staging yang aman dan skenario browser yang belum selesai.
+- [Laporan QA](docs/QA-REPORT-2026-10-14.md) - temuan kualitas dan dependensi yang tercatat.
+- [Sistem desain](docs/design-system-velure-loop.md) - referensi tampilan.
