@@ -2,8 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import type { KeyboardEvent, PointerEvent, WheelEvent } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type {
+  KeyboardEvent,
+  PointerEvent,
+  TransitionEvent,
+  WheelEvent,
+} from "react";
 import { formatRupiah } from "@/lib/format";
 import type { ProductListItem } from "@/types";
 
@@ -79,6 +84,8 @@ function ProductSlide({
 }
 export function HeroShowcase({ products }: { products: ProductListItem[] }) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [trackIndex, setTrackIndex] = useState(1);
+  const [trackTransitionDisabled, setTrackTransitionDisabled] = useState(false);
   const [pointerInside, setPointerInside] = useState(false);
   const [focusWithin, setFocusWithin] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -92,6 +99,26 @@ export function HeroShowcase({ products }: { products: ProductListItem[] }) {
   const lastWheelChange = useRef(0);
   const activeProduct = products[activeIndex];
   const paused = pointerInside || focusWithin || isDragging;
+
+  const moveSlide = useCallback(
+    (direction: -1 | 1) => {
+      if (products.length < 2) return;
+      const wrapsToStart = direction > 0 && activeIndex === products.length - 1;
+      const wrapsToEnd = direction < 0 && activeIndex === 0;
+      const nextIndex =
+        (activeIndex + direction + products.length) % products.length;
+
+      setActiveIndex(nextIndex);
+      if ((wrapsToStart || wrapsToEnd) && reducedMotion) {
+        setTrackTransitionDisabled(true);
+        setTrackIndex(wrapsToStart ? 1 : products.length);
+        window.requestAnimationFrame(() => setTrackTransitionDisabled(false));
+        return;
+      }
+      setTrackIndex((current) => current + direction);
+    },
+    [activeIndex, products.length, reducedMotion],
+  );
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -114,11 +141,18 @@ export function HeroShowcase({ products }: { products: ProductListItem[] }) {
     if (products.length < 2 || paused || !pageVisible || reducedMotion) return;
 
     const intervalId = window.setInterval(() => {
-      setActiveIndex((current) => (current + 1) % products.length);
+      moveSlide(1);
     }, 4500);
 
     return () => window.clearInterval(intervalId);
-  }, [activeIndex, pageVisible, paused, products.length, reducedMotion]);
+  }, [
+    activeIndex,
+    moveSlide,
+    pageVisible,
+    paused,
+    products.length,
+    reducedMotion,
+  ]);
 
   if (!activeProduct) return null;
 
@@ -152,10 +186,7 @@ export function HeroShowcase({ products }: { products: ProductListItem[] }) {
     setDragOffsetX(0);
     if (Math.abs(deltaX) < 40) return;
     ignoreClick.current = true;
-    setActiveIndex(
-      (current) =>
-        (current + (deltaX < 0 ? 1 : -1) + products.length) % products.length,
-    );
+    moveSlide(deltaX < 0 ? 1 : -1);
     ignoreClickTimeout.current = window.setTimeout(() => {
       ignoreClick.current = false;
       ignoreClickTimeout.current = null;
@@ -173,11 +204,7 @@ export function HeroShowcase({ products }: { products: ProductListItem[] }) {
       wheelDeltaX.current = 0;
       return;
     }
-    setActiveIndex(
-      (current) =>
-        (current + (wheelDeltaX.current > 0 ? 1 : -1) + products.length) %
-        products.length,
-    );
+    moveSlide(wheelDeltaX.current > 0 ? 1 : -1);
     lastWheelChange.current = now;
     wheelDeltaX.current = 0;
   };
@@ -186,12 +213,27 @@ export function HeroShowcase({ products }: { products: ProductListItem[] }) {
     if (products.length < 2 || !["ArrowLeft", "ArrowRight"].includes(event.key))
       return;
     event.preventDefault();
-    setActiveIndex(
-      (current) =>
-        (current + (event.key === "ArrowRight" ? 1 : -1) + products.length) %
-        products.length,
-    );
+    moveSlide(event.key === "ArrowRight" ? 1 : -1);
   };
+
+  const handleTrackTransitionEnd = (event: TransitionEvent<HTMLDivElement>) => {
+    if (
+      event.target !== event.currentTarget ||
+      event.propertyName !== "transform"
+    )
+      return;
+    if (trackIndex === products.length + 1 || trackIndex === 0) {
+      setTrackTransitionDisabled(true);
+      setTrackIndex(trackIndex === 0 ? products.length : 1);
+      window.requestAnimationFrame(() => setTrackTransitionDisabled(false));
+    }
+  };
+
+  const renderedProducts = [
+    products[products.length - 1]!,
+    ...products,
+    products[0]!,
+  ];
 
   return (
     <section
@@ -239,20 +281,30 @@ export function HeroShowcase({ products }: { products: ProductListItem[] }) {
         >
           <div className="relative size-full overflow-hidden rounded-t-[160px] rounded-b-[16px] bg-sage">
             <div
-              className={`absolute inset-0 flex ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${isDragging ? "transition-none" : "transition-transform duration-[650ms]"}`}
+              onTransitionEnd={handleTrackTransitionEnd}
+              className={`absolute inset-0 flex ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${isDragging || trackTransitionDisabled ? "transition-none" : "transition-transform duration-[650ms]"}`}
               style={{
-                transform: `translate3d(calc(-${activeIndex * 100}% + ${dragOffsetX}px), 0, 0)`,
+                transform: `translate3d(calc(-${trackIndex * 100}% + ${dragOffsetX}px), 0, 0)`,
               }}
             >
-              {products.map((product, index) => (
-                <ProductSlide
-                  key={product.id}
-                  product={product}
-                  index={index}
-                  total={products.length}
-                  active={index === activeIndex}
-                />
-              ))}
+              {renderedProducts.map((product, position) => {
+                const isClone =
+                  position === 0 || position === products.length + 1;
+                const index = isClone
+                  ? position === 0
+                    ? products.length - 1
+                    : 0
+                  : position - 1;
+                return (
+                  <ProductSlide
+                    key={`${product.id}-${position}`}
+                    product={product}
+                    index={index}
+                    total={products.length}
+                    active={!isClone && index === activeIndex}
+                  />
+                );
+              })}
             </div>
             <div className="pointer-events-none absolute inset-x-3 bottom-3 z-10 p-3 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] sm:inset-x-4 sm:bottom-4 sm:p-4">
               <span className="block text-[10px] font-semibold uppercase tracking-[.14em] text-white/90 sm:text-xs">
