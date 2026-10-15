@@ -3,8 +3,7 @@ import { Shell } from "@/components/layout/shell";
 import { ProductGrid } from "@/components/product/cards";
 import { listProducts, getProductCategories } from "@/server/services/products";
 import { getCurrentUser } from "@/lib/session";
-import { formatRupiah } from "@/lib/format";
-import { HeroFeaturedImage } from "@/components/home/hero-featured-image";
+import { HeroShowcase } from "@/components/home/hero-showcase";
 
 export default async function Home() {
   const user = await getCurrentUser();
@@ -12,12 +11,24 @@ export default async function Home() {
     listProducts({}, user?.id),
     getProductCategories(),
   ]);
-  const newestProduct = items[0];
+  const uniqueShowcaseProducts = items.filter((product, index, products) => {
+    const hasUploadedImage =
+      !product.coverImageUrl.startsWith("/products/item-");
+    return (
+      hasUploadedImage &&
+      products.findIndex(
+        (candidate) => candidate.coverImageUrl === product.coverImageUrl,
+      ) === index
+    );
+  });
+  const showcaseProducts = uniqueShowcaseProducts.length
+    ? uniqueShowcaseProducts.slice(0, 3)
+    : items.slice(0, 1);
   return (
     <Shell>
-      <section className="mx-auto min-w-0 max-w-[1536px] px-4 pt-6 sm:px-6 sm:pt-8 lg:px-8">
+      <section className="mx-auto w-full min-w-0 max-w-[1536px] px-4 pt-6 sm:px-6 sm:pt-8 lg:px-8">
         <div
-          className={`relative isolate mx-auto grid min-w-0 grid-cols-1 max-w-[1440px] overflow-hidden rounded-2xl bg-primary text-primary-foreground ${newestProduct ? "lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,.95fr)]" : "lg:grid-cols-1"}`}
+          className={`relative isolate mx-auto grid w-full min-w-0 grid-cols-1 max-w-[1440px] overflow-hidden rounded-2xl bg-primary text-primary-foreground ${showcaseProducts.length ? "lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,.95fr)]" : "lg:grid-cols-1"}`}
         >
           <svg
             aria-hidden="true"
@@ -101,16 +112,16 @@ export default async function Home() {
               <circle cx="1382" cy="404" r="3" />
             </g>
           </svg>
-          <div className="relative z-10 flex min-w-0 flex-col items-start justify-center px-6 py-8 sm:px-10 sm:py-10 lg:px-10 lg:py-8">
+          <div className="relative z-10 flex w-full min-w-0 flex-col items-start justify-center px-6 py-8 sm:px-10 sm:py-10 lg:px-10 lg:py-8">
             <span className="text-xs font-semibold uppercase tracking-[.16em] text-primary-foreground/80">
               PASAR LOAK KONTEMPORER &bull; KHUSUS ANAK KOS
             </span>
-            <h1 className="mt-4 font-heading text-[clamp(51px,5.25vw,73px)] font-normal leading-none tracking-[-0.03em]">
+            <h1 className="mt-4 w-full max-w-full font-heading text-[clamp(30px,9vw,46px)] font-normal leading-none tracking-[-0.03em] sm:text-[clamp(51px,5.25vw,73px)]">
               Kebutuhan kos,
               <br />
               <span className="text-peach">harga bersahabat.</span>
             </h1>
-            <p className="mt-5 max-w-lg leading-7 text-primary-foreground/90">
+            <p className="mt-5 w-full max-w-lg leading-7 text-primary-foreground/90">
               Cari furnitur kecil, perlengkapan tidur, alat dapur, elektronik,
               dan kebutuhan belajar preloved dari sesama anak kos.
             </p>
@@ -121,34 +132,8 @@ export default async function Home() {
               Cari barang kos
             </Link>
           </div>
-          {newestProduct && (
-            <Link
-              href={`/products/${newestProduct.id}`}
-              className="group relative z-10 mx-auto block aspect-[4/5] w-full max-w-[448px] rounded-t-[170px] rounded-b-[22px] bg-peach p-2.5 focus-visible:outline-offset-[-2px] lg:my-auto"
-            >
-              <div className="relative size-full overflow-hidden rounded-t-[160px] rounded-b-[16px] bg-sage">
-                <HeroFeaturedImage
-                  key={newestProduct.id}
-                  src={newestProduct.coverImageUrl}
-                  alt={newestProduct.title}
-                  sizes="(max-width: 1023px) 100vw, 448px"
-                  priority
-                />
-              </div>
-              <div className="absolute bottom-5 left-5 right-5 rounded-2xl bg-cream/95 p-4 text-foreground shadow-card sm:p-5">
-                <p className="text-xs font-semibold uppercase tracking-[.16em] text-primary">
-                  Pilihan anak kos
-                </p>
-                <div className="mt-1 flex items-end justify-between gap-3">
-                  <h2 className="line-clamp-2 min-w-0 text-base leading-tight sm:text-lg">
-                    {newestProduct.title}
-                  </h2>
-                  <p className="shrink-0 font-bold text-primary">
-                    {formatRupiah(newestProduct.price)}
-                  </p>
-                </div>
-              </div>
-            </Link>
+          {showcaseProducts.length > 0 && (
+            <HeroShowcase products={showcaseProducts} />
           )}
         </div>
         <div className="py-5 sm:py-6 lg:py-7">
@@ -194,7 +179,7 @@ export default async function Home() {
             </h2>
           </div>
           <ProductGrid
-            products={items.slice(newestProduct ? 1 : 0, 12)}
+            products={items.slice(0, 12)}
             favoriteDisabled={!user}
             gridClassName="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-4 xl:gap-5"
           />
